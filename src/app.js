@@ -956,6 +956,30 @@
      ========================================================= */
   var LOTTO_LATEST = { no:1243, date:'2026-09-26', nums:[9,18,24,38,43,44], bonus:35,
     first:{ count:12, prize:2592525282 }, second:{ count:115, prize:45087397 } };
+  /* 배포 주소에서는 /api/lotto(서버리스)로 최신 회차를 받아 덮어쓴다. 실패하면 위 정적 데이터 유지 */
+  function validLotto(d){
+    return d && d.no > 0 && Array.isArray(d.nums) && d.nums.length === 6 && d.nums.every(function(n){ return n >= 1 && n <= 45; }) &&
+      d.bonus >= 1 && d.bonus <= 45 && /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') && d.first && d.first.prize >= 0;
+  }
+  function useLotto(d, live){
+    if (!validLotto(d) || d.no < LOTTO_LATEST.no) return false;
+    LOTTO_LATEST = { no:+d.no, date:d.date, nums:d.nums.map(Number).sort(function(a, b){ return a - b; }), bonus:+d.bonus,
+      first:{ count:+d.first.count || 0, prize:+d.first.prize || 0 },
+      second:d.second && d.second.prize ? { count:+d.second.count || 0, prize:+d.second.prize } : null,
+      sell:+d.sell || null, live:!!live };
+    return true;
+  }
+  try { useLotto(JSON.parse(localStorage.getItem('unsu_lotto_cache') || 'null'), true); } catch(e){}
+  function refreshLotto(){
+    if (!/^https?:$/.test(location.protocol) || !window.fetch) return;
+    try { if (window.top !== window.self) return; } catch(e){ return; }
+    fetch('/api/lotto', { headers:{ Accept:'application/json' } }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      var before = LOTTO_LATEST.no + '|' + LOTTO_LATEST.live;
+      if (!useLotto(d, true)) return;
+      try { localStorage.setItem('unsu_lotto_cache', JSON.stringify(LOTTO_LATEST)); } catch(e){}
+      if (before !== LOTTO_LATEST.no + '|' + LOTTO_LATEST.live && currentView === 'fill') renderNumToday();
+    }).catch(function(){});
+  }
   function krw(n){
     var eok = Math.floor(n / 1e8), man = Math.floor((n % 1e8) / 1e4);
     return (eok ? eok + '억 ' : '') + (man ? man.toLocaleString('ko-KR') + '만 ' : '') + '원';
@@ -972,9 +996,11 @@
     var title = days >= 0 && days < 7 ? '지난주 1등 번호' : '최근 발표된 1등 번호';
     var next = new Date(dd); while (next <= now) next.setDate(next.getDate() + 7);
     var h = '<div class="card"><div class="sec-head"><h2 class="sec-title">' + title + '</h2><span class="sec-meta">제' + L.no + '회</span></div>' +
-      '<p class="helper" style="margin-top:-8px">' + (+p[1]) + '월 ' + (+p[2]) + '일(토) 추첨 · 동행복권 발표 기준</p>' +
+      '<p class="helper" style="margin-top:-8px">' + (+p[1]) + '월 ' + (+p[2]) + '일(토) 추첨 · 동행복권 발표 기준' + (L.live ? ' · <span class="lt-live">자동 갱신</span>' : '') + '</p>' +
       '<div class="balls lt-row">' + L.nums.map(function(n){ return '<div class="ball lt ' + ltColor(n) + '">' + n + '</div>'; }).join('') + '<span class="lt-plus">+</span><div class="ball lt ' + ltColor(L.bonus) + '">' + L.bonus + '</div></div>' +
-      '<div class="lt-prize"><div><span>1등</span><b>' + krw(L.first.prize) + '</b><small>' + L.first.count + '게임 당첨</small></div><div><span>2등</span><b>' + krw(L.second.prize) + '</b><small>' + L.second.count + '게임 당첨</small></div></div>';
+      '<div class="lt-prize"><div><span>1등</span><b>' + krw(L.first.prize) + '</b><small>' + L.first.count + '게임 당첨</small></div>' +
+        (L.second ? '<div><span>2등</span><b>' + krw(L.second.prize) + '</b><small>' + L.second.count + '게임 당첨</small></div>'
+          : L.sell ? '<div><span>총 판매</span><b>' + Math.round(L.sell / 1e8).toLocaleString('ko-KR') + '억 원' + '</b><small>이번 회차</small></div>' : '') + '</div>';
     if (life){
       var rk = lottoRank(life);
       h += '<div class="divider"></div><div class="num-set"><div class="lab">내 평생 번호와 맞춰 보기 <small>' + rk.hit + '개 일치' + (rk.bonus ? ' + 보너스' : '') + '</small></div>' +
@@ -1032,35 +1058,109 @@
   /* =========================================================
      궁합
      ========================================================= */
-  var gh = { a:null, b:null };
+  var gh = { a:null, b:null, edit:null, f:null, bCleared:false };
   function getUnlocks(){ var u = store('unsu_unlock'); return Array.isArray(u) ? u : []; }
   function ghKey(ea, eb){ return [ea.id, eb.id].sort().join('|'); }
-  function slotHTML(e, which){
-    if (!e) return '<button class="gh-slot" data-slot="' + which + '"><span class="nm">선택하기</span><span class="sb">저장된 사주에서 고르기</span></button>';
+  function slotHTML(e, which, label){
+    var on = gh.edit === which ? ' editing' : '';
+    if (!e) return '<button class="gh-slot empty' + on + '" data-slot="' + which + '" aria-expanded="' + (gh.edit === which) + '"><span class="gh-q">?</span><span class="nm">' + label + '</span><span class="sb">' + (gh.edit === which ? '아래에서 입력해요' : '눌러서 입력') + '</span></button>';
     var r = compute(e);
-    return '<button class="gh-slot" data-slot="' + which + '">' + figSVG(r.animal, ANIMAL_EL[r.animal], 'mini') + '<span class="nm">' + esc(e.name) + '</span><span class="sb">' + r.pillars.day.name + '일주 · ' + r.animal + '띠</span><span class="chg">바꾸기</span></button>';
+    return '<button class="gh-slot' + on + '" data-slot="' + which + '" aria-expanded="' + (gh.edit === which) + '">' + figSVG(r.animal, ANIMAL_EL[r.animal], 'mini') + '<span class="nm">' + esc(e.name) + '</span><span class="sb">' + r.pillars.day.name + '일주 · ' + r.animal + '띠</span><span class="chg">' + (gh.edit === which ? '입력 중' : '바꾸기') + '</span></button>';
+  }
+  function freshGhForm(which){
+    var other = getList().filter(function(x){ return x.id === (which === 'a' ? gh.b : gh.a); })[0];
+    return { name:'', gender:other ? (other.gender === 'F' ? 'M' : 'F') : 'F', cal:'solar', leap:false, birth:'', hour:'', minute:'0' };
+  }
+  function ghFormState(){
+    var f = gh.f, b = parseBirth(f.birth);
+    if (f.birth.length < 8) return { ok:false, cls:'', text:'숫자 8자리로 입력해 주세요 (예: 19950412)' };
+    if (!b || b.y < 1900 || b.y > 2050) return { ok:false, cls:'err', text:'1900~2050년 사이의 날짜를 입력해 주세요' };
+    var e = { name:f.name.trim() || '상대', gender:f.gender, cal:f.cal, leap:f.cal === 'lunar' && f.leap, y:b.y, m:b.m, d:b.d,
+      unknown:f.hour === '', hour:f.hour === '' ? null : +f.hour, minute:f.hour === '' ? null : +f.minute, corr:true };
+    var r = compute(e);
+    if (r.error) return { ok:false, cls:'err', text:r.error };
+    if (new Date(r.solar.y, r.solar.m - 1, r.solar.d) > new Date()) return { ok:false, cls:'err', text:'오늘 이후의 날짜는 입력할 수 없어요' };
+    var t = (f.cal === 'lunar' ? '양력 ' + r.solar.y + '.' + r.solar.m + '.' + r.solar.d : (r.lunar ? '음력 ' + r.lunar.m + '.' + r.lunar.d + (r.lunar.leap ? ' 윤' : '') : '')) +
+      ' · ' + r.pillars.year.name + '년생 ' + r.animal + '띠 · ' + r.pillars.day.name + '일주' + (r.pillars.hour ? ' · ' + r.pillars.hour.bk + '시' : '');
+    return { ok:true, cls:'ok', text:t, entry:e };
+  }
+  function ghEditorHTML(which){
+    var f = gh.f, other = which === 'a' ? gh.b : gh.a;
+    var cands = getList().filter(function(x){ return x.id !== other; });
+    var who = which === 'a' ? (getMe() ? '첫 번째 사람' : '나') : '상대';
+    var h = '<div class="ge" id="ghEditor"><div class="ge-head"><b>' + who + '의 사주</b>' + ((which === 'a' ? gh.a : gh.b) ? '<button class="ge-x" id="geClose" aria-label="입력 닫기">✕</button>' : '') + '</div>';
+    if (cands.length){
+      h += '<div class="ge-label">저장 목록에서 고르기</div><div class="ge-chips">' + cands.map(function(e){
+        var r = compute(e); if (r.error) return '';
+        var cur = e.id === (which === 'a' ? gh.a : gh.b);
+        return '<button class="ge-chip' + (cur ? ' on' : '') + '" data-pick="' + e.id + '"' + (cur ? ' aria-current="true"' : '') + '>' + figSVG(r.animal, ANIMAL_EL[r.animal], 'mini') + '<span><b>' + esc(e.name) + '</b><small>' + r.pillars.day.name + '일주 · ' + (e.gender === 'M' ? '남' : '여') + (cur ? ' · 선택됨' : '') + '</small></span></button>';
+      }).join('') + '</div><div class="ge-or"><span>또는 직접 입력</span></div>';
+    }
+    var hours = '<option value="">태어난 시 · 모름</option>'; for (var i = 0; i < 24; i++) hours += '<option value="' + i + '"' + (f.hour === String(i) ? ' selected' : '') + '>' + pad2(i) + '시</option>';
+    var mins = ''; for (var j = 0; j < 60; j++) mins += '<option value="' + j + '"' + (f.minute === String(j) ? ' selected' : '') + '>' + pad2(j) + '분</option>';
+    h += '<div class="ge-form">' +
+      '<input class="text-input" id="geName" maxlength="12" placeholder="이름 (예: ' + (which === 'a' && !getMe() ? '소율' : '이별빛') + ')" autocomplete="off" value="' + esc(f.name) + '">' +
+      '<div class="toggle-row">' +
+        '<div class="pill" role="group" aria-label="성별"><button type="button" data-gg="F" aria-pressed="' + (f.gender === 'F') + '">여자</button><button type="button" data-gg="M" aria-pressed="' + (f.gender === 'M') + '">남자</button></div>' +
+        '<div class="pill" role="group" aria-label="양력 음력"><button type="button" data-gc="solar" aria-pressed="' + (f.cal === 'solar') + '">양력</button><button type="button" data-gc="lunar" aria-pressed="' + (f.cal === 'lunar') + '">음력</button></div>' +
+        '<div class="pill' + (f.cal === 'lunar' ? '' : ' is-disabled') + '" role="group" aria-label="평달 윤달"><button type="button" data-gl="0" aria-pressed="' + !f.leap + '"' + (f.cal === 'lunar' ? '' : ' disabled') + '>평달</button><button type="button" data-gl="1" aria-pressed="' + f.leap + '"' + (f.cal === 'lunar' ? '' : ' disabled') + '>윤달</button></div>' +
+      '</div>' +
+      '<input class="text-input mono" id="geBirth" inputmode="numeric" maxlength="8" placeholder="생년월일 8자리 · 19950412" autocomplete="off" value="' + f.birth + '">' +
+      '<div class="ge-time"><select class="ge-select" id="geHour" aria-label="태어난 시">' + hours + '</select><select class="ge-select" id="geMin" aria-label="태어난 분"' + (f.hour === '' ? ' disabled' : '') + '>' + mins + '</select></div>' +
+      '<div class="field-hint" id="geHint"></div>' +
+      '<button class="btn-primary btn-block" id="geDone">' + (which === 'a' && !getMe() ? '내 사주로 저장' : '이 사람으로 궁합 보기') + '</button>' +
+      '<p class="helper" style="text-align:center">입력한 사주는 저장 목록에 자동으로 저장돼요</p></div></div>';
+    return h;
+  }
+  function bindGhEditor(which){
+    var f = gh.f;
+    var upd = function(){ var st = ghFormState(); var hint = $('geHint'); hint.className = 'field-hint ' + st.cls; hint.textContent = st.text; $('geDone').disabled = !st.ok; };
+    $('geName').oninput = function(){ f.name = this.value; };
+    $('geBirth').oninput = function(){ this.value = this.value.replace(/\D/g, '').slice(0, 8); f.birth = this.value; upd(); };
+    $('geHour').onchange = function(){ f.hour = this.value; $('geMin').disabled = f.hour === ''; upd(); };
+    $('geMin').onchange = function(){ f.minute = this.value; upd(); };
+    var box = $('ghEditor');
+    box.querySelectorAll('[data-gg]').forEach(function(b){ b.onclick = function(){ f.gender = b.dataset.gg; box.querySelectorAll('[data-gg]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); }); }; });
+    box.querySelectorAll('[data-gc],[data-gl]').forEach(function(b){ b.onclick = function(){ if (b.dataset.gc){ f.cal = b.dataset.gc; if (f.cal === 'solar') f.leap = false; } else f.leap = b.dataset.gl === '1'; renderGunghap(); }; });
+    box.querySelectorAll('[data-pick]').forEach(function(b){ b.onclick = function(){ gh[which] = b.dataset.pick; if (which === 'b') gh.bCleared = false; gh.edit = null; gh.f = null; renderGunghap(); }; });
+    if ($('geClose')) $('geClose').onclick = function(){ gh.edit = null; gh.f = null; renderGunghap(); };
+    $('geBirth').onkeydown = function(e){ if (e.key === 'Enter') $('geDone').click(); };
+    $('geDone').onclick = function(){
+      var st = ghFormState(); if (!st.ok){ upd(); return; }
+      var e = st.entry, list = getList(), found = list.filter(function(x){ return sameEntry(x, e); })[0];
+      if (!found){ e.id = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); e.saved = Date.now(); list.unshift(e); store('unsu_list', list); found = e; }
+      var madeMe = false;
+      if (which === 'a' && !getMe()){ setMe(found.id); welcomeCoins(); madeMe = true; }
+      gh[which] = found.id; if (which === 'b') gh.bCleared = false;
+      gh.edit = null; gh.f = null;
+      updateSegCount(); updateTopbar();
+      renderGunghap();
+      toast(madeMe ? '내 사주로 저장했어요. 이제 상대를 입력해 주세요' : '‘' + found.name + '’님을 저장하고 궁합을 펼쳤어요');
+      var t = $('ghBody').querySelector(madeMe ? '#ghEditor' : '.poster'); if (t) t.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+    };
+    upd();
   }
   function renderGunghap(){
     var list = getList(), box = $('ghBody');
-    if (list.length < 2){
-      if (!getMe()){
-        box.innerHTML = '<div class="card gate">' + figSVG('쌍둥이자리', 'air') + '<h2 class="sec-title">내 사주부터 등록해 주세요</h2><p class="helper">궁합은 내 사주와 상대의 사주를 나란히 놓고 봐요. 등록은 30초면 끝나요.</p><button class="btn-primary btn-block" id="btnGhOnb">내 사주 등록하기</button><button class="text-btn" id="btnGhDemo">예시 두 사람으로 먼저 보기</button></div>';
-        $('btnGhOnb').onclick = function(){ startOnboarding('new'); };
-        $('btnGhDemo').onclick = function(){ enterDemo('gunghap'); };
-      } else {
-        box.innerHTML = '<div class="card gate">' + figSVG('쌍둥이자리', 'air') + '<h2 class="sec-title">궁합을 볼 상대를 추가해 주세요</h2><p class="helper">연인, 친구, 가족, 동료 누구든 괜찮아요. 상대의 생년월일을 입력하고 저장하면 바로 궁합이 열려요.</p><button class="btn-primary btn-block" id="btnGhInput">상대 사주 입력하기</button><button class="btn-soft btn-block" id="btnGhInv">' + SH_IC.link + '친구에게 궁합 신청 링크 보내기</button></div>';
-        $('btnGhInput').onclick = function(){ prepOtherForm(); };
-        $('btnGhInv').onclick = openInvite;
-      }
+    var byId = function(id){ return list.filter(function(x){ return x.id === id; })[0] || null; };
+    var A = byId(gh.a) || getMe() || null;
+    if (A) gh.a = A.id;
+    var B = byId(gh.b); if (B && A && B.id === A.id) B = null;
+    if (!B && A && !gh.bCleared) B = list.filter(function(x){ return x.id !== A.id; })[0] || null;
+    gh.b = B ? B.id : null;
+    if (!gh.edit){ if (!A) gh.edit = 'a'; else if (!B) gh.edit = 'b'; }
+    if (gh.edit && !gh.f) gh.f = freshGhForm(gh.edit);
+    var h = '<div class="card gh-box"><div class="gh-pair">' + slotHTML(A, 'a', getMe() ? '첫 번째 사람' : '나') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b', '상대') + '</div>';
+    if (gh.edit) h += ghEditorHTML(gh.edit);
+    if (getMe() && !NS) h += '<button class="text-btn" id="btnGhInv2" style="align-self:center">상대 생년월일을 모르나요? 궁합 신청 링크 보내기</button>';
+    else if (!getMe()) h += '<button class="text-btn" id="btnGhDemo" style="align-self:center">예시 두 사람으로 먼저 보기</button>';
+    h += '</div>';
+    var ra = A && compute(A), rb = B && compute(B);
+    if (!A || !B || gh.edit || ra.error || rb.error){
+      box.innerHTML = h; bindGh();
+      if (gh.edit) bindGhEditor(gh.edit);
       return;
     }
-    var byId = function(id){ return list.filter(function(x){ return x.id === id; })[0] || null; };
-    var A = byId(gh.a) || getMe() || list[0];
-    var B = byId(gh.b); if (!B || B.id === A.id) B = list.filter(function(x){ return x.id !== A.id; })[0];
-    gh.a = A.id; gh.b = B.id;
-    var ra = compute(A), rb = compute(B);
-    var h = '<div class="card"><div class="gh-pair">' + slotHTML(A, 'a') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b') + '</div></div>';
-    if (ra.error || rb.error){ box.innerHTML = h; bindGh(); return; }
     var m = DAILY.match(A, ra, B, rb);
     var nm = function(t){ return t.replace(/A/g, esc(A.name)).replace(/B/g, esc(B.name)); };
     h += '<div class="poster"><div class="poster-frame">' +
@@ -1118,16 +1218,14 @@
   function bindGh(){
     $('ghBody').querySelectorAll('[data-slot]').forEach(function(btn){
       btn.onclick = function(){
-        var which = btn.dataset.slot, other = which === 'a' ? gh.b : gh.a, curId = gh[which];
-        var list = getList().filter(function(x){ return x.id !== other; });
-        openSheet('<h3 id="sheetTitle">' + (which === 'a' ? '첫 번째' : '두 번째') + ' 사람 고르기</h3><div class="pick-list">' + list.map(function(e){
-          var r = compute(e); if (r.error) return '';
-          return '<button class="pick" data-pick="' + e.id + '" aria-pressed="' + (e.id === curId) + '">' + figSVG(r.animal, ANIMAL_EL[r.animal], 'mini') + '<span><span class="nm">' + esc(e.name) + '</span><br><span class="sb">' + fmtEntryDate(e) + '</span></span><span class="sb">' + r.pillars.day.name + '</span></button>';
-        }).join('') + '</div><button class="btn-ghost btn-block" id="btnPickNew">새 사주 입력하기</button>');
-        $('sheetBody').querySelectorAll('[data-pick]').forEach(function(p){ p.onclick = function(){ gh[which] = p.dataset.pick; closeSheet(); renderGunghap(); }; });
-        $('btnPickNew').onclick = function(){ closeSheet(); show('input'); };
+        var which = btn.dataset.slot;
+        gh.edit = gh.edit === which ? null : which; gh.f = null;
+        renderGunghap();
+        var ed = $('ghEditor'); if (ed){ ed.scrollIntoView({ block:'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); var n = $('geName'); if (n && !('ontouchstart' in window)) n.focus(); }
       };
     });
+    if ($('btnGhInv2')) $('btnGhInv2').onclick = openInvite;
+    if ($('btnGhDemo')) $('btnGhDemo').onclick = function(){ enterDemo('gunghap'); };
   }
 
   /* =========================================================
@@ -1648,6 +1746,8 @@
       '<p class="helper">내 생년월일만 알려 주면 두 사람의 궁합 점수와 풀이가 바로 나와요. 가입 없이 30초면 끝나요.</p>' +
       '<div class="wel-cta"><button class="btn-primary btn-block" id="btnInvStart">내 생년월일 입력하기</button><button class="text-btn" id="btnInvSkip">초대는 나중에 볼게요</button></div></div>';
   }
+
+  refreshLotto();
 
   (function readInvite(){
     var code = null;

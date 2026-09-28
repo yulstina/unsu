@@ -631,6 +631,8 @@
   .lt-prize span{font-size:11.5px;color:var(--text-helper);}
   .lt-prize b{font-family:var(--font-display);font-size:16px;color:#fff;font-weight:600;font-variant-numeric:tabular-nums;}
   .lt-prize small{font-size:11.5px;color:var(--text-muted);}
+  .lt-live{display:inline-flex;align-items:center;gap:4px;color:#8fe3c8;}
+  .lt-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#3dd6be;box-shadow:0 0 6px #3dd6be;}
   .fill-compare{text-align:center;font-size:13px;color:var(--text-muted);}
   .fill-compare b{color:#fff;font-weight:600;}
   @media (max-width:350px){ .lt-row .ball{width:32px;height:32px;font-size:12.5px;} .lt-row{gap:3px;} }
@@ -662,6 +664,42 @@
   .inv-p small{font-size:11px;color:var(--text-helper);}
   .inv-q{width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:40px;color:var(--text-helper);box-shadow:inset 0 0 0 1.5px dashed rgba(199,211,234,.3);border:1.5px dashed rgba(199,211,234,.3);}
   .btn-soft svg,.btn-primary svg{flex:none;}
+
+  /* ---------- 궁합 인라인 입력 ---------- */
+  .gh-box{display:flex;flex-direction:column;gap:16px;}
+  .gh-slot.empty{background:rgba(199,211,234,.03);}
+  .gh-q{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(186,214,247,.35);font-family:var(--font-display);font-size:30px;color:var(--text-helper);}
+  .gh-slot.empty .chg{color:#fff;background:var(--violet);padding:3px 10px;border-radius:var(--r-full);margin-top:4px;}
+  .gh-slot.editing{box-shadow:inset 0 0 0 1.5px var(--violet);background:rgba(102,58,243,.12);}
+  .gh-slot.editing .gh-q{border-color:rgba(160,130,255,.8);color:#fff;}
+  .ge{display:flex;flex-direction:column;gap:12px;padding-top:16px;border-top:1px solid var(--border-hairline);animation:geIn .28s ease-out;}
+  @keyframes geIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .ge-head{display:flex;justify-content:space-between;align-items:center;min-height:28px;}
+  .ge-head b{font-size:15px;color:#fff;font-weight:600;}
+  .ge-x{width:32px;height:32px;border:none;border-radius:50%;background:rgba(199,211,234,.08);color:var(--text-muted);font-size:13px;cursor:pointer;}
+  .ge-label{font-size:12px;font-weight:500;color:var(--text-muted);}
+  .ge-chips{display:flex;gap:8px;overflow-x:auto;margin:0 -4px;padding:2px 4px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;}
+  .ge-chips::-webkit-scrollbar{display:none;}
+  .ge-chip{flex:0 0 auto;display:grid;grid-template-columns:40px auto;gap:8px;align-items:center;text-align:left;background:rgba(199,211,234,.06);border:none;border-radius:12px;padding:6px 12px 6px 6px;color:inherit;cursor:pointer;box-shadow:inset 0 0 0 1px var(--border-hairline);scroll-snap-align:start;max-width:180px;transition:background .15s,box-shadow .15s;}
+  .ge-chip:active{background:rgba(102,58,243,.2);box-shadow:inset 0 0 0 1.5px var(--violet);}
+  .ge-chip svg{width:40px;height:40px;}
+  .ge-chip span{display:flex;flex-direction:column;min-width:0;}
+  .ge-chip b{font-size:13.5px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ge-chip small{font-size:11px;color:var(--text-helper);white-space:nowrap;}
+  .ge-or{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text-helper);}
+  .ge-or::before,.ge-or::after{content:'';flex:1;height:1px;background:var(--border-hairline);}
+  .ge-form{display:flex;flex-direction:column;gap:10px;}
+  .ge-form .toggle-row{grid-template-columns:repeat(3,1fr);gap:6px;}
+  .ge-chip.on{background:rgba(102,58,243,.16);box-shadow:inset 0 0 0 1.5px var(--violet);}
+  .ge-chip.on small{color:#c9b8ff;}
+  .ge-form .pill button{font-size:12.5px;padding:8px 0;}
+  .ge-time{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;}
+  .ge-select{width:100%;appearance:none;-webkit-appearance:none;background:rgba(199,211,234,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%239da7ba' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--border-hairline);color:#fff;font-size:15px;padding:12px 32px 12px 14px;border-radius:10px;font-family:inherit;cursor:pointer;}
+  .ge-select:focus{outline:none;border-color:var(--border-hairline-strong);}
+  .ge-select:disabled{opacity:.35;cursor:not-allowed;}
+  .ge-select option{background:#10131f;color:#fff;}
+  .ge .field-hint{min-height:0;}
+  .ge .field-hint:empty{display:none;}
 
   /* ---------- toast ---------- */
   .toast{position:fixed;left:50%;bottom:calc(var(--tabbar-h) + 30px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);z-index:30;
@@ -834,7 +872,7 @@
     <div class="hero-copy" style="padding-inline:2px">
       <div class="eyebrow">宮合 · MATCH</div>
       <h1 class="hero-title">두 사람의 여덟 글자가<br>만나면</h1>
-      <p class="helper">저장된 사주 두 개를 골라 일간·일지·오행으로 궁합을 봐요. 연인, 친구, 동료 모두 가능해요.</p>
+      <p class="helper">두 사람의 생년월일만 넣으면 여기서 바로 궁합을 봐요. 저장 목록에서 골라도 돼요.</p>
     </div>
     <div id="ghBody" class="view"></div>
   </section>
