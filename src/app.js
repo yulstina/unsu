@@ -187,7 +187,7 @@
      ========================================================= */
   var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill') };
   var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'gunghap', fill:'num' };
-  var currentTab = 'today', currentView = 'today', lastSajuView = 'input';
+  var currentTab = 'today', currentView = 'today', lastSajuView = null;
   function show(view, tab){
     Object.keys(VIEWS).forEach(function(k){ VIEWS[k].hidden = k !== view; });
     currentView = view; currentTab = tab !== undefined ? tab : TAB_OF[view];
@@ -195,13 +195,16 @@
     if (typeof updateTopbar === 'function') updateTopbar();
     if (view === 'input' || view === 'list' || view === 'result') lastSajuView = view;
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === currentTab); b.setAttribute('aria-current', b.dataset.tab === currentTab ? 'page' : 'false'); });
-    document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === view)); });
+    var segKey = view === 'result' ? 'mine' : view;
+    document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });
     window.scrollTo(0, 0);
   }
   function go(t){
     if (t === 'today'){ renderToday(); show('today'); }
     else if (t === 'saju'){
-      var v = currentTab === 'saju' ? 'input' : lastSajuView;
+      var v = (currentTab === 'saju' || !lastSajuView) ? (getMe() ? 'mine' : 'input') : lastSajuView;
+      if (v === 'result' && (!cur || cur.asTab)) v = getMe() ? 'mine' : 'input';
+      if (v === 'mine'){ openMine(); return; }
       if (v === 'list') renderList();
       show(v);
     }
@@ -209,7 +212,8 @@
     else if (t === 'num'){ renderNumToday(); show('fill'); }
   }
   document.querySelector('.tabbar').addEventListener('click', function(e){ var b = e.target.closest('.tab'); if (b) go(b.dataset.tab); });
-  document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ if (b.dataset.sub === 'list') renderList(); show(b.dataset.sub); }); });
+  document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ if (b.dataset.sub === 'mine'){ openMine(); return; } if (b.dataset.sub === 'list') renderList(); show(b.dataset.sub); }); });
+  function openMine(){ var me = getMe(); if (!me){ startOnboarding('new'); return; } var r = compute(me); if (r.error){ show('input'); return; } openResult(me, r, true); }
 
   /* =========================================================
      사주 입력 폼
@@ -444,9 +448,10 @@
     return '<div class="pcol' + (isDay ? ' is-day' : '') + '">' + head + '<div class="ten">' + p.tenStem + '</div>' + tileHTML(p.stem, true, p) + tileHTML(p.br, false, p) + '<div class="ten">' + p.tenBr + '</div></div>';
   }
 
-  function openResult(entry, r){
+  function openResult(entry, r, asTab){
     if (currentView !== 'result') prevView = currentView;
-    cur = { entry:entry, r:r };
+    cur = { entry:entry, r:r, asTab:!!asTab };
+    $('resultSeg').hidden = !asTab; $('resultHead').hidden = !!asTab;
     var P = r.pillars, order = ['hour','day','month','year'];
     var dStem = P.day.stem, dEl = r.dEl, ig = ILGAN[dStem];
     var saved = getList().some(function(x){ return sameEntry(x, entry); });
@@ -569,7 +574,7 @@
     h += '<p class="disclaimer">전통 명리 이론을 바탕으로 계산한 참고용 풀이예요. 절기가 바뀌는 시각 전후 10분 이내에 태어났다면 월주가 달라질 수 있어요.</p>';
 
     $('resultBody').innerHTML = h;
-    show('result', prevView === 'today' ? 'today' : prevView === 'gunghap' ? 'gunghap' : 'saju');
+    show('result', asTab ? 'saju' : prevView === 'today' ? 'today' : prevView === 'gunghap' ? 'gunghap' : 'saju');
     drawOn($('posterFig'));
     var du = $('duScroll').querySelector('.now');
     if (du) $('duScroll').scrollLeft = du.offsetLeft - 60;
@@ -730,6 +735,11 @@
   }
   function ymd(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
   var WD = ['일','월','화','수','목','금','토'];
+  var SH_IC = {
+    send:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>',
+    link:'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.1 0l2.8-2.8a5 5 0 0 0-7.1-7.1L11.5 4.4"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.8 2.8a5 5 0 0 0 7.1 7.1l1.3-1.3"/></svg>',
+    heart:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg>'
+  };
 
   var COIN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="9.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
   var LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
@@ -794,19 +804,29 @@
   };
   $('adClaim').onclick = function(){ if (!adFinished) return; closeAd(); var f = adDone; adDone = null; if (f) f(); };
 
-  $('coinChip').onclick = function(){
+  $('coinChip').onclick = openCoinSheet;
+  function openCoinSheet(){
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
+    var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
     var h = '<h3 id="sheetTitle">내 엽전 ' + getCoins() + '닢</h3>' +
-      '<div class="tip-list">' +
-      '<div class="earn-row"><div><div class="t">매일 출석</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><b style="color:#f3dca0">+10</b></div>' +
-      '<div class="earn-row"><div><div class="t">7일 연속 출석 보너스</div><div class="s">7일마다 한 번씩</div></div><b style="color:#f3dca0">+30</b></div>' +
-      '<div class="earn-row"><div><div class="t">광고 보고 받기</div><div class="s">하루 ' + AD_LIMIT + '번 · 오늘 ' + adCount() + '번 사용</div></div><b style="color:#f3dca0">+' + AD_REWARD + '</b></div>' +
-      '<div class="earn-row"><div><div class="t">상세 궁합 리포트 열기</div><div class="s">한 번 열면 계속 볼 수 있어요</div></div><b style="color:#ffb4a8">−' + GH_COST + '</b></div>' +
-      '</div><div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
+      '<div class="eyebrow"><span class="line"></span>모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
+      '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
+      '<div class="earn-row"><div><div class="t">7일 연속 보너스 +30</div><div class="s">' + (left === 7 ? '이번 주기 보너스를 받았어요' : '앞으로 ' + left + '일 더 출석하면 받아요') + '</div></div><button class="btn-ghost" id="csCal" style="padding:9px 14px;font-size:12.5px">캘린더</button></div>' +
+      '<div class="earn-row"><div><div class="t">광고 보고 +' + AD_REWARD + '</div><div class="s">하루 ' + AD_LIMIT + '번 · 오늘 ' + used + '/' + AD_LIMIT + '</div></div><button class="btn-soft" id="csAd" style="padding:9px 14px;font-size:12.5px"' + (used >= AD_LIMIT ? ' disabled' : '') + '>' + (used >= AD_LIMIT ? '내일 다시' : '광고 보기') + '</button></div>' +
+      '</div><div class="eyebrow"><span class="line"></span>쓰기<span class="line right"></span></div>' +
+      '<button class="row-link" id="csGh" style="border-top:none;margin:4px 0 16px"><span class="ic" style="color:#f3dca0">' + COIN_SVG + '</span><span>상세 궁합 리포트 열기<br><span class="helper">' + GH_COST + '닢 · 한 번 열면 계속 볼 수 있어요</span></span><span class="chev">›</span></button>' +
+      '<div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
       (log.length ? log.slice(0, 8).map(function(x){ var d = new Date(x.t); return '<div><span>' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + esc(x.why) + '</span><b class="' + (x.n < 0 ? 'minus' : '') + '">' + (x.n > 0 ? '+' : '') + x.n + '</b></div>'; }).join('') : '<div><span>아직 내역이 없어요</span></div>') +
       '</div><button class="btn-primary btn-block" data-close>확인</button>';
     openSheet(h);
-  };
+    $('csAd').onclick = function(){
+      if (adCount() >= AD_LIMIT) return;
+      closeSheet();
+      playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); toast('엽전 +' + AD_REWARD + '닢을 받았어요'); openCoinSheet(); });
+    };
+    $('csGh').onclick = function(){ closeSheet(); go('gunghap'); };
+    $('csCal').onclick = function(){ var me = getMe(); if (!me) return; openAttSheet(me, compute(me)); };
+  }
 
   /* =========================================================
      출석
@@ -844,6 +864,22 @@
     h += '<div class="att-stats"><div><b>' + st + '일</b><span>연속 출석</span></div><div><b>' + monthCnt + '일</b><span>' + (m+1) + '월 출석</span></div><div><b>' + toBonus + '일</b><span>보너스까지</span></div></div>';
     return h;
   }
+  function attStripHTML(stampToday){
+    var a = getAtt(), st = streakOf(a), cells = '';
+    for (var i = 6; i >= 0; i--){
+      var d = new Date(); d.setDate(d.getDate() - i);
+      var done = !!a.days[ymd(d)], isT = i === 0;
+      cells += '<span class="as-d' + (done ? ' on' : '') + (isT ? ' t' : '') + (isT && stampToday ? ' stamp' : '') + '"><i>' + (done ? CHECK_SVG : '') + '</i>' + WD[d.getDay()] + '</span>';
+    }
+    var left = 7 - (st % 7);
+    return '<button class="att-strip" id="btnAtt" aria-label="출석 캘린더 열기"><span class="as-txt"><b>출석 ' + st + '일째</b><small>' + (left === 7 ? '오늘 보너스 +30닢 받았어요' : '연속 보너스까지 ' + left + '일') + '</small></span><span class="as-week">' + cells + '</span><span class="chev">›</span></button>';
+  }
+  function openAttSheet(me, r){
+    calOffset = 0;
+    openSheet('<h3 id="sheetTitle">운세 캘린더</h3><p class="helper" style="margin:-10px 0 16px">출석한 날의 운세는 언제든 다시 볼 수 있어요. 매일 +10닢, 7일 연속이면 +30닢.</p><div id="calWrap" class="view" style="gap:14px">' + calendarHTML() + '</div><button class="btn-primary btn-block" data-close style="margin-top:18px">확인</button>');
+    justStamped = false;
+    bindCalendar(me, r);
+  }
   function bindCalendar(me, r){
     $('calPrev').onclick = function(){ calOffset--; justStamped = false; $('calWrap').innerHTML = calendarHTML(); bindCalendar(me, r); };
     $('calNext').onclick = function(){ calOffset++; justStamped = false; $('calWrap').innerHTML = calendarHTML(); bindCalendar(me, r); };
@@ -852,7 +888,8 @@
         if (b.classList.contains('lock')){ toast('출석하지 않은 날의 운세는 다시 볼 수 없어요'); return; }
         var p = b.dataset.day.split('-');
         var f = DAILY.today(me, r, new Date(+p[0], +p[1]-1, +p[2]));
-        openSheet('<div class="today-ilj" style="text-align:left">' + f.pillars.day.hanja + '日 · ' + f.ten + '의 날</div><h3 id="sheetTitle" style="margin-top:6px">' + (+p[1]) + '월 ' + (+p[2]) + '일, ' + f.head + '</h3>' + scoreRowsHTML(f) + '<p class="body-text" style="margin:16px 0 22px">' + esc(me.name) + '님, ' + f.body + '</p><button class="btn-primary btn-block" data-close>확인</button>');
+        openSheet('<div class="today-ilj" style="text-align:left">' + f.pillars.day.hanja + '日 · ' + f.ten + '의 날</div><h3 id="sheetTitle" style="margin-top:6px">' + (+p[1]) + '월 ' + (+p[2]) + '일, ' + f.head + '</h3>' + scoreRowsHTML(f) + '<p class="body-text" style="margin:16px 0 22px">' + esc(me.name) + '님, ' + f.body + '</p><div class="row"><button class="btn-ghost grow" id="btnCalBack">캘린더로</button><button class="btn-primary grow" data-close>확인</button></div>');
+        $('btnCalBack').onclick = function(){ var off = calOffset; openAttSheet(me, r); if (off){ calOffset = off; $('calWrap').innerHTML = calendarHTML(); bindCalendar(me, r); } };
       };
     });
   }
@@ -890,13 +927,14 @@
     var elc = EL_CLASS[f.luckyEl];
     var h = '';
     if (NS) h += demoBarHTML();
+    h += attStripHTML(att.newly);
     h += '<div class="today-head"><div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일, 오늘은</div>' +
       '<h1 class="today-title">' + f.head + '</h1>' +
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
-      '<div class="row"><button class="btn-ghost grow" id="btnTodaySaju">내 사주 풀이 보기</button><button class="btn-soft grow" id="btnTodayShare">오늘 운세 공유</button></div></div>';
+      '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
     h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
       '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>행운의 팁<span class="chev">›</span></button></div>';
@@ -904,15 +942,9 @@
     h += '<div class="card ' + elc + '"><div class="sec-head"><h2 class="sec-title">오늘의 행운 번호</h2><span class="sec-meta">행운 숫자 ' + f.tip.nums.join('·') + '</span></div>' +
       '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
       '<p class="helper">빛나는 번호는 오늘의 행운 숫자 <b style="color:var(--elc)">' + f.tip.nums.join('·') + '</b>로 끝나요. 행운의 팁과 같은 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운에서 나온 숫자예요.</p></div>';
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">운세 캘린더</h2><span class="sec-meta">ATTENDANCE</span></div><p class="helper" style="margin-top:-8px">출석한 날의 운세는 언제든 다시 볼 수 있어요.</p><div id="calWrap" class="view" style="gap:14px">' + calendarHTML() + '</div></div>';
     var stNow = streakOf(getAtt());
     if (!NS && !store('unsu_auth') && store('unsu_nudge') !== todayStr() && (stNow >= 3 || getCoins() >= 60 || getUnlocks().length))
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
-    var used = adCount();
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">엽전 모으기</h2><span class="sec-meta">보유 ' + getCoins() + '닢</span></div>' +
-      '<div class="earn-row"><div><div class="t">오늘 출석</div><div class="s">매일 +10 · 7일 연속이면 +30 보너스</div></div><span class="chip" style="color:#8fdcaa">완료</span></div>' +
-      '<div class="earn-row"><div><div class="t">광고 보고 엽전 받기</div><div class="s">+' + AD_REWARD + ' · 오늘 ' + used + '/' + AD_LIMIT + '</div></div><button class="btn-soft" id="btnAdCoin" style="padding:10px 16px;font-size:13px"' + (used >= AD_LIMIT ? ' disabled' : '') + '>' + (used >= AD_LIMIT ? '내일 다시' : '광고 보기') + '</button></div>' +
-      '<button class="row-link" id="btnGoGh"><span class="ic" style="color:#f3dca0">' + COIN_SVG + '</span>엽전 ' + GH_COST + '닢으로 상세 궁합 열기<span class="chev">›</span></button></div>';
     var z = getZodiac(r.solar.m, r.solar.d);
     var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
     h += '<div class="card"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:16px;color:#fff;font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
@@ -921,13 +953,12 @@
     body.innerHTML = h;
     renderCoin();
     drawOn($('todayFig'));
-    bindCalendar(me, r);
+    $('btnAtt').onclick = function(){ openAttSheet(me, r); };
     bindDemoBar();
     if ($('btnNudgeLogin')){
       $('btnNudgeLogin').onclick = function(){ openLoginSheet('연속 ' + streakOf(getAtt()) + '일 출석 기록과 엽전 ' + getCoins() + '닢이 지금은 이 기기에만 있어요.'); };
       $('btnNudgeClose').onclick = function(){ store('unsu_nudge', todayStr()); renderToday(); };
     }
-    $('btnTodaySaju').onclick = function(){ openResult(me, r); };
     $('btnTodayShare').onclick = function(){
       var md = (now.getMonth()+1) + '월 ' + now.getDate() + '일';
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
@@ -943,11 +974,6 @@
         '<div class="tip"><span class="ic">' + TIP_IC.num + '</span><div><small>행운의 숫자</small><b>' + f.tip.nums.join(', ') + '</b><small style="margin-top:3px">오늘의 행운 번호 ' + nums.map(function(o){ return o.y ? '<b style="font-size:13px;color:var(--elc)">' + o.n + '</b>' : o.n; }).join(' · ') + '</small></div></div>' +
         '</div><button class="btn-primary btn-block" data-close>확인</button>');
     };
-    $('btnAdCoin').onclick = function(){
-      if (adCount() >= AD_LIMIT) return;
-      playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); toast('엽전 +' + AD_REWARD + '닢을 받았어요'); renderToday(); });
-    };
-    $('btnGoGh').onclick = function(){ go('gunghap'); };
     $('btnTodayZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
   }
 
@@ -1075,11 +1101,12 @@
     var f = gh.f, b = parseBirth(f.birth);
     if (f.birth.length < 8) return { ok:false, cls:'', text:'숫자 8자리로 입력해 주세요 (예: 19950412)' };
     if (!b || b.y < 1900 || b.y > 2050) return { ok:false, cls:'err', text:'1900~2050년 사이의 날짜를 입력해 주세요' };
-    var e = { name:f.name.trim() || '상대', gender:f.gender, cal:f.cal, leap:f.cal === 'lunar' && f.leap, y:b.y, m:b.m, d:b.d,
+    var e = { name:f.name.trim() || '__auto', gender:f.gender, cal:f.cal, leap:f.cal === 'lunar' && f.leap, y:b.y, m:b.m, d:b.d,
       unknown:f.hour === '', hour:f.hour === '' ? null : +f.hour, minute:f.hour === '' ? null : +f.minute, corr:true };
     var r = compute(e);
     if (r.error) return { ok:false, cls:'err', text:r.error };
     if (new Date(r.solar.y, r.solar.m - 1, r.solar.d) > new Date()) return { ok:false, cls:'err', text:'오늘 이후의 날짜는 입력할 수 없어요' };
+    if (e.name === '__auto') e.name = r.animal + '띠 ' + (e.gender === 'M' ? '남자' : '여자');
     var t = (f.cal === 'lunar' ? '양력 ' + r.solar.y + '.' + r.solar.m + '.' + r.solar.d : (r.lunar ? '음력 ' + r.lunar.m + '.' + r.lunar.d + (r.lunar.leap ? ' 윤' : '') : '')) +
       ' · ' + r.pillars.year.name + '년생 ' + r.animal + '띠 · ' + r.pillars.day.name + '일주' + (r.pillars.hour ? ' · ' + r.pillars.hour.bk + '시' : '');
     return { ok:true, cls:'ok', text:t, entry:e };
@@ -1099,7 +1126,7 @@
     var hours = '<option value="">태어난 시 · 모름</option>'; for (var i = 0; i < 24; i++) hours += '<option value="' + i + '"' + (f.hour === String(i) ? ' selected' : '') + '>' + pad2(i) + '시</option>';
     var mins = ''; for (var j = 0; j < 60; j++) mins += '<option value="' + j + '"' + (f.minute === String(j) ? ' selected' : '') + '>' + pad2(j) + '분</option>';
     h += '<div class="ge-form">' +
-      '<input class="text-input" id="geName" maxlength="12" placeholder="이름 (예: ' + (which === 'a' && !getMe() ? '소율' : '이별빛') + ')" autocomplete="off" value="' + esc(f.name) + '">' +
+      '<input class="text-input" id="geName" maxlength="12" placeholder="' + (which === 'a' && !getMe() ? '이름 (예: 소율)' : '이름 (비우면 ‘말띠 여자’로 저장)') + '" autocomplete="off" value="' + esc(f.name) + '">' +
       '<div class="toggle-row">' +
         '<div class="pill" role="group" aria-label="성별"><button type="button" data-gg="F" aria-pressed="' + (f.gender === 'F') + '">여자</button><button type="button" data-gg="M" aria-pressed="' + (f.gender === 'M') + '">남자</button></div>' +
         '<div class="pill" role="group" aria-label="양력 음력"><button type="button" data-gc="solar" aria-pressed="' + (f.cal === 'solar') + '">양력</button><button type="button" data-gc="lunar" aria-pressed="' + (f.cal === 'lunar') + '">음력</button></div>' +
@@ -1152,7 +1179,7 @@
     if (gh.edit && !gh.f) gh.f = freshGhForm(gh.edit);
     var h = '<div class="card gh-box"><div class="gh-pair">' + slotHTML(A, 'a', getMe() ? '첫 번째 사람' : '나') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b', '상대') + '</div>';
     if (gh.edit) h += ghEditorHTML(gh.edit);
-    if (getMe() && !NS) h += '<button class="text-btn" id="btnGhInv2" style="align-self:center">상대 생년월일을 모르나요? 궁합 신청 링크 보내기</button>';
+    if (gh.edit === 'b' && getMe() && !NS) h += '<button class="ge-invite" id="btnGhInv2">' + SH_IC.link + '<span>상대 생년월일을 모른다면<br><b>궁합 신청 링크 보내기</b></span><span class="chev">›</span></button>';
     else if (!getMe()) h += '<button class="text-btn" id="btnGhDemo" style="align-self:center">예시 두 사람으로 먼저 보기</button>';
     h += '</div>';
     var ra = A && compute(A), rb = B && compute(B);
@@ -1553,9 +1580,9 @@
     $('myBody').innerHTML = h;
     bindDemoBar();
     $('btnMyEdit').onclick = function(){ if (NS){ toast('예시 모드에서는 수정할 수 없어요'); return; } startOnboarding('edit'); };
-    $('btnMySaju').onclick = function(){ if (!r.error) openResult(me, r); };
-    $('stCoin').onclick = function(){ $('coinChip').onclick(); };
-    $('stAtt').onclick = function(){ go('today'); };
+    $('btnMySaju').onclick = function(){ openMine(); };
+    $('stCoin').onclick = openCoinSheet;
+    $('stAtt').onclick = function(){ if (!r.error) openAttSheet(me, r); };
     $('stList').onclick = function(){ renderList(); show('list'); };
     $('stGh').onclick = function(){ go('gunghap'); };
     $('setMe').onclick = function(){ renderList(); show('list'); };
@@ -1661,11 +1688,6 @@
   function inviteLink(e, withTime){ var c = encodeInvite(e, withTime); return isHosted() ? shareBase() + '?i=' + c : APP_URL + '#i.' + c; }
   function shortUrl(u){ u = u.replace(/^https?:\/\//, ''); return u.length > 42 ? u.slice(0, 30) + '…' + u.slice(-8) : u; }
 
-  var SH_IC = {
-    send:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>',
-    link:'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.1 0l2.8-2.8a5 5 0 0 0-7.1-7.1L11.5 4.4"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.8 2.8a5 5 0 0 0 7.1 7.1l1.3-1.3"/></svg>',
-    heart:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg>'
-  };
 
   var shareState = null;
   function currentLink(){ var o = shareState; return o.inviteEntry ? inviteLink(o.inviteEntry, o.withTime) : o.link; }

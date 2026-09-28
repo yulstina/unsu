@@ -336,7 +336,7 @@
   @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.15)}100%{transform:scale(1)}}
 
   /* ---------- 사주 segmented ---------- */
-  .seg{display:grid;grid-template-columns:1fr 1fr;background:rgba(199,211,234,.06);border-radius:999px;padding:4px;box-shadow:inset 0 0 0 1px var(--border-hairline);}
+  .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:rgba(199,211,234,.06);border-radius:999px;padding:4px;box-shadow:inset 0 0 0 1px var(--border-hairline);}
   .seg button{background:transparent;border:none;color:var(--text-helper);font-size:13.5px;font-weight:500;padding:10px 0;border-radius:999px;cursor:pointer;}
   .seg button[aria-selected="true"]{background:rgba(186,214,247,.14);color:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline-strong);}
   .seg-n{font-family:var(--font-display);font-variant-numeric:tabular-nums;opacity:.8;}
@@ -701,6 +701,26 @@
   .ge .field-hint{min-height:0;}
   .ge .field-hint:empty{display:none;}
 
+  /* ---------- 출석 스트립 ---------- */
+  .att-strip{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;background:rgba(199,211,234,.05);border:none;border-radius:14px;padding:10px 12px 10px 14px;color:inherit;cursor:pointer;text-align:left;box-shadow:inset 0 0 0 1px var(--border-hairline);}
+  .att-strip .as-txt{display:flex;flex-direction:column;gap:1px;white-space:nowrap;}
+  .att-strip .as-txt b{font-size:13.5px;color:#fff;font-weight:600;}
+  .att-strip .as-txt small{font-size:11px;color:var(--text-helper);}
+  .as-week{display:flex;justify-content:flex-end;gap:4px;}
+  .as-d{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;color:var(--text-helper);}
+  .as-d i{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--border-hairline-strong);}
+  .as-d i svg{width:11px;height:11px;}
+  .as-d.on i{background:rgba(143,220,170,.18);color:#8fdcaa;box-shadow:inset 0 0 0 1px rgba(143,220,170,.5);}
+  .as-d.t{color:#fff;font-weight:600;}
+  .as-d.t.on i{background:var(--violet);color:#fff;box-shadow:0 0 10px rgba(102,58,243,.6);}
+  .as-d.stamp i{animation:stamp .7s .4s cubic-bezier(.2,1.4,.4,1) both;}
+  .att-strip .chev{color:var(--text-helper);font-size:18px;}
+  @media (max-width:360px){ .as-d:nth-child(-n+2){display:none;} }
+  .ge-invite{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;width:100%;background:rgba(102,58,243,.1);border:none;border-radius:12px;padding:12px 14px;color:var(--text-muted);font-size:12.5px;line-height:1.5;text-align:left;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(157,140,255,.3);}
+  .ge-invite svg{width:20px;height:20px;justify-self:center;color:var(--icon-accent);}
+  .ge-invite b{color:#fff;font-size:14px;font-weight:600;}
+  .ge-invite .chev{color:var(--text-helper);font-size:18px;}
+
   /* ---------- toast ---------- */
   .toast{position:fixed;left:50%;bottom:calc(var(--tabbar-h) + 30px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);z-index:30;
     background:rgba(20,22,44,.92);color:#fff;font-size:13px;padding:11px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--border-hairline-strong),0 12px 30px rgba(0,0,0,.5);
@@ -750,8 +770,9 @@
   <!-- ================= 사주 입력 ================= -->
   <section class="view" id="v-input" hidden>
     <div class="seg" role="tablist" aria-label="사주 메뉴">
-      <button type="button" role="tab" data-sub="input" aria-selected="true">새로 입력</button>
+      <button type="button" role="tab" data-sub="mine" aria-selected="false">내 사주</button>
       <button type="button" role="tab" data-sub="list" aria-selected="false">저장 목록 <span class="seg-n"></span></button>
+      <button type="button" role="tab" data-sub="input" aria-selected="true">새로 입력</button>
     </div>
     <div class="hero">
       <div class="hero-copy">
@@ -822,7 +843,12 @@
 
   <!-- ================= 사주 결과 ================= -->
   <section class="view" id="v-result" hidden>
-    <div class="flow-header">
+    <div class="seg" id="resultSeg" role="tablist" aria-label="사주 메뉴" hidden>
+      <button type="button" role="tab" data-sub="mine" aria-selected="true">내 사주</button>
+      <button type="button" role="tab" data-sub="list" aria-selected="false">저장 목록 <span class="seg-n"></span></button>
+      <button type="button" role="tab" data-sub="input" aria-selected="false">새로 입력</button>
+    </div>
+    <div class="flow-header" id="resultHead">
       <button class="icon-back" id="btnBackResult" aria-label="뒤로">‹</button>
       <span class="ttl" id="resultTtl">사주 풀이</span>
       <button class="btn-ghost" id="btnSaveResult" style="padding:8px 14px;font-size:12.5px">저장</button>
@@ -833,8 +859,9 @@
   <!-- ================= 목록 ================= -->
   <section class="view" id="v-list" hidden>
     <div class="seg" role="tablist" aria-label="사주 메뉴">
-      <button type="button" role="tab" data-sub="input" aria-selected="false">새로 입력</button>
+      <button type="button" role="tab" data-sub="mine" aria-selected="false">내 사주</button>
       <button type="button" role="tab" data-sub="list" aria-selected="true">저장 목록 <span class="seg-n"></span></button>
+      <button type="button" role="tab" data-sub="input" aria-selected="false">새로 입력</button>
     </div>
     <div class="sec-head" style="padding-inline:2px">
       <h2 class="hero-title" style="font-size:22px">저장된 사주</h2>
