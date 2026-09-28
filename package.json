@@ -1,0 +1,17 @@
+{
+  "name": "unsu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "운수(運數) — 만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호 모바일 웹앱",
+  "scripts": {
+    "build:site": "node scripts/build.js",
+    "build:og": "node scripts/og.js",
+    "dev": "npx -y serve public"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "korean-lunar-calendar": "0.4.0",
+    "terser": "^5.31.0"
+  },
+  "license": "UNLICENSED"
+}
