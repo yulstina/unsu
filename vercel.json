@@ -34,5 +34,10 @@
   ],
   "regions": [
     "icn1"
-  ]
+  ],
+  "functions": {
+    "api/lotto.js": {
+      "maxDuration": 10
+    }
+  }
 }
