@@ -775,7 +775,9 @@
   .ny-toc{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:2px;}
   .ny-toc li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border-hairline);font-size:calc(15px*var(--fs));color:var(--text-body);}
   .ny-toc li.lock{color:var(--text-helper);} .ny-toc li small{font-size:calc(12.5px*var(--fs));color:var(--text-helper);white-space:nowrap;}
-  .coin-chip{white-space:nowrap;}
+  .coin-chip{white-space:nowrap;min-width:0;flex-shrink:1;}
+  .coin-chip.guest span{display:none;} .coin-chip.guest b{font-size:calc(13px*var(--fs));}
+  html,body{overflow-x:clip;}
   .cfx{position:fixed;inset:0;z-index:70;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .35s;}
   .cfx.big{pointer-events:auto;background:radial-gradient(circle at 50% 42%,rgba(20,14,60,.78),rgba(5,6,15,.86));}
   .cfx.out{opacity:0;}
