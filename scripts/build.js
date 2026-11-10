@@ -24,7 +24,7 @@ const SITE = 'https://unsu.vercel.app';
   const jsOpts = { compress: { passes: 2 }, mangle: true, format: { ascii_only: false, comments: false } };
   const lunar = r('node_modules/korean-lunar-calendar/dist/korean-lunar-calendar.min.js').replace(/\/\/# sourceMappingURL=.*$/m, '').trim();
   fs.writeFileSync(path.join(OUT, 'js/lunar.js'), '/*! korean-lunar-calendar v0.4.0 | MIT License | (c) 2022 Jinil Lee */\n' + lunar + '\n');
-  const figures = (await minify(r('figures.js') + '\n' + r('render.js'), jsOpts)).code;
+  const figures = (await minify(r('figures.js') + '\n' + r('render.js') + '\n' + r('machine.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/figures.js'), figures);
   const core = (await minify(r('engine.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('content.js') + '\n' + r('content_legacy.js') + '\n' + r('daily.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/core.js'), core);
