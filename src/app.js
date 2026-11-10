@@ -27,13 +27,13 @@
   var cv = $('atmosphere'), cx = cv.getContext('2d');
   var off = document.createElement('canvas'), ox = off.getContext('2d');
   var W = 0, H = 0, DPR = 1, stars = [];
-  var OS = 5; /* 1/5 해상도로 그린 뒤 업스케일 → 부드러운 블러 */
-  var PLUMES = [
-    { c:[102,58,243],  x:.12, w:.46, h:.62, sp:.00021, ph:0.0 },
-    { c:[61,214,190],  x:.50, w:.42, h:.54, sp:.00027, ph:1.7 },
-    { c:[120,236,160], x:.88, w:.40, h:.48, sp:.00019, ph:3.1 },
-    { c:[214,92,214],  x:.32, w:.34, h:.44, sp:.00033, ph:4.4 },
-    { c:[88,140,255],  x:.70, w:.40, h:.66, sp:.00024, ph:5.6 }
+  var OS = 6; /* 1/6 해상도로 그린 뒤 업스케일 → 결 없이 부드러운 블러 */
+  /* 신뢰의 블루 + 신비로운 바이올렛 (초록·마젠타 제거) */
+  var RIBBONS = [
+    { c:[76,128,255],  y:.30, amp:.07, k:2.1, sp:.00018, ph:0.0, hgt:.46, a:.34 },
+    { c:[124,86,246],  y:.38, amp:.09, k:1.6, sp:.00023, ph:2.2, hgt:.52, a:.32 },
+    { c:[64,176,255],  y:.24, amp:.06, k:2.7, sp:.00026, ph:4.1, hgt:.34, a:.20 },
+    { c:[168,110,255], y:.46, amp:.08, k:1.3, sp:.00016, ph:5.3, hgt:.40, a:.22 }
   ];
   function size(){
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -49,51 +49,43 @@
         b:Math.random()*.45 + .25, s:Math.random()*.0035 + .0012, p:Math.random()*6.28, big:big });
     }
   }
-  /* 모바일(좁은 화면)에서는 오로라를 더 높고 진하게 */
-  function narrowBoost(){ return W < 600 ? 1.25 : 1; }
   function drawOff(t){
-    var w = off.width, h = off.height, boost = narrowBoost();
+    var w = off.width, h = off.height;
     ox.globalCompositeOperation = 'source-over';
     ox.clearRect(0, 0, w, h);
     ox.globalCompositeOperation = 'lighter';
-    PLUMES.forEach(function(p, pi){
-      var cxp = (p.x + Math.sin(t*p.sp + p.ph)*.08) * w;
-      var pw = p.w * w * (W < 600 ? 1.3 : 1);
-      var hh = Math.min(.92, p.h * boost);
-      var top = h * (1 - hh * (.8 + .2*Math.sin(t*p.sp*1.7 + p.ph)));
-      var g = ox.createLinearGradient(0, h, 0, top);
-      g.addColorStop(0, 'rgba(' + p.c + ',.5)');
-      g.addColorStop(.4, 'rgba(' + p.c + ',.24)');
-      g.addColorStop(1, 'rgba(' + p.c + ',0)');
-      ox.fillStyle = g;
-      ox.beginPath();
-      ox.moveTo(cxp - pw/2, h);
-      var steps = 18;
-      for (var i = 0; i <= steps; i++){
-        var u = i / steps, x = cxp - pw/2 + u*pw, env = Math.pow(Math.sin(u*Math.PI), .8);
-        var y = h - (h - top) * env * (.78 + .22*Math.sin(t*.0011 + u*7 + pi*2));
-        ox.lineTo(x, y);
-      }
-      ox.lineTo(cxp + pw/2, h);
-      ox.closePath(); ox.fill();
-      /* 커튼 결 (세로 빛줄기) */
-      for (var k = 0; k < 10; k++){
-        var rx = cxp - pw/2 + ((k + .5)/10)*pw + Math.sin(t*.0008 + k + pi)*4;
-        var rh = (h - top) * (.45 + .55*Math.abs(Math.sin(t*.0013 + k*1.7 + pi)));
-        var rg = ox.createLinearGradient(0, h, 0, h - rh);
-        rg.addColorStop(0, 'rgba(' + p.c + ',.3)'); rg.addColorStop(1, 'rgba(' + p.c + ',0)');
-        ox.fillStyle = rg;
-        ox.fillRect(rx, h - rh, 1.3, rh);
+    /* 바닥 쪽 은은한 인디고 안개 */
+    var fog = ox.createLinearGradient(0, h, 0, h*.45);
+    fog.addColorStop(0, 'rgba(70,60,200,.30)'); fog.addColorStop(1, 'rgba(70,60,200,0)');
+    ox.fillStyle = fog; ox.fillRect(0, h*.45, w, h*.55);
+    /* 리본 커튼: 열마다 세로 그라데이션, 부드러운 사인 합성으로 일렁임 */
+    RIBBONS.forEach(function(r, ri){
+      for (var x = 0; x < w; x++){
+        var u = x / w;
+        var wave = Math.sin(u*Math.PI*2*r.k + t*r.sp*3 + r.ph) * .6 + Math.sin(u*Math.PI*2*r.k*.47 - t*r.sp*2 + r.ph*1.3) * .4;
+        var cy = (r.y + r.amp * wave) * h;
+        var inten = .55 + .45 * Math.sin(u*Math.PI*3.1 + t*r.sp*4 + ri*1.9);
+        var edge = Math.sin(u*Math.PI); edge = Math.pow(edge, .55);
+        var al = r.a * inten * edge;
+        var hh = r.hgt * h * (.8 + .2*Math.sin(u*5 + t*r.sp*2 + ri));
+        var g = ox.createLinearGradient(0, cy - hh*.15, 0, cy + hh);
+        g.addColorStop(0, 'rgba(' + r.c + ',0)');
+        g.addColorStop(.12, 'rgba(' + r.c + ',' + al + ')');
+        g.addColorStop(.5, 'rgba(' + r.c + ',' + (al*.35) + ')');
+        g.addColorStop(1, 'rgba(' + r.c + ',0)');
+        ox.fillStyle = g; ox.fillRect(x, cy - hh*.15, 1, hh*1.15);
       }
     });
   }
   function frame(t){
     cx.globalCompositeOperation = 'source-over';
-    cx.fillStyle = '#05060f'; cx.fillRect(0, 0, W, H);
+    var bg = cx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#04061a'); bg.addColorStop(.6, '#0a0f2e'); bg.addColorStop(1, '#14103a');
+    cx.fillStyle = bg; cx.fillRect(0, 0, W, H);
     /* aurora */
     drawOff(t);
     cx.globalCompositeOperation = 'lighter';
-    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
     cx.drawImage(off, 0, 0, W, H);
     /* twinkling stars */
     for (var i = 0; i < stars.length; i++){
@@ -120,6 +112,8 @@
   window.addEventListener('resize', size);
   document.addEventListener('visibilitychange', function(){ if (!document.hidden && !raf && !reduceMotion) raf = requestAnimationFrame(frame); });
   if (reduceMotion) frame(8000); else raf = requestAnimationFrame(frame);
+
+  (function(){ var b = $('brandHome'); function home(){ if (typeof go === 'function'){ go('today'); window.scrollTo(0, 0); } } b.onclick = home; b.onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); home(); } }; })();
 
   /* =========================================================
      공통 헬퍼
@@ -247,34 +241,18 @@
   var SIJIN = []; for (var hh0 = 0; hh0 < 24; hh0++) SIJIN.push(['자','축','인','묘','진','사','오','미','신','유','술','해'][Math.floor((hh0 + 1) / 2) % 12]);
   function timeValue(){ return (tsel.h === null || tsel.m === null) ? '' : pad2(tsel.h) + pad2(tsel.m); }
   function renderDDVals(){
-    var hv = $('ddHourVal'), mv = $('ddMinVal');
-    hv.textContent = tsel.h === null ? '시 선택' : pad2(tsel.h) + '시'; hv.classList.toggle('placeholder', tsel.h === null);
-    mv.textContent = tsel.m === null ? '분 선택' : pad2(tsel.m) + '분'; mv.classList.toggle('placeholder', tsel.m === null);
-    $('hourPanel').querySelectorAll('.dd-opt').forEach(function(b){ b.setAttribute('aria-selected', String(+b.dataset.v === tsel.h)); });
-    $('minPanel').querySelectorAll('.dd-opt').forEach(function(b){ b.setAttribute('aria-selected', String(+b.dataset.v === tsel.m)); });
+    $('ddHour').value = tsel.h === null ? '' : String(tsel.h);
+    $('ddMin').value = tsel.m === null ? '' : String(tsel.m);
   }
   (function buildDD(){
-    var hp = '', mp = '';
-    for (var i = 0; i < 24; i++) hp += '<button type="button" class="dd-opt" role="option" data-v="' + i + '">' + pad2(i) + '시</button>';
-    for (var j = 0; j < 60; j++) mp += '<button type="button" class="dd-opt" role="option" data-v="' + j + '">' + pad2(j) + '</button>';
-    $('hourPanel').innerHTML = hp; $('minPanel').innerHTML = mp;
+    var hp = '<option value="">시</option>', mp = '<option value="">분</option>';
+    for (var i = 0; i < 24; i++) hp += '<option value="' + i + '">' + pad2(i) + '시 (' + SIJIN[i] + '시)</option>';
+    for (var j = 0; j < 60; j++) mp += '<option value="' + j + '">' + pad2(j) + '분</option>';
+    $('ddHour').innerHTML = hp; $('ddMin').innerHTML = mp;
   })();
-  function closeDD(){ ['hourPanel','minPanel'].forEach(function(id){ $(id).hidden = true; }); $('ddHour').setAttribute('aria-expanded','false'); $('ddMin').setAttribute('aria-expanded','false'); }
-  function toggleDD(which){
-    var panel = $(which === 'h' ? 'hourPanel' : 'minPanel'), btn = $(which === 'h' ? 'ddHour' : 'ddMin');
-    var open = panel.hidden; closeDD();
-    if (open){
-      panel.hidden = false; btn.setAttribute('aria-expanded','true');
-      var sel = panel.querySelector('[aria-selected="true"]') || panel.querySelector(which === 'h' ? '[data-v="9"]' : '[data-v="0"]');
-      if (sel) panel.scrollTop = sel.offsetTop - panel.clientHeight/2 + sel.offsetHeight/2;
-    }
-  }
-  $('ddHour').onclick = function(){ toggleDD('h'); };
-  $('ddMin').onclick = function(){ toggleDD('m'); };
-  $('hourPanel').addEventListener('click', function(e){ var b = e.target.closest('.dd-opt'); if (!b) return; tsel.h = +b.dataset.v; closeDD(); if (tsel.m === null) toggleDD('m'); renderDDVals(); updateTimeHint(); saveDraft(); });
-  $('minPanel').addEventListener('click', function(e){ var b = e.target.closest('.dd-opt'); if (!b) return; tsel.m = +b.dataset.v; closeDD(); renderDDVals(); updateTimeHint(); saveDraft(); });
-  document.addEventListener('click', function(e){ if (!e.target.closest('.dd-group') && !e.target.closest('.dd-panel')) closeDD(); });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDD(); });
+  function closeDD(){}
+  $('ddHour').onchange = function(){ tsel.h = this.value === '' ? null : +this.value; if (tsel.h !== null && tsel.m === null){ tsel.m = 0; renderDDVals(); } updateTimeHint(); saveDraft(); };
+  $('ddMin').onchange = function(){ tsel.m = this.value === '' ? null : +this.value; updateTimeHint(); saveDraft(); };
   $('fName').addEventListener('input', saveDraft);
 
   function parseBirth(v){
@@ -473,6 +451,7 @@
       '<div class="poster-sub">' + P.year.name + '년생 · ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주</div>' +
       '<div class="poster-meta">양력 ' + solarStr + ' ' + timeStr + '<br>음력 ' + lunarStr + (corrStr ? ' · ' + corrStr : '') + '</div>' +
       '</div></div>';
+    h += '<button class="btn-primary btn-block" id="btnImgRes" style="margin:-4px 0 4px">정리된 결과 이미지로 저장·공유</button>';
 
     /* --- 원국 --- */
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">사주 원국</h2><span class="sec-meta">' + (P.hour ? '8字' : '6字') + '</span></div>';
@@ -584,6 +563,7 @@
       $('numWrap').hidden = false; this.hidden = true;
       revealBalls($('ballsLife')); setTimeout(function(){ revealBalls($('ballsYong')); }, 450);
     };
+    $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
     $('btnCopyRes').onclick = function(){ copyText(summaryText(), '결과를 복사했어요'); };
     $('btnShareRes').onclick = function(){
       var ig0 = ILGAN[P.day.stem];
@@ -592,6 +572,66 @@
         text:'[운수] ' + entry.name + '님의 사주\n' + P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주\n일간 ' + ig0.t + ' — ' + ig0.img,
         cta:'생년월일만 넣으면 내 여덟 글자도 풀어 줘요 →', link:linkFor('') });
     };
+  }
+
+  /* ---- 결과 이미지 카드 (1080×1350, 공유·저장용) ---- */
+  var EL_HEX = ['#6fd88a','#ff8a73','#f0c35b','#e3e9f5','#6aa8ff'];
+  function resultCardCanvas(entry, r, done){
+    var P = r.pillars, c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+    var g = c.getContext('2d'), F = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif', H = '"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif';
+    var bg = g.createLinearGradient(0,0,0,1350); bg.addColorStop(0,'#070b24'); bg.addColorStop(.55,'#101650'); bg.addColorStop(1,'#2a1a6e');
+    g.fillStyle = bg; g.fillRect(0,0,1080,1350);
+    [[200,260,520,'rgba(76,128,255,.28)'],[900,420,480,'rgba(140,90,250,.30)'],[540,1250,560,'rgba(100,80,240,.25)']].forEach(function(o){
+      var rg = g.createRadialGradient(o[0],o[1],0,o[0],o[1],o[2]); rg.addColorStop(0,o[3]); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0,0,1080,1350); });
+    for (var i = 0; i < 70; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
+    function rr(x,y,w,h,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); }
+    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('운수 運數  ·  나의 사주 리포트', 540, 96);
+    g.fillStyle = '#fff'; g.font = '700 64px ' + F; g.fillText(entry.name + '님', 540, 650);
+    g.fillStyle = '#c9d4ff'; g.font = '400 34px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 706);
+    /* 사주 네 기둥 */
+    var keys = ['hour','day','month','year'], lab = {hour:'시주',day:'일주',month:'월주',year:'년주'};
+    keys.forEach(function(k, i){
+      var x = 120 + i*205, y = 750, p = P[k];
+      rr(x, y, 185, 250, 26); g.fillStyle = k === 'day' ? 'rgba(124,86,246,.38)' : 'rgba(255,255,255,.07)'; g.fill();
+      g.strokeStyle = k === 'day' ? 'rgba(190,170,255,.8)' : 'rgba(255,255,255,.18)'; g.lineWidth = 2; g.stroke();
+      g.fillStyle = '#9fb0e8'; g.font = '500 26px ' + F; g.fillText(lab[k], x+92, y+42);
+      if (!p){ g.fillStyle = 'rgba(255,255,255,.4)'; g.font = '400 30px ' + F; g.fillText('모름', x+92, y+150); return; }
+      g.font = '700 80px ' + H; g.fillStyle = EL_HEX[p.sEl]; g.fillText(p.sh, x+92, y+137);
+      g.fillStyle = EL_HEX[p.bEl]; g.fillText(p.bh, x+92, y+226);
+    });
+    /* 오행 막대 */
+    var mx = Math.max.apply(null, r.cnt.concat([1]));
+    for (var e = 0; e < 5; e++){
+      var y2 = 1050 + e*40;
+      g.textAlign = 'left'; g.fillStyle = '#dfe6ff'; g.font = '500 28px ' + F; g.fillText(MS.EL_H[e] + ' ' + MS.EL_K[e], 130, y2+10);
+      rr(270, y2-10, 560, 22, 11); g.fillStyle = 'rgba(255,255,255,.1)'; g.fill();
+      if (r.cnt[e]){ rr(270, y2-10, Math.max(22, 560*r.cnt[e]/mx), 22, 11); g.fillStyle = EL_HEX[e]; g.fill(); }
+      g.fillStyle = '#fff'; g.fillText(String(r.cnt[e]), 860, y2+10);
+    }
+    g.textAlign = 'center'; g.fillStyle = '#c9d4ff'; g.font = '500 30px ' + F;
+    g.fillText('일간 ' + P.day.sh + ' · ' + ILGAN[P.day.stem].t + '  |  용신 ' + MS.EL_H[r.yong] + MS.EL_K[r.yong], 540, 1280);
+    g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '400 26px ' + F; g.fillText(shortUrl(linkFor('')), 540, 1322);
+    /* 동물 일러스트 */
+    var svg = figSVG(r.animal, ANIMAL_EL[r.animal]).replace('<svg ', '<svg width="560" height="560" ');
+    var im = new Image();
+    im.onload = function(){ g.drawImage(im, 260, 120, 560, 560); done(c); };
+    im.onerror = function(){ done(c); };
+    im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  function shareResultImage(entry, r){
+    toast('이미지를 만드는 중이에요…');
+    resultCardCanvas(entry, r, function(c){
+      c.toBlob(function(blob){
+        if (!blob){ toast('이미지를 만들지 못했어요'); return; }
+        var file = null; try { file = new File([blob], 'unsu-saju.png', { type:'image/png' }); } catch(_){}
+        if (file && navigator.canShare && navigator.canShare({ files:[file] })){
+          navigator.share({ files:[file], title:'운수 · ' + entry.name + '님의 사주', text:'[운수] ' + entry.name + '님의 사주 리포트' }).catch(function(){});
+        } else {
+          var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'unsu-saju-' + entry.name + '.png';
+          document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요');
+        }
+      }, 'image/png');
+    });
   }
   function summaryText(){
     var e = cur.entry, r = cur.r, P = r.pillars;
@@ -1047,21 +1087,23 @@
     h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
       '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>행운의 팁<span class="chev">›</span></button></div>';
+    var z = getZodiac(r.solar.m, r.solar.d);
+    var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    h += '<div class="card"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:#fff;font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
+      '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += nyCardHTML(me, r);
     h += '<div class="ad-slot" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>네이티브 광고 영역</b><small>콘텐츠 카드와 같은 모양 · 오늘의 결론을 본 뒤 1개만 노출</small></div></div>';
     h += '<div class="card ' + elc + '"><div class="sec-head"><h2 class="sec-title">오늘의 행운 번호</h2><span class="sec-meta">행운 숫자 ' + f.tip.nums.join('·') + '</span></div>' +
       '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
-      '<p class="helper">빛나는 번호는 오늘의 행운 숫자 <b style="color:var(--elc)">' + f.tip.nums.join('·') + '</b>로 끝나요. 행운의 팁과 같은 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운에서 나온 숫자예요.</p></div>';
+      '<p class="helper">빛나는 번호는 오늘의 행운 숫자 <b style="color:var(--elc)">' + f.tip.nums.join('·') + '</b>로 끝나요. 행운의 팁과 같은 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운에서 나온 숫자예요.</p>' +
+      '<button class="btn-soft btn-block" id="btnGoNum" style="margin-top:12px">추첨기로 내 번호 더 뽑기 ›</button></div>';
     var stNow = streakOf(getAtt());
     if (!NS && !store('unsu_auth') && store('unsu_nudge') !== todayStr() && (stNow >= 3 || getCoins() >= 60 || getUnlocks().length))
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
-    var z = getZodiac(r.solar.m, r.solar.d);
-    var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    h += '<div class="card"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:#fff;font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
-      '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>별자리 운세 보기<span class="chev">›</span></button></div>';
     h += '<p class="disclaimer">오늘의 운세는 일진과 사주의 관계로 계산한 재미용 콘텐츠예요.</p>' + bizFootHTML();
     body.innerHTML = h;
     $('btnNY').onclick = function(){ openNYSheet(me, r); };
+    $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     renderCoin();
     drawOn($('todayFig'));
     $('btnAtt').onclick = function(){ openAttSheet(me, r); };
@@ -1595,11 +1637,10 @@
         '<div class="field-hint" id="obBirthHint"></div>';
     } else if (st === 2){
       q = '태어난 시간을<br>알고 있나요?'; sub = '시간까지 알면 시주(時柱)가 더해져 풀이가 더 정확해져요.';
-      var hg = ''; for (var i = 0; i < 24; i++) hg += '<button type="button" class="hc" data-oh="' + i + '" aria-pressed="' + (ob.h === i) + '">' + pad2(i) + '시</button>';
-      var mg = ''; for (var j = 0; j < 60; j++) mg += '<button type="button" class="hc" data-om="' + j + '" aria-pressed="' + (ob.m === j) + '">' + pad2(j) + '</button>';
+      var hg = '<option value="">시</option>'; for (var i = 0; i < 24; i++) hg += '<option value="' + i + '"' + (ob.h === i ? ' selected' : '') + '>' + pad2(i) + '시</option>';
+      var mg = '<option value="">분</option>'; for (var j = 0; j < 60; j++) mg += '<option value="' + j + '"' + (ob.m === j ? ' selected' : '') + '>' + pad2(j) + '분</option>';
       inner = '<button type="button" class="unk-btn" id="obUnk" aria-pressed="' + ob.unknown + '"><span>태어난 시간을 몰라요</span><span class="ck">' + (ob.unknown ? OK_SVG : '') + '</span></button>' +
-        '<div class="' + (ob.unknown ? 'dim' : '') + '"><div class="lbl" style="font-size:calc(12px*var(--fs));color:var(--text-muted);margin:4px 0 8px">시</div><div class="hour-grid">' + hg + '</div>' +
-        (ob.h !== null ? '<div class="lbl" style="font-size:calc(12px*var(--fs));color:var(--text-muted);margin:14px 0 8px">분</div><div class="min-grid" id="obMinGrid">' + mg + '</div>' : '') + '</div>' +
+        '<div class="dd-group' + (ob.unknown ? ' dim' : '') + '" style="margin-top:6px"><select class="sel sel-lg" id="obH" aria-label="태어난 시"' + (ob.unknown ? ' disabled' : '') + '>' + hg + '</select><select class="sel sel-lg" id="obM" aria-label="태어난 분"' + (ob.unknown ? ' disabled' : '') + '>' + mg + '</select></div>' +
         '<div class="field-hint ok">' + obTimeText() + '</div>';
     } else if (st === 3){
       q = '성별을 선택해 주세요'; sub = '대운이 흐르는 방향(순행·역행)을 정하는 데 쓰여요.';
@@ -1624,7 +1665,7 @@
       (st < 4 ? '<div class="ob-step">STEP ' + (st + 1) + ' / 4</div>' : '<div class="ob-step">CONFIRM</div>') +
       '<h1 class="ob-q">' + q + '</h1>' + (sub ? '<p class="helper" style="margin-top:-8px">' + sub + '</p>' : '') +
       '<div class="ob-body">' + inner + '</div>' +
-      '<div class="ob-cta"><button class="btn-primary btn-block" id="obNext"' + (obValid() ? '' : ' disabled') + '>' + next + '</button></div>';
+      '<div class="ob-cta"><button class="btn-primary btn-block" id="obNext"' + (obValid() ? '' : ' disabled') + '>' + next + '</button>' + (st === 4 && ob.mode !== 'edit' ? '<button type="button" class="btn-ghost btn-block" id="obSave" style="margin-top:8px">' + esc(ob.name) + '님 정보 저장하기</button>' : '') + '</div>';
     bindOb();
   }
   function refreshNext(){ $('obNext').disabled = !obValid(); }
@@ -1652,17 +1693,17 @@
       upd(); if (!ob.birth) bi.focus();
     } else if (st === 2){
       $('obUnk').onclick = function(){ ob.unknown = !ob.unknown; renderOb(); };
-      $('obBody').querySelectorAll('[data-oh]').forEach(function(b){ b.onclick = function(){ ob.h = +b.dataset.oh; renderOb(); var g = $('obMinGrid'); if (g){ g.scrollIntoView({ block:'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); } }; });
-      $('obBody').querySelectorAll('[data-om]').forEach(function(b){ b.onclick = function(){ ob.m = +b.dataset.om; renderOb(); }; });
-      var sel = $('obBody').querySelector('[data-om][aria-pressed="true"]'); if (sel) $('obMinGrid').scrollTop = sel.offsetTop - 60;
+      $('obH').onchange = function(){ ob.h = this.value === '' ? null : +this.value; if (ob.h !== null && ob.m === null) ob.m = 0; renderOb(); };
+      $('obM').onchange = function(){ ob.m = this.value === '' ? null : +this.value; renderOb(); };
     } else if (st === 3){
       $('obBody').querySelectorAll('[data-og]').forEach(function(b){ b.onclick = function(){ ob.gender = b.dataset.og; renderOb(); setTimeout(obGoNext, 280); }; });
     } else {
+      if ($('obSave')) $('obSave').onclick = function(){ finishOb(true); };
       $('obBody').querySelectorAll('[data-ej]').forEach(function(b){ b.onclick = function(){ ob.step = +b.dataset.ej; ob.back4 = true; renderOb(); }; });
     }
   }
   function closeOb(){ var mode = ob && ob.mode; ob = null; if (mode === 'edit') openMy(); else go('today'); }
-  function finishOb(){
+  function finishOb(saveOnly){
     var e = obEntry(), r = compute(e);
     if (r.error){ toast(r.error); ob.step = 1; renderOb(); return; }
     if (ob.mode === 'edit'){
@@ -1673,15 +1714,30 @@
     e.id = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); e.saved = Date.now();
     var list = getList(); list.unshift(e); store('unsu_list', list); setMe(e.id);
     welcomeCoins(); updateSegCount(); ob = null;
+    if (saveOnly){ toast(e.name + '님 정보를 저장했어요'); go('today'); return; }
     showGen(r, function(){ if (!(INVITE && acceptInviteForMe())) go('today'); });
   }
   function showGen(r, cb){
     var P = r.pillars, g = ['hour','day','month','year'].map(function(k){ return P[k] ? P[k].hanja : '　　'; }).join(' ');
+    var steps = ['절기·음력 맞추는 중', '여덟 글자 세우는 중', '오행의 균형 헤아리는 중', '용신 찾는 중'];
+    var mx = Math.max.apply(null, r.cnt.concat([1])), bars = '';
+    for (var e = 0; e < 5; e++) bars += '<div class="gb ' + EL_CLASS[e] + '"><span>' + MS.EL_H[e] + '</span><i><u data-w="' + Math.max(8, Math.round(r.cnt[e] / mx * 100)) + '"></u></i></div>';
     var el = document.createElement('div'); el.className = 'gen'; el.setAttribute('role', 'status');
-    el.innerHTML = figSVG(r.animal, MS.EL_KEY[P.day.sEl]) + '<div class="hj">' + g + '</div><b>여덟 글자를 펼치는 중이에요</b><p>절기와 음력, 태어난 시간을 맞춰 보고 있어요</p>';
+    el.innerHTML = '<div class="gen-fig">' + figSVG(r.animal, MS.EL_KEY[P.day.sEl]) + '<span class="gen-ring"></span></div><div class="hj">' + g + '</div>' +
+      '<b id="genStep">' + steps[0] + '</b><div class="gen-bars">' + bars + '</div>' +
+      '<div class="gen-prog"><i id="genProg"></i></div><p id="genPct">0%</p>';
     document.body.appendChild(el);
     var s = el.querySelector('svg'); s.classList.add('fig'); if (!reduceMotion) s.classList.add('draw');
-    setTimeout(function(){ el.remove(); cb(); }, reduceMotion ? 400 : 2000);
+    if (reduceMotion){ el.querySelectorAll('u').forEach(function(u){ u.style.width = u.dataset.w + '%'; }); setTimeout(function(){ el.remove(); cb(); }, 500); return; }
+    var T = 3200, t0 = Date.now();
+    setTimeout(function(){ el.querySelectorAll('u').forEach(function(u, i){ setTimeout(function(){ u.style.width = u.dataset.w + '%'; }, i * 380); }); }, 900);
+    (function tick(){
+      var k = Math.min(1, (Date.now() - t0) / T);
+      $('genProg').style.width = (k * 100) + '%'; $('genPct').textContent = Math.round(k * 100) + '%';
+      $('genStep').textContent = steps[Math.min(3, Math.floor(k * 4))];
+      if (k < 1) requestAnimationFrame(tick);
+      else { el.classList.add('flash'); setTimeout(function(){ el.remove(); cb(); }, 650); }
+    })();
   }
 
   /* =========================================================
