@@ -3,7 +3,7 @@
  * body: { text: string }  (10~500자)
  * 응답: { cat, catName, title, summary, symbols:[{word, meaning, nums}], picks:[6], source:'ai'|'local' }
  *
- * - ANTHROPIC_API_KEY 가 Vercel 환경변수에 있으면 Claude로 풀고, 없거나 실패하면 Woon 자체 사전(src/dream.js)으로 푼다
+ * - ANTHROPIC_API_KEY 가 Vercel 환경변수에 있으면 Claude로 풀고, 없거나 실패하면 운픽 자체 사전(src/dream.js)으로 푼다
  * - 사전에서 찾은 상징·번호를 근거로 넘겨서 번호 체계가 앱 전체에서 같게 유지된다
  * - 키는 서버에만 둔다(브라우저 코드에 절대 넣지 않음)
  * - 엽전 차감은 지금은 클라이언트 목업. Supabase 붙이면 여기서 세션 확인 + 차감까지 서버에서 처리해야 함(TODO)
@@ -49,7 +49,7 @@ const SCHEMA = {
   additionalProperties: false
 };
 
-const SYSTEM = `당신은 운세 앱 Woon의 '재미로 보는 꿈 해몽' 풀이사입니다.
+const SYSTEM = `당신은 운세 앱 운픽의 '재미로 보는 꿈 해몽' 풀이사입니다.
 사용자가 적은 꿈을 한국 민속 해몽 관점에서 따뜻하고 구체적으로 풀고, 꿈속 상징마다 1~45 사이의 관련 숫자를 붙입니다.
 
 규칙

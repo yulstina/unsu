@@ -1,4 +1,4 @@
-/* 운이 캐릭터 정적 SVG (앱 아이콘·시작 화면·상단 로고 공용). app.js petSVG('happy', 2)와 같은 모양 */
+/* 우니 캐릭터 정적 SVG (앱 아이콘·시작 화면·상단 로고 공용). app.js petSVG('happy', 2)와 같은 모양 */
 function woni(id){
   return '<defs><radialGradient id="' + id + 'b" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs>' +
     '<path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/>' +

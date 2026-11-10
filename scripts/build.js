@@ -39,23 +39,23 @@ const SITE = 'https://unsu.vercel.app';
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Woon — 내 사주로 여는 오늘의 운세</title>
+<title>운픽 WoonPick — 내 사주로 여는 오늘의 운세</title>
 <meta name="description" content="만세력으로 푸는 사주 원국·대운, 매일 바뀌는 오늘의 운세, 궁합, 행운 번호까지. 생년월일만 입력하면 30초면 시작해요.">
 <meta name="theme-color" content="#0d0b1e">
 <script>try{var f=parseInt(localStorage.getItem('unsu_fs'),10);if(f>=0&&f<=2)document.documentElement.setAttribute('data-fs',f)}catch(e){}</script>
 <link rel="canonical" href="${SITE}/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Woon 運">
+<meta property="og:site_name" content="운픽 WoonPick">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="${SITE}/">
-<meta property="og:title" content="Woon — 내 사주로 여는 오늘의 운세">
+<meta property="og:title" content="운픽 WoonPick — 내 사주로 여는 오늘의 운세">
 <meta property="og:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호. 생년월일만 입력하면 바로 시작해요.">
 <meta property="og:image" content="${SITE}/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Woon — 별자리와 오로라 위에 떠 있는 로고와 '내 사주로 여는 오늘의 운세' 문구">
+<meta property="og:image:alt" content="운픽 — 별자리와 오로라 위에 떠 있는 로고와 '내 사주로 여는 오늘의 운세' 문구">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Woon — 내 사주로 여는 오늘의 운세">
+<meta name="twitter:title" content="운픽 WoonPick — 내 사주로 여는 오늘의 운세">
 <meta name="twitter:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호">
 <meta name="twitter:image" content="${SITE}/og.jpg">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -65,7 +65,7 @@ const SITE = 'https://unsu.vercel.app';
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Woon">
+<meta name="apple-mobile-web-app-title" content="운픽">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -87,7 +87,7 @@ ${markupMin}
   fs.writeFileSync(path.join(OUT, 'index.html'), html);
 
   fs.writeFileSync(path.join(OUT, 'manifest.webmanifest'), JSON.stringify({
-    name:'Woon — 내 사주로 여는 오늘의 운세', short_name:'Woon', lang:'ko', start_url:'/', scope:'/', display:'standalone',
+    name:'운픽 WoonPick — 내 사주로 여는 오늘의 운세', short_name:'운픽', lang:'ko', start_url:'/', scope:'/', display:'standalone',
     background_color:'#0d0b1e', theme_color:'#0d0b1e',
     icons:[{ src:'/icons/icon-192.png', sizes:'192x192', type:'image/png' }, { src:'/icons/icon-512.png', sizes:'512x512', type:'image/png' }, { src:'/icon.svg', sizes:'any', type:'image/svg+xml' }]
   }));
