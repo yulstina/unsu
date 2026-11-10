@@ -1,6 +1,8 @@
 /* src/ → public/ 빌드: index.html + css/style.css + js/*.js 로 분리·압축
    실행: npm install && npm run build:site  (og 이미지·아이콘은 scripts/og.js) */
 const fs = require('fs');
+const crypto = require('crypto');
+const ver = s => crypto.createHash('md5').update(s).digest('hex').slice(0, 8);
 const path = require('path');
 const { minify } = require('terser');
 const CleanCSS = require('clean-css');
@@ -39,7 +41,7 @@ const SITE = 'https://unsu.vercel.app';
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>운수 — 내 사주로 여는 오늘의 운세</title>
 <meta name="description" content="만세력으로 푸는 사주 원국·대운, 매일 바뀌는 오늘의 운세, 궁합, 행운 번호까지. 생년월일만 입력하면 30초면 시작해요.">
-<meta name="theme-color" content="#05060f">
+<meta name="theme-color" content="#070a1f">
 <script>try{var f=parseInt(localStorage.getItem('unsu_fs'),10);if(f>=0&&f<=2)document.documentElement.setAttribute('data-fs',f)}catch(e){}</script>
 <link rel="canonical" href="${SITE}/">
 <meta property="og:type" content="website">
@@ -66,18 +68,19 @@ const SITE = 'https://unsu.vercel.app';
 <meta name="apple-mobile-web-app-title" content="운수">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@500;700&display=swap">
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/style.css?v=${ver(cssMin)}">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
 </head>
 <body>
 ${markupMin}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="/js/lunar.js"></script>
-<script src="/js/figures.js"></script>
-<script src="/js/core.js"></script>
-<script src="/js/app.js"></script>
+<script src="/js/lunar.js?v=${ver(lunar)}"></script>
+<script src="/js/figures.js?v=${ver(figures)}"></script>
+<script src="/js/core.js?v=${ver(core)}"></script>
+<script src="/js/app.js?v=${ver(app)}"></script>
 </body>
 </html>
 `;

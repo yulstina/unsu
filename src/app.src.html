@@ -3,6 +3,7 @@
 <meta name="description" content="만세력 기반 사주 풀이와 별자리 운세, 행운 번호까지 한 번에 보는 모바일 웹앱">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@500;700&display=swap">
 <style>
   :root{
@@ -799,9 +800,9 @@
   .nf i{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;display:block;} .nf u{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#5b8cff,#b79bff);} .nf b{font-weight:500;text-align:right;}
   .ny-h{display:flex;justify-content:space-between;align-items:baseline;margin:18px 0 8px;font-size:calc(15px*var(--fs));color:#fff;font-weight:600;} .ny-h small{font-size:calc(12px*var(--fs));color:var(--text-helper);font-weight:400;}
   .ny-months{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;height:132px;align-items:end;}
-  .nm{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:calc(10px*var(--fs));color:var(--text-helper);}
-  .nm i{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#9b7bff,#5b8cff);display:block;}
-  .nm.lock i{background:rgba(199,211,234,.16);} .nm b{font-weight:500;color:#fff;font-size:calc(10px*var(--fs));height:14px;display:flex;align-items:center;} .nm.lock b svg{width:11px;height:11px;color:var(--text-helper);}
+  .ny-months .nm{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:calc(10px*var(--fs));color:var(--text-helper);}
+  .ny-months .nm i{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#9b7bff,#5b8cff);display:block;}
+  .ny-months .nm.lock i{background:rgba(199,211,234,.16);} .ny-months .nm b{font-weight:500;color:#fff;font-size:calc(10px*var(--fs));height:14px;display:flex;align-items:center;} .ny-months .nm.lock b svg{width:11px;height:11px;color:var(--text-helper);}
   .ny-chaps{list-style:none;margin:0;padding:0;display:grid;gap:8px;} .nc{background:rgba(199,211,234,.05);border-radius:12px;padding:12px 14px;}
   .nc-h{display:flex;justify-content:space-between;align-items:center;font-size:calc(14.5px*var(--fs));color:#fff;} .nc-h svg{width:16px;height:16px;color:var(--text-helper);} .nc .ny-blur{margin:6px 0 0;font-size:calc(13.5px*var(--fs));}
   .ny-buy{margin-top:16px;padding:16px;border-radius:16px;background:linear-gradient(150deg,rgba(234,197,111,.14),rgba(102,58,243,.2));display:grid;gap:10px;}
@@ -837,6 +838,184 @@
   .mc-seg button[aria-pressed="true"]{background:var(--violet-soft);color:#fff;box-shadow:inset 0 0 0 1px var(--violet);}
   .mc-result{min-height:44px;}
   .mc-result .ball{width:40px;height:40px;}
+
+  /* =========================================================
+     LIQUID GLASS 레이어 (docs/DESIGN.md 기준 · iOS 27 스타일)
+     기존 색상(밤하늘 네이비 + 바이올렛 + 아이스블루 + 엽전 골드)은 유지하고
+     재질·곡률·타이포·하단 탭바만 iOS 감각으로 정리한다.
+     ========================================================= */
+  :root{
+    --font-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Pretendard Variable',Pretendard,'IBM Plex Sans KR',system-ui,sans-serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Pretendard Variable',Pretendard,'IBM Plex Sans KR',system-ui,sans-serif;
+    --font-mono:-apple-system,BlinkMacSystemFont,'SF Pro Text','Pretendard Variable',Pretendard,system-ui,sans-serif;
+    --canvas:#070a1f;
+    --r-card:24px; --r-inner:16px; --r-sheet:32px;
+    /* 유리 재질 */
+    --glass-tint:rgba(30,36,78,.38);
+    --glass-tint-strong:rgba(24,28,62,.62);
+    --glass-blur:blur(26px) saturate(185%);
+    --glass-edge:inset 0 1px 0 rgba(255,255,255,.20),inset 0 -1px 0 rgba(255,255,255,.04),inset 0 0 0 .5px rgba(214,228,255,.16);
+    --glass-shadow:0 18px 44px rgba(3,4,16,.45),0 2px 6px rgba(3,4,16,.25);
+    --ease-spring:cubic-bezier(.32,1.28,.48,1);
+    --ease-ios:cubic-bezier(.22,.9,.24,1);
+  }
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{letter-spacing:-.012em;font-feature-settings:'tnum' 0;}
+  h1,h2,h3,.sec-title,.today-title,.hero-title,.ny-title,.num-title,.sheet h3{letter-spacing:-.022em;font-weight:700;}
+  .sec-meta,.eyebrow,.top-date,.today-ilj{letter-spacing:.02em;font-weight:500;}
+
+  /* 넘침 방지: 모든 플렉스/그리드 자식이 화면보다 넓어지지 않게 */
+  main,.view,.card{min-width:0;max-width:100%;}
+  main>*,.view>*{min-width:0;}
+  .topbar{min-width:0;gap:8px;}
+  .hero{grid-template-columns:minmax(0,1fr) auto;} .hero-copy{min-width:0;} .hero-fig{max-width:100%;}
+  .brand{min-width:0;flex:0 1 auto;white-space:nowrap;}
+  .top-actions{min-width:0;flex:0 1 auto;justify-content:flex-end;}
+  .att-strip{grid-template-columns:minmax(0,1fr) auto auto;}
+  .att-strip .as-txt{min-width:0;white-space:normal;}
+  .att-strip .as-txt small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .as-week{min-width:0;}
+  @media (max-width:380px){ .brand small{display:none;} .as-d:nth-child(-n+2){display:none;} }
+  html[data-fs="2"] .brand small,html[data-fs="1"] .brand small{display:none;}
+  html[data-fs="2"] .as-d:nth-child(-n+3){display:none;}
+  html[data-fs="2"] .coin-chip span{display:none;}
+
+  /* 상단 바: 맨 위에서는 투명, 스크롤하면 유리 */
+  .topbar{background:transparent;transition:background .3s,box-shadow .3s;margin-inline:-16px;padding-inline:16px;max-width:none;}
+  @media (min-width:492px){ .topbar{margin-inline:auto;max-width:460px;padding-inline:0;} }
+  body.scrolled .topbar{background:linear-gradient(180deg,rgba(7,10,31,.78),rgba(7,10,31,.55));
+    -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:inset 0 -.5px 0 rgba(214,228,255,.14);}
+  @media (min-width:492px){ body.scrolled .topbar{border-radius:0 0 22px 22px;padding-inline:14px;} }
+  .fs-btn,.avatar{box-shadow:var(--glass-edge);background:var(--glass-tint);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);}
+  .coin-chip{box-shadow:inset 0 1px 0 rgba(255,236,190,.28),inset 0 0 0 .5px rgba(234,197,111,.45);background:linear-gradient(180deg,rgba(234,197,111,.16),rgba(234,197,111,.06));
+    -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);}
+
+  /* 카드 = 유리 패널 */
+  .card{border-radius:var(--r-card);background:var(--glass-tint);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-edge),var(--glass-shadow);}
+  .att-strip,.seg,.pill,.ad-slot,.nudge{border-radius:20px;background:rgba(30,36,78,.30);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-edge);}
+  .seg,.pill{border-radius:999px;}
+  .seg button[aria-selected="true"],.pill button[aria-pressed="true"]{background:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,.10));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 .5px rgba(255,255,255,.18),0 4px 14px rgba(0,0,0,.25);}
+  .ny-card{border-radius:var(--r-card);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+    box-shadow:inset 0 1px 0 rgba(255,236,190,.3),inset 0 0 0 .5px rgba(234,197,111,.4),var(--glass-shadow);}
+
+  /* 버튼: 캡슐 + 유리 하이라이트 */
+  .btn-primary{background:linear-gradient(180deg,#8160ff 0%,#663af3 55%,#5a2fe6 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.18),0 10px 26px rgba(102,58,243,.42);font-weight:600;}
+  .btn-primary:hover{background:linear-gradient(180deg,#8d6eff 0%,#7248f5 55%,#6236ee 100%);}
+  .btn-soft{background:rgba(255,255,255,.08);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-edge);font-weight:600;}
+  .btn-soft:hover{background:rgba(255,255,255,.13);}
+  .btn-ghost{box-shadow:inset 0 0 0 .5px rgba(214,228,255,.3);}
+  .btn-primary,.btn-ghost,.btn-soft{transition:transform .35s var(--ease-spring),background .2s,box-shadow .2s;}
+  .btn-primary:active,.btn-ghost:active,.btn-soft:active{transform:scale(.96);}
+
+  /* 시트: 유리 + 큰 곡률 */
+  .sheet{border-radius:var(--r-sheet) var(--r-sheet) 0 0;background:linear-gradient(180deg,rgba(26,30,68,.86),rgba(12,14,36,.94));
+    -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 .5px rgba(214,228,255,.12),0 -24px 60px rgba(0,0,0,.5);animation-timing-function:var(--ease-ios);}
+  @media (min-width:500px){ .sheet{margin-bottom:12px;border-radius:var(--r-sheet);} }
+  .sheet-grip{width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);}
+  .sheet-backdrop{background:rgba(3,4,14,.48);}
+  .toast{border-radius:999px;padding:12px 18px;background:rgba(30,36,78,.62);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-edge),var(--glass-shadow);font-weight:500;}
+
+  /* ---------- 하단 탭바: 떠 있는 리퀴드 글라스 ---------- */
+  :root{--tabbar-h:66px;}
+  .tabbar{padding:0 18px calc(10px + env(safe-area-inset-bottom,0px));}
+  .tabbar::before{content:'';position:fixed;left:0;right:0;bottom:0;height:120px;pointer-events:none;z-index:-1;
+    background:linear-gradient(180deg,rgba(7,10,31,0),rgba(7,10,31,.55) 60%,rgba(7,10,31,.8));}
+  .tabbar-inner{position:relative;isolation:isolate;max-width:400px;border-radius:999px;padding:5px;gap:0;
+    background:linear-gradient(180deg,rgba(58,66,128,.34),rgba(22,26,62,.46));
+    -webkit-backdrop-filter:blur(22px) saturate(190%) brightness(1.08);backdrop-filter:blur(22px) saturate(190%) brightness(1.08);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 1px rgba(255,255,255,.06),inset 0 0 0 .5px rgba(214,228,255,.22),0 16px 40px rgba(2,3,14,.55),0 2px 8px rgba(2,3,14,.3);
+    transition:transform .45s var(--ease-spring),max-width .45s var(--ease-spring);}
+  /* 유리 위 빛 반사(스페큘러) */
+  .tabbar-inner::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+    background:radial-gradient(120% 140% at 20% -40%,rgba(255,255,255,.18),transparent 45%),radial-gradient(80% 120% at 100% 140%,rgba(150,190,255,.10),transparent 55%);}
+  /* 선택 탭 아래로 미끄러지는 렌즈 */
+  .tab-lens{position:absolute;z-index:0;top:5px;bottom:5px;left:5px;width:calc((100% - 10px) / 4);border-radius:999px;pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 18px rgba(0,0,0,.28);
+    transform:translateX(calc(var(--ti,0) * 100%));transition:transform .5s var(--ease-spring);}
+  .tab{position:relative;z-index:1;border-radius:999px;padding:7px 2px 6px;gap:2px;font-weight:600;font-size:calc(10.5px*var(--fs));color:rgba(214,226,250,.62);}
+  .tab svg{width:24px;height:24px;transition:transform .4s var(--ease-spring);}
+  .tab.active{background:transparent;color:#fff;}
+  .tab.active svg{filter:drop-shadow(0 0 8px rgba(182,217,252,.55));transform:scale(1.06);}
+  .tab:active svg{transform:scale(.88);}
+  /* 아래로 스크롤하면 탭바가 살짝 작아지고 라벨이 숨는다 (iOS 탭바 최소화) */
+  body.tb-min .tabbar-inner{transform:scale(.9) translateY(4px);}
+  .tab span{display:block;max-height:18px;overflow:hidden;transition:max-height .35s var(--ease-ios),opacity .25s;}
+  body.tb-min .tab span{max-height:0;opacity:0;}
+  body.tb-min .tab{padding-block:9px;}
+  @media (prefers-reduced-transparency: reduce){
+    .tabbar-inner,.card,.sheet,.toast{background:rgba(16,19,46,.96);-webkit-backdrop-filter:none;backdrop-filter:none;}
+  }
+
+  /* ---------- 키우는 캐릭터 '운이' ---------- */
+  .pet-card{gap:14px;position:relative;overflow:hidden;}
+  .pet-card.m-love{box-shadow:inset 0 1px 0 rgba(255,220,235,.3),inset 0 0 0 .5px rgba(255,160,200,.45),0 0 40px rgba(255,143,177,.18),var(--glass-shadow);}
+  .pet-card.m-love::before{content:'';position:absolute;inset:-40%;background:radial-gradient(40% 40% at 30% 40%,rgba(255,143,177,.16),transparent 70%);pointer-events:none;animation:petGlow 4s ease-in-out infinite alternate;}
+  @keyframes petGlow{to{transform:translate(20%,10%);}}
+  .pet-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;align-items:center;position:relative;}
+  .pet-fig{width:96px;height:96px;padding:0;border:none;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .pet-svg{width:100%;height:100%;overflow:visible;display:block;}
+  .pet-svg .pbody{transform-origin:60px 100px;animation:petBob 3.2s ease-in-out infinite;}
+  .pet-svg.m-sleepy .pbody{animation-duration:4.6s;}
+  .pet-svg.m-love .pbody{animation:petHop 1.6s var(--ease-spring) infinite;}
+  .pet-svg .pe{transform-origin:60px 67px;animation:petBlink 4.2s infinite;}
+  .pet-svg .pz text{animation:petZ 2.6s ease-in-out infinite;} .pet-svg .pz text+text{animation-delay:.6s;}
+  .pet-svg .ph path{transform-box:fill-box;transform-origin:center;animation:petHeart 2.2s ease-in-out infinite;} .pet-svg .ph path:nth-child(2){animation-delay:.5s;} .pet-svg .ph path:nth-child(3){animation-delay:1s;}
+  .pet-svg.poke .pbody{animation:petPoke .55s var(--ease-spring);}
+  @keyframes petBob{50%{transform:translateY(-3px) scale(1.015,.985);}}
+  @keyframes petHop{0%,100%{transform:none;}30%{transform:translateY(-7px) scale(.97,1.04);}55%{transform:translateY(0) scale(1.05,.95);}}
+  @keyframes petBlink{0%,92%,100%{transform:none;}95%{transform:scaleY(.1);}}
+  @keyframes petZ{0%{opacity:0;transform:translateY(4px);}40%{opacity:1;}100%{opacity:0;transform:translateY(-8px);}}
+  @keyframes petHeart{0%,100%{transform:translateY(0) scale(.9);opacity:.6;}50%{transform:translateY(-6px) scale(1.1);opacity:1;}}
+  @keyframes petPoke{0%{transform:none;}35%{transform:scale(1.12,.86);}70%{transform:scale(.94,1.08);}100%{transform:none;}}
+  .pet-info{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .pet-name{font-size:calc(17px*var(--fs));font-weight:700;color:#fff;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .pet-name small{font-size:calc(12px*var(--fs));font-weight:600;color:#c9b9ff;}
+  .pet-say{font-size:calc(13.5px*var(--fs));color:var(--text-muted);line-height:1.5;}
+  .pet-gauge{height:10px;border-radius:999px;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 2px rgba(0,0,0,.35),inset 0 0 0 .5px rgba(255,255,255,.08);overflow:hidden;}
+  .pet-gauge i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7c56f6,#b79bff 60%,#ff9cc0);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 12px rgba(183,155,255,.6);transition:width .9s var(--ease-spring);}
+  .pet-meta{display:flex;justify-content:space-between;font-size:calc(12px*var(--fs));color:var(--text-helper);}
+  .pet-meta b{color:#fff;font-weight:700;font-variant-numeric:tabular-nums;}
+  .pet-todo{display:flex;flex-direction:column;gap:8px;}
+  .pet-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .pet-chips button{border:none;cursor:pointer;border-radius:999px;padding:7px 12px;font-size:calc(12.5px*var(--fs));font-weight:600;color:var(--text-body);
+    background:rgba(255,255,255,.07);box-shadow:var(--glass-edge);transition:transform .3s var(--ease-spring);}
+  .pet-chips button b{color:#c9b9ff;font-weight:700;}
+  .pet-chips button:active{transform:scale(.94);}
+  .pet-claim{background:linear-gradient(180deg,#ff9cc0,#b48bff 55%,#7c56f6);animation:petPulse 1.8s ease-in-out infinite;}
+  @keyframes petPulse{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 0 6px rgba(255,156,192,.16),0 12px 30px rgba(180,139,255,.45);}}
+  /* 상단 알림 (다이내믹 아일랜드 느낌) */
+  .pet-pop{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));z-index:65;display:flex;align-items:center;gap:10px;
+    max-width:calc(100% - 32px);padding:6px 16px 6px 6px;border-radius:999px;color:#fff;font-size:calc(13px*var(--fs));font-weight:600;
+    background:rgba(10,12,30,.82);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 .5px rgba(214,228,255,.18),0 14px 34px rgba(0,0,0,.45);
+    transform:translate(-50%,-140%) scale(.7);opacity:0;transition:transform .55s var(--ease-spring),opacity .3s;pointer-events:none;}
+  .pet-pop.in{transform:translate(-50%,0) scale(1);opacity:1;}
+  .pet-pop .pet-svg{width:36px;height:36px;flex:none;}
+  .pet-pop span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .pet-pop.changed{box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 0 0 .5px rgba(255,156,192,.5),0 0 24px rgba(255,156,192,.3),0 14px 34px rgba(0,0,0,.45);}
+  .pet-levelup{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin-bottom:18px;}
+  .pet-levelup .pet-svg{width:150px;height:150px;}
+  .pet-levelup h3{margin:6px 0 0 !important;}
+  .pet-ticket{position:relative;width:100%;margin-top:10px;padding:16px 18px 16px 22px;border-radius:18px;text-align:left;display:flex;flex-direction:column;gap:3px;
+    background:linear-gradient(120deg,rgba(255,156,192,.18),rgba(124,86,246,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,190,215,.45);}
+  .pet-ticket::before{content:'';position:absolute;left:10px;top:12px;bottom:12px;border-left:1.5px dashed rgba(255,190,215,.45);}
+  .pet-ticket.gold::before{border-color:rgba(234,197,111,.5);}
+  .pet-ticket.gold{background:linear-gradient(120deg,rgba(234,197,111,.2),rgba(124,86,246,.18));box-shadow:inset 0 1px 0 rgba(255,236,190,.3),inset 0 0 0 .5px rgba(234,197,111,.5);}
+  .pet-ticket small{font-size:calc(10.5px*var(--fs));letter-spacing:.14em;color:#ffc2d6;font-weight:700;}
+  .pet-ticket.gold small{color:#f3dca0;}
+  .pet-ticket b{font-size:calc(16px*var(--fs));color:#fff;font-weight:700;}
+  .pet-ticket span{font-size:calc(12px*var(--fs));color:var(--text-muted);}
+  .pet-ticket.sm{margin-top:0;padding:12px 14px 12px 20px;}
+  .pet-mini-row{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;}
+  .pet-mini-row .pet-svg{width:44px;height:44px;}
+  .card .pet-ticket.sm + .pet-ticket.sm{margin-top:8px;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -1026,11 +1205,11 @@
 </main>
 
 <nav class="tabbar" aria-label="주요 메뉴">
-  <div class="tabbar-inner">
-    <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg>오늘</button>
-    <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg>사주</button>
-    <button class="tab" data-tab="gunghap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg>궁합</button>
-    <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2"/></svg>번호</button>
+  <div class="tabbar-inner"><i class="tab-lens" aria-hidden="true"></i>
+    <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>오늘</span></button>
+    <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
+    <button class="tab" data-tab="gunghap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg><span>궁합</span></button>
+    <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2"/></svg><span>번호</span></button>
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
