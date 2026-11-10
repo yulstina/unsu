@@ -1450,7 +1450,7 @@
     return '<div class="card machine-card">' +
       (canDraw ? '<div class="mc-seg" role="group" aria-label="번호 종류"><button type="button" data-mk="today" aria-pressed="true">오늘 번호</button><button type="button" data-mk="life" aria-pressed="false">평생 번호</button></div>' : '') +
       '<canvas id="mcCanvas" class="mc-canvas" role="img" aria-label="로또 추첨기 일러스트. 버튼을 누르면 내 사주로 계산한 번호 6개가 하나씩 나와요."></canvas>' +
-      '<div class="balls mc-result" id="mcResult" aria-live="polite" hidden></div>' +
+      '<span class="sr-only" id="mcResult" aria-live="polite"></span>' +
       '<button class="btn-primary btn-block" id="btnMcDraw">' + (canDraw ? '추첨 시작' : '내 사주 등록하고 뽑기') + '</button>' +
       '<p class="helper" style="text-align:center">번호는 사주로 계산해요. 추첨 연출은 재미 요소이고 당첨을 보장하지 않아요.</p></div>';
   }
@@ -1463,16 +1463,16 @@
       b.onclick = function(){
         if (machine.isBusy()) return; kind = b.dataset.mk;
         document.querySelectorAll('[data-mk]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
-        machine.reset(); box.hidden = true; btn.textContent = '추첨 시작';
+        machine.reset(); box.textContent = ''; btn.textContent = '추첨 시작';
       };
     });
     btn.onclick = function(){
       if (!sets){ startOnboarding('new'); return; }
       if (machine.isBusy()) return;
-      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '추첨 중…'; box.hidden = true;
+      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '추첨 중…'; box.textContent = '';
       machine.draw(nums, null, function(){
-        box.innerHTML = nums.slice().sort(function(a, b){ return a - b; }).map(function(n){ return '<div class="ball lt ' + ltColor(n) + '">' + n + '</div>'; }).join('');
-        box.hidden = false; btn.disabled = false; btn.textContent = '다시 뽑기';
+        box.textContent = '뽑힌 번호 ' + nums.slice().sort(function(a, b){ return a - b; }).join(', ');
+        btn.disabled = false; btn.textContent = '다시 뽑기';
         toast((kind === 'today' ? '오늘의' : '평생') + ' 행운 번호가 나왔어요');
         bond('num');
       });
