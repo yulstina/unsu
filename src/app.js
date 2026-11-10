@@ -7,8 +7,8 @@
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
-  var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1 };
-  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons'];
+  var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1, unsu_consent:1, unsu_notif:1 };
+  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders'];
   function nsk(k){ return GLOBAL_KEYS[k] ? k : NS + k; }
   function store(k, v){
     var key = nsk(k);
@@ -1151,7 +1151,15 @@
       '<h4>쓰는 곳</h4><p>사주 계산, 오늘의 운세, 궁합, 구매한 리포트 보관.</p>' +
       '<h4>보관 기간</h4><p>탈퇴하면 바로 파기. 결제 기록은 전자상거래법에 따라 5년 보관.</p>' +
       '<h4>처리 위탁</h4><p>호스팅(Vercel), 로그인·DB(Supabase), 결제(토스페이먼츠).</p>' +
+      '<h4>선택 정보</h4><p>혜택 알림에 동의하면 알림 수신 정보(웹 푸시 토큰)와 동의 일시를 보관해요. 철회하면 바로 지워요.</p>' +
+      '<h4>만 14세 미만</h4><p>만 14세 미만은 가입할 수 없어요.</p>' +
       '<h4>상대방 정보</h4><p>궁합에 입력한 다른 사람의 정보는 내 저장 목록에서 언제든 지울 수 있어요.</p>'; },
+    marketing:function(){ return '<h3 id="sheetTitle">혜택·이벤트 알림 수신 동의 (선택)</h3>' +
+      '<h4>받는 내용</h4><p>할인 쿠폰, 이벤트, 새 콘텐츠 소식 같은 광고성 정보</p>' +
+      '<h4>받는 방법</h4><p>앱 알림(웹 푸시), 이메일, 카카오 알림톡 중 동의한 방법</p>' +
+      '<h4>야간 알림</h4><p>밤 9시부터 다음 날 아침 8시 사이에는 따로 동의한 경우에만 보내요.</p>' +
+      '<h4>보유 기간</h4><p>동의를 철회하거나 탈퇴할 때까지. 동의 여부는 2년마다 다시 확인해요.</p>' +
+      '<p>동의하지 않아도 Woon의 모든 기능을 쓸 수 있고, 설정 &gt; 알림 설정에서 언제든 바꿀 수 있어요.</p>'; },
     refund:function(){ return '<h3 id="sheetTitle">환불 정책</h3>' +
       '<p>유료 리포트는 결제 후 <b>열기 전</b>이라면 결제일로부터 7일 안에 전액 환불해요.</p>' +
       '<p>리포트를 연 뒤에는 디지털 콘텐츠 특성상 청약철회가 제한돼요(전자상거래법 제17조 제2항). 결제 화면에서 이 내용을 먼저 안내해요.</p>' +
@@ -1752,6 +1760,8 @@
     ticket:TICKET_SVG,
     info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>',
     doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h5"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0" stroke-linecap="round"/></svg>',
+    help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 12a7.5 7.5 0 1 1 3.2 6.1L4 19.5l1.3-3.4A7.4 7.4 0 0 1 4.5 12z" stroke-linejoin="round"/><path d="M10 10a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.7M12 16h.01"/></svg>',
     user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.6"/><path d="M5.5 19.5c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>'
   };
   function openSettings(){
@@ -1765,16 +1775,25 @@
         row('stCoins', SET_IC.coin, '엽전', guest && !NS ? '<em>가입하면 ' + SIGNUP_COINS.toLocaleString() + '닢</em>' : getCoins().toLocaleString() + '닢', 'gold') +
         row('stCoupons', SET_IC.ticket, '쿠폰함', cps + '장') +
         row('stMy', SET_IC.user, '내 정보', '사주·계정 관리') +
+        row('stOrders', SET_IC.doc, '구매 내역', getOrders().length + '건') +
+      '</div>' +
+      '<div class="st-group">' +
+        row('stNotif', SET_IC.bell, '알림 설정', getNotif().mkt ? '혜택 알림 켬' : '') +
+        row('stHelp', SET_IC.help, '고객센터', '공지·자주 묻는 질문·문의') +
       '</div>' +
       '<div class="st-group st-fs"><div class="st-cap">글자 크기</div>' + fsSegHTML() + '</div>' +
       '<div class="st-group">' +
-        '<div class="st-row static"><span class="st-ic">' + SET_IC.info + '</span><span class="st-l">앱 정보</span><span class="st-v">Woon v1.0</span></div>' +
+        row('stAbout', SET_IC.info, '앱 정보', 'Woon v1.0') +
       '</div>' +
       (guest && !NS ? '<button class="btn-primary btn-block" id="stLogin" style="margin-top:14px">로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button>' : '') +
       bizFootHTML();
     openSheet(h);
     var sb = $('sheetBody'); sb.classList.add('st-sheet'); bindFsSeg(sb);
     $('stProf').onclick = $('stMy').onclick = $('stCoupons').onclick = function(){ closeSheet(); openMy(); };
+    $('stOrders').onclick = openOrdersSheet;
+    $('stNotif').onclick = openNotifSheet;
+    $('stHelp').onclick = openHelpSheet;
+    $('stAbout').onclick = openAboutSheet;
     $('stCoins').onclick = function(){ closeSheet(); setTimeout(openCoinSheet, 260); };
     $('stPet').onclick = function(){ closeSheet(); go('today'); setTimeout(function(){ var c = $('petCard'); if (c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 120); };
     if ($('stLogin')) $('stLogin').onclick = function(){ closeSheet(); setTimeout(function(){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요.'); }, 260); };
@@ -2091,6 +2110,7 @@
         '<p class="helper">마지막 동기화 ' + (at.getMonth()+1) + '.' + at.getDate() + ' ' + pad2(at.getHours()) + ':' + pad2(at.getMinutes()) + ' · 출석과 엽전이 계정에 보관되고 있어요.</p>';
       if (myConfirm === 'logout') h += '<div class="inline-confirm">로그아웃하면 이 기기에서 내 정보가 지워져요. 같은 계정으로 다시 로그인하면 그대로 돌아와요.<div class="row"><button class="btn-ghost grow" data-mc="cancel">취소</button><button class="btn-ghost btn-danger grow" id="btnLogoutOk">로그아웃</button></div></div>';
       else h += '<button class="btn-ghost btn-block" id="btnLogout">로그아웃</button>';
+      h += '<button class="text-btn" id="btnWithdraw" style="align-self:center">회원 탈퇴</button>';
     }
     h += '</div>';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">글자 크기</h2></div>' + fsSegHTML() + '</div>';
@@ -2122,6 +2142,7 @@
     if ($('btnMyStart')) $('btnMyStart').onclick = function(){ startOnboarding('new'); };
     if ($('btnLogout')) $('btnLogout').onclick = function(){ myConfirm = 'logout'; renderMy(); };
     if ($('btnLogoutOk')) $('btnLogoutOk').onclick = doLogout;
+    if ($('btnWithdraw')) $('btnWithdraw').onclick = openWithdrawSheet;
     $('myBody').querySelectorAll('[data-mc]').forEach(function(b){ b.onclick = function(){ myConfirm = null; renderMy(); }; });
     $('myBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ doLogin(b.dataset.login, b); }; });
   }
@@ -2133,13 +2154,154 @@
   var syncT = 0;
   function writeAccount(){ var a = store('unsu_auth'); if (!a || NS) return; store('unsu_account', { provider:a.provider, nick:a.nick, snapshot:snapshot(), at:Date.now() }); }
   syncHook = function(){ clearTimeout(syncT); syncT = setTimeout(writeAccount, 60); };
+  /* =========================================================
+     출시 필수 화면: 가입 약관 동의 · 알림 설정(마케팅·야간 수신 동의) · 구매 내역 · 고객센터(FAQ·문의·공지) · 회원 탈퇴 · 앱 정보
+     법적 근거 메모: 정보통신망법 제50조(광고성 정보 사전 동의, 야간 21~08시 별도 동의, 처리 결과 통지, 2년마다 재확인),
+     개인정보보호법(필수/선택 동의 분리, 만 14세 미만 법정대리인 동의), 전자상거래법(구매 기록 5년 보관, 청약철회 안내)
+     ========================================================= */
+  function getConsent(){ var c = store('unsu_consent'); return c && typeof c === 'object' ? c : null; }
+  function getNotif(){ var n = store('unsu_notif'); return n && typeof n === 'object' ? n : { daily:true, dailyAt:'08:00', att:true, pet:true, ny:true, mkt:false, night:false }; }
+  function fmtDate(t){ var d = new Date(t); return d.getFullYear() + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()); }
+  function swHTML(id, on, label, sub){
+    return '<button type="button" class="nt-row" role="switch" id="' + id + '" aria-checked="' + !!on + '"><span class="nt-t"><b>' + label + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="sw"><i></i></span></button>';
+  }
+  /* 가입(첫 로그인) 직전 약관 동의 — 필수 3 + 선택 2 */
+  function openConsentSheet(provider){
+    var st = { age:false, terms:false, privacy:false, mkt:false, night:false };
+    var items = [
+      ['age', '만 14세 이상이에요', true, null],
+      ['terms', 'Woon 이용약관 동의', true, 'terms'],
+      ['privacy', '개인정보 수집·이용 동의', true, 'privacy'],
+      ['mkt', '혜택·이벤트 알림 받기 (마케팅 정보 수신)', false, 'marketing'],
+      ['night', '밤 9시~아침 8시에도 혜택 알림 받기', false, 'marketing']
+    ];
+    function draw(){
+      var all = items.every(function(i){ return st[i[0]]; }), req = items.every(function(i){ return !i[2] || st[i[0]]; });
+      $('sheetBody').innerHTML = '<h3 id="sheetTitle">Woon 시작 전에 확인해 주세요</h3>' +
+        '<button type="button" class="cs-all" data-ck="all" aria-pressed="' + all + '"><span class="ck"></span><b>모두 동의하기</b><small>선택 항목 포함 · 선택은 동의하지 않아도 가입할 수 있어요</small></button>' +
+        '<div class="cs-list">' + items.map(function(i){
+          return '<div class="cs-item"><button type="button" class="cs-ck" data-ck="' + i[0] + '" aria-pressed="' + st[i[0]] + '"><span class="ck"></span><span><em class="' + (i[2] ? 'req' : 'opt') + '">' + (i[2] ? '필수' : '선택') + '</em>' + i[1] + '</span></button>' + (i[3] ? '<button type="button" class="cs-view" data-doc="' + i[3] + '">보기</button>' : '') + '</div>';
+        }).join('') + '</div>' +
+        '<p class="helper" style="margin-top:6px">만 14세 미만은 보호자 동의가 필요해 지금은 가입할 수 없어요.</p>' +
+        '<button class="btn-primary btn-block" id="csGo"' + (req ? '' : ' disabled') + ' style="margin-top:14px">동의하고 ' + PROV[provider] + '로 계속하기</button>' +
+        '<button class="text-btn" data-close>취소</button>';
+      $('sheetBody').querySelectorAll('[data-ck]').forEach(function(b){ b.onclick = function(){
+        var k = b.dataset.ck;
+        if (k === 'all'){ var v = !all; items.forEach(function(i){ st[i[0]] = v; }); }
+        else { st[k] = !st[k]; if (k === 'night' && st.night) st.mkt = true; if (k === 'mkt' && !st.mkt) st.night = false; }
+        draw();
+      }; });
+      $('csGo').onclick = function(){
+        var now = Date.now();
+        store('unsu_consent', { terms:now, privacy:now, age:now, mkt:st.mkt ? now : 0, night:st.night ? now : 0, v:'2026-12' });
+        var n = getNotif(); n.mkt = st.mkt; n.night = st.night; store('unsu_notif', n);
+        if (st.mkt) setTimeout(function(){ toast(fmtDate(now) + ' 혜택 알림 수신에 동의했어요'); }, 2600);
+        doLogin(provider, this);
+      };
+    }
+    openSheet('<div></div>'); draw();
+  }
+  /* 알림 설정 */
+  function openNotifSheet(){
+    var n = getNotif(), c = getConsent(), guest = isGuest();
+    var times = ['07:00', '08:00', '09:00', '12:00', '18:00', '21:00'];
+    openSheet('<h3 id="sheetTitle">알림 설정</h3>' +
+      '<div class="st-cap">서비스 알림</div><div class="st-group">' +
+        swHTML('ntDaily', n.daily, '오늘의 운세', '매일 정한 시간에 오늘 운세 한 줄') +
+        '<div class="nt-time"' + (n.daily ? '' : ' hidden') + '><span>받는 시간</span><select class="sel" id="ntAt">' + times.map(function(t){ return '<option' + (t === n.dailyAt ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>' +
+        swHTML('ntAtt', n.att, '출석 알림', '연속 출석이 끊기기 전에 알려 드려요') +
+        swHTML('ntPet', n.pet, '운이 알림', '교감이 가득 차서 선물을 받을 수 있을 때') +
+        swHTML('ntNy', n.ny, '신년운세 오픈·구매 알림', '결제·리포트 준비 완료 같은 거래 알림') +
+      '</div>' +
+      '<div class="st-cap" style="margin-top:14px">혜택 알림 (광고성 정보)</div><div class="st-group">' +
+        swHTML('ntMkt', n.mkt, '혜택·이벤트 알림', '할인 쿠폰, 이벤트, 새 콘텐츠 소식') +
+        swHTML('ntNight', n.night, '야간 혜택 알림', '밤 9시~아침 8시에도 받기') +
+      '</div>' +
+      '<p class="helper nt-law">' + (c && c.mkt ? '혜택 알림 동의일 ' + fmtDate(c.mkt) + ' · 2년마다 다시 확인해요. ' : '') + '혜택 알림을 꺼도 출석·결제 같은 서비스 알림은 계속 받아요.' +
+      (guest ? ' 알림은 로그인하고 홈 화면에 Woon을 추가하면 받을 수 있어요(아이폰은 iOS 16.4 이상).' : '') + '</p>' +
+      '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
+    function save(){ store('unsu_notif', n); }
+    function bind(id, key, after){ $(id).onclick = function(){ n[key] = !n[key]; this.setAttribute('aria-checked', String(n[key])); if (after) after(n[key]); save(); }; }
+    bind('ntDaily', 'daily', function(v){ document.querySelector('.nt-time').hidden = !v; });
+    bind('ntAtt', 'att'); bind('ntPet', 'pet'); bind('ntNy', 'ny');
+    $('ntAt').onchange = function(){ n.dailyAt = this.value; save(); toast('매일 ' + this.value + '에 알려 드릴게요'); };
+    bind('ntMkt', 'mkt', function(v){
+      var cs = getConsent() || {}; cs.mkt = v ? Date.now() : 0; if (!v){ cs.night = 0; n.night = false; $('ntNight').setAttribute('aria-checked', 'false'); }
+      store('unsu_consent', cs); toast(fmtDate(Date.now()) + ' 혜택 알림 수신에 ' + (v ? '동의했어요' : '동의를 철회했어요'));
+    });
+    bind('ntNight', 'night', function(v){
+      var cs = getConsent() || {};
+      if (v && !n.mkt){ n.mkt = true; cs.mkt = Date.now(); $('ntMkt').setAttribute('aria-checked', 'true'); }
+      cs.night = v ? Date.now() : 0; store('unsu_consent', cs); toast(fmtDate(Date.now()) + ' 야간 혜택 알림 수신에 ' + (v ? '동의했어요' : '동의를 철회했어요'));
+    });
+  }
+  /* 구매 내역 */
+  function getOrders(){ var o = store('unsu_orders'); return Array.isArray(o) ? o : []; }
+  function openOrdersSheet(){
+    var o = getOrders();
+    openSheet('<h3 id="sheetTitle">구매 내역</h3>' +
+      (o.length ? '<div class="st-group">' + o.map(function(x){
+        return '<div class="od-row"><div><b>' + esc(x.name) + '</b><small>' + fmtDate(x.at) + ' · ' + (x.status === 'refund' ? '환불 완료' : x.opened ? '열람함' : '결제 완료 · 열기 전') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
+      }).join('') + '</div>'
+      : '<div class="empty-box"><b>아직 구매한 리포트가 없어요</b><p class="helper">신년운세 같은 유료 리포트를 사면 여기에 보관돼요. 결제 기록은 전자상거래법에 따라 5년 동안 보관해요.</p></div>') +
+      '<p class="helper" style="margin-top:12px">열기 전 리포트는 결제일로부터 7일 안에 전액 환불돼요. <button class="link-btn" data-doc="refund">환불 정책</button></p>' +
+      '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
+  }
+  /* 고객센터: 공지 · FAQ · 문의 */
+  var NOTICES = [
+    { d:'2026-12-14', t:'Woon 정식 오픈 · 2027 신년운세 기념가 안내' },
+    { d:'2026-12-14', t:'개인정보처리방침·이용약관 시행 안내' }
+  ];
+  var FAQ = [
+    ['태어난 시간을 몰라도 볼 수 있나요?', '네. 시간을 모르면 시주를 빼고 여섯 글자로 풀어요. 정확도는 조금 낮아질 수 있어요.'],
+    ['엽전은 무엇인가요?', '출석, 가입 선물, 운이 선물로 무료로 모으는 포인트예요. 궁합 상세 리포트를 여는 데 쓰고, 현금으로 바꾸거나 환불할 수는 없어요.'],
+    ['유료 리포트를 환불할 수 있나요?', '열기 전이라면 결제일로부터 7일 안에 전액 환불돼요. 연 뒤에는 디지털 콘텐츠 특성상 청약철회가 제한되고, 계산 오류가 있으면 열람과 관계없이 환불해요.'],
+    ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 구매한 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],
+    ['행운 번호로 당첨될 수 있나요?', '행운 번호는 사주로 계산한 재미용 숫자예요. 당첨을 보장하거나 확률을 높여 주지 않아요.'],
+    ['알림이 오지 않아요.', '홈 화면에 Woon을 추가하고 설정 > 알림 설정에서 켜 주세요. 아이폰은 iOS 16.4 이상, 홈 화면에 추가한 경우에만 알림을 받을 수 있어요.']
+  ];
+  function openHelpSheet(){
+    var mail = BIZ.email || '';
+    openSheet('<h3 id="sheetTitle">고객센터</h3>' +
+      '<div class="st-cap">공지사항</div><div class="st-group">' + NOTICES.map(function(n){ return '<div class="od-row"><div><b>' + esc(n.t) + '</b><small>' + n.d.replace(/-/g, '.') + '</small></div></div>'; }).join('') + '</div>' +
+      '<div class="st-cap" style="margin-top:14px">자주 묻는 질문</div><div class="st-group faq">' + FAQ.map(function(f){ return '<details><summary>' + esc(f[0]) + '</summary><p>' + esc(f[1]) + '</p></details>'; }).join('') + '</div>' +
+      '<div class="st-cap" style="margin-top:14px">1:1 문의</div><div class="st-group" style="padding:14px">' +
+        '<p class="helper">결제·환불·오류 문의는 메일로 받아요. 평일 10시~18시, 1영업일 안에 답해 드려요.</p>' +
+        (mail ? '<a class="btn-soft btn-block" style="margin-top:10px;text-decoration:none" href="mailto:' + esc(mail) + '?subject=' + encodeURIComponent('[Woon 문의] ') + '">메일로 문의하기</a>' : '<p class="helper" style="margin-top:8px"><span class="todo">출시 전 입력</span> 고객센터 메일 주소</p>') +
+      '</div>' + bizFootHTML() +
+      '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
+  }
+  /* 앱 정보 · 오픈소스 */
+  function openAboutSheet(){
+    openSheet('<h3 id="sheetTitle">앱 정보</h3><div class="st-group">' +
+      '<div class="od-row"><div><b>버전</b></div><span>Woon v1.0</span></div>' +
+      '<div class="od-row"><div><b>콘텐츠 안내</b><small>사주·운세·행운 번호는 전통 명리 이론을 바탕으로 한 재미·참고용 콘텐츠예요.</small></div></div>' +
+      '<div class="od-row"><div><b>오픈소스 라이선스</b><small>korean-lunar-calendar v0.4.0 (MIT) · GSAP 3 (Standard License) · QRCode.js (MIT) · Pretendard (OFL)</small></div></div>' +
+      '</div>' + bizFootHTML() + '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
+  }
+  /* 회원 탈퇴 */
+  function openWithdrawSheet(){
+    if (isGuest()) return;
+    openSheet('<h3 id="sheetTitle">회원 탈퇴</h3>' +
+      '<ul class="benefits wd"><li>저장한 사주, 출석 기록, 엽전, 쿠폰, 운이 성장 기록이 모두 지워지고 되돌릴 수 없어요.</li>' +
+      '<li>구매한 리포트는 다시 볼 수 없어요. 열기 전 리포트가 있으면 먼저 환불을 요청해 주세요.</li>' +
+      '<li>결제 기록은 전자상거래법에 따라 5년 동안 분리 보관한 뒤 파기해요.</li>' +
+      '<li>같은 계정으로 다시 가입해도 가입 선물 엽전은 다시 드리지 않아요.</li></ul>' +
+      '<button type="button" class="cs-ck" id="wdAgree" aria-pressed="false" style="margin-top:14px"><span class="ck"></span><span>안내를 모두 확인했어요</span></button>' +
+      '<button class="btn-ghost btn-danger btn-block" id="wdGo" disabled style="margin-top:12px">탈퇴하기</button><button class="text-btn" data-close>취소</button>');
+    $('wdAgree').onclick = function(){ var v = this.getAttribute('aria-pressed') !== 'true'; this.setAttribute('aria-pressed', String(v)); $('wdGo').disabled = !v; };
+    $('wdGo').onclick = function(){
+      store('unsu_account', null); store('unsu_auth', null); store('unsu_consent', null); store('unsu_notif', null); clearData();
+      closeSheet(); updateSegCount(); updateTopbar(); go('today'); toast('탈퇴했어요. 그동안 Woon과 함께해 주셔서 고마워요');
+    };
+  }
   function openLoginSheet(reason){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
     openSheet('<h3 id="sheetTitle">로그인하고 기록 지키기</h3>' + (reason ? '<p class="body-text" style="margin:-6px 0 14px">' + reason + '</p>' : '') +
       '<ul class="benefits"><li>' + OK_SVG + '<b>처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요</li><li>' + OK_SVG + '기기를 바꿔도 출석·엽전이 그대로예요</li><li>' + OK_SVG + '저장한 사주와 궁합 리포트가 계정에 보관돼요</li></ul>' +
       '<div class="view" style="gap:8px;margin-top:18px"><button class="btn-social k" data-login="kakao">카카오로 계속하기</button><button class="btn-social g" data-login="google">Google로 계속하기</button>' +
       '<button class="text-btn" data-close>나중에 할게요</button><p class="mock-note">포트폴리오 목업이에요 · 실제 계정과 연결되지 않아요</p></div>');
-    $('sheetBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ doLogin(b.dataset.login, b); }; });
+    $('sheetBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ if (!getConsent() || !getConsent().terms){ openConsentSheet(b.dataset.login); return; } doLogin(b.dataset.login, b); }; });
   }
   function doLogin(provider, btn){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
