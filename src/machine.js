@@ -2,7 +2,7 @@
    LottoMachine.mount(canvas, { reduceMotion }) → { draw(nums, onBall, onDone), reset(), destroy() }
    번호 자체는 앱이 사주로 계산한 값을 그대로 받아 "뽑히는 모습"만 연출한다. */
 var LottoMachine = (function(){
-  var W = 320, H = 350;
+  var W = 320, H = 376;
   var GC = { x:160, y:108, r:88 };            /* 유리 구 */
   var BALL_R = 7.5;
   var COLORS = { y:['#ffd84a', '#d9a300'], b:['#8fdcff', '#3a9fd0'], r:['#ff9a9a', '#d04a4a'], k:['#c9c9c9', '#7d7d7d'], g:['#cdeb6a', '#7ea61f'] };
@@ -36,7 +36,7 @@ var LottoMachine = (function(){
     var queue = [], out = [], sparks = [], rack = [], tStart = 0, cbBall = null, cbDone = null, drawT = 0, nextAt = 0, total = 0;
     var raf = 0, last = 0, dead = false;
 
-    function rackPos(i){ return { x:50 + i * 44, y:322 }; }
+    function rackPos(i){ return { x:38 + i * 48.8, y:343 }; }
 
     function physics(dt){
       var lift = spin;
@@ -123,9 +123,9 @@ var LottoMachine = (function(){
       rr(112, 184, 96, 8, 4); ctx.fillStyle = '#eac56f'; ctx.fill();
 
       /* 공 받침대(랙) */
-      rr(20, 304, 280, 38, 19); ctx.fillStyle = 'rgba(10,8,32,.78)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(214,230,255,.28)'; ctx.stroke();
-      for (var s = 0; s < 6; s++){ var rp = rackPos(s); ctx.beginPath(); ctx.arc(rp.x, rp.y, 16, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(214,230,255,.2)'; ctx.stroke(); }
-      for (var r2 = 0; r2 < rack.length; r2++){ var rb = rack[r2], pp = rackPos(r2); if (!rb) continue; ballSprite(pp.x, pp.y, 15, rb.n, rb.c, true, 0); }
+      rr(8, 308, 304, 62, 31); ctx.fillStyle = 'rgba(10,8,32,.78)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(214,230,255,.28)'; ctx.stroke();
+      for (var s = 0; s < 6; s++){ var rp = rackPos(s); ctx.beginPath(); ctx.arc(rp.x, rp.y, 22.5, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(214,230,255,.2)'; ctx.stroke(); }
+      for (var r2 = 0; r2 < rack.length; r2++){ var rb = rack[r2], pp = rackPos(r2); if (!rb) continue; ballSprite(pp.x, pp.y, 21, rb.n, rb.c, true, 0); }
 
       /* 나오는 공 */
       for (var o = 0; o < out.length; o++){ var ob = out[o]; ballSprite(ob.x, ob.y, ob.r, ob.n, ob.c, true, ob.rot); }
@@ -166,7 +166,7 @@ var LottoMachine = (function(){
         else if (b.t < T1 + T2){ var u2 = (b.t - T1) / T2; b.x = 160 + (b.slot % 2 ? 6 : -6) * u2; b.y = 272 + 26 * easeIn(u2); b.r = 12 + 3 * u2; }
         else if (b.t < T1 + T2 + T3){
           var u3 = easeOut((b.t - T1 - T2) / T3), fx = 160 + (b.slot % 2 ? 6 : -6);
-          b.x = fx + (pos.x - fx) * u3; b.y = 298 + (pos.y - 298) * u3 - Math.sin(u3 * Math.PI) * 6; b.r = 15; b.rot = u3 * (pos.x - fx) / 15;
+          b.x = fx + (pos.x - fx) * u3; b.y = 298 + (pos.y - 298) * u3 - Math.sin(u3 * Math.PI) * 6; b.r = 15 + 6 * u3; b.rot = u3 * (pos.x - fx) / 15;
         } else {
           rack[b.slot] = { n:b.n, c:b.c }; out.splice(i, 1); burst(pos.x, pos.y, 14); flash = .6;
         }
