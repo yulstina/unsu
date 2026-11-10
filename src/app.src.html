@@ -111,7 +111,7 @@
   /* ---------- hero ---------- */
   .hero{display:grid;grid-template-columns:1fr 128px;gap:8px;align-items:center;}
   .hero-copy{display:flex;flex-direction:column;gap:10px;}
-  .hero-title{font-family:var(--font-display);font-size:calc(25px*var(--fs));line-height:1.25;color:var(--text-headline);letter-spacing:-.01em;}
+  .hero-title{white-space:nowrap;overflow:hidden;font-family:var(--font-display);font-size:min(calc(25px*var(--fs)),calc((100vw - 32px) / 13.5));line-height:1.25;color:var(--text-headline);letter-spacing:-.01em;}
   .hero-fig{position:relative;width:128px;height:128px;}
   .hero-fig svg{width:100%;height:100%;animation:float 6s ease-in-out infinite;}
   .hero-fig figcaption{position:absolute;bottom:-4px;left:0;right:0;text-align:center;font-family:var(--font-mono);font-size:calc(11px*var(--fs));letter-spacing:.1em;color:var(--text-helper);}
@@ -743,7 +743,7 @@
   .toast.show{opacity:1;transform:translate(-50%,0);}
 
   @media (max-width:360px){
-    .hero{grid-template-columns:1fr 96px;} .hero-fig{width:96px;height:96px;} .hero-title{font-size:calc(22px*var(--fs));}
+    .hero{grid-template-columns:1fr 96px;} .hero-fig{width:96px;height:96px;} .hero-title{font-size:min(calc(22px*var(--fs)),calc((100vw - 32px) / 13.5));}
     .tile .hj{font-size:calc(25px*var(--fs));} .toggle-row{grid-template-columns:1fr 1fr;}
   }
   @media (prefers-reduced-motion: reduce){
@@ -786,6 +786,13 @@
   .machine-card{align-items:stretch;}
   .mc-canvas{display:block;border-radius:12px;}
   .num-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 2px 0;}
+  .quick-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .quick-row button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:14px;border:1px solid var(--border-hairline);background:rgba(199,211,234,.06);color:#fff;font-size:calc(13.5px*var(--fs));cursor:pointer;}
+  .quick-row button svg{width:22px;height:22px;color:var(--icon-accent);}
+  .quick-row .new{position:relative;}
+  .quick-row .new::after{content:'NEW';position:absolute;top:-6px;right:6px;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--violet);}
+  .ge-list{display:grid;gap:8px;margin-top:8px;}
+  .ge-list .ge-chip{width:100%;}
   .num-title{font-family:var(--font-display);font-weight:500;font-size:calc(21px*var(--fs));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
   .chip-btn{flex:none;border:1px solid var(--border-hairline-strong);background:rgba(124,86,246,.16);color:#dfe6ff;border-radius:999px;padding:8px 14px;font-size:calc(13px*var(--fs));cursor:pointer;}
   .num-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:rgba(199,211,234,.08);}
@@ -843,7 +850,7 @@
     <div class="hero">
       <div class="hero-copy">
         <div class="eyebrow">萬歲曆 · SAJU</div>
-        <h1 class="hero-title">태어난 순간의 하늘을<br>여덟 글자로 읽어요</h1>
+        <h1 class="hero-title">여덟 글자로 읽는 내 하늘</h1>
         <p class="helper">절기·음력·진태양시까지 계산하는 만세력으로 사주 원국과 대운, 올해의 흐름을 풀어 드려요.</p>
       </div>
       <figure class="hero-fig" id="heroFig" style="margin:0"></figure>
@@ -941,7 +948,7 @@
       <div class="flow-header"><button class="icon-back" id="btnZHomeBack" aria-label="오늘로 돌아가기">‹</button><span class="ttl">오늘의 별자리</span></div>
       <div class="hero-copy">
         <div class="eyebrow">TWELVE SIGNS · 12</div>
-        <h1 class="hero-title">오늘, 나의 별자리는<br>어떤 빛일까요</h1>
+        <h1 class="hero-title">오늘 나의 별자리 운세</h1>
       </div>
       <div class="card">
         <div class="field">
@@ -962,7 +969,7 @@
   <section class="view" id="v-gunghap" hidden>
     <div class="hero-copy" style="padding-inline:2px">
       <div class="eyebrow">宮合 · MATCH</div>
-      <h1 class="hero-title">두 사람의 여덟 글자가<br>만나면</h1>
+      <h1 class="hero-title">여덟 글자가 만나면</h1>
       <p class="helper">두 사람의 생년월일만 넣으면 여기서 바로 궁합을 봐요. 저장 목록에서 골라도 돼요.</p>
     </div>
     <div id="ghBody" class="view"></div>
