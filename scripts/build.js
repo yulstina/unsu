@@ -40,6 +40,7 @@ const SITE = 'https://unsu.vercel.app';
 <title>운수 — 내 사주로 여는 오늘의 운세</title>
 <meta name="description" content="만세력으로 푸는 사주 원국·대운, 매일 바뀌는 오늘의 운세, 궁합, 행운 번호까지. 생년월일만 입력하면 30초면 시작해요.">
 <meta name="theme-color" content="#05060f">
+<script>try{var f=parseInt(localStorage.getItem('unsu_fs'),10);if(f>=0&&f<=2)document.documentElement.setAttribute('data-fs',f)}catch(e){}</script>
 <link rel="canonical" href="${SITE}/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="운수 運數">
