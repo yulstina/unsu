@@ -7,7 +7,7 @@
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
-  var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1 };
+  var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1 };
   var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert'];
   function nsk(k){ return GLOBAL_KEYS[k] ? k : NS + k; }
   function store(k, v){
@@ -790,17 +790,59 @@
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
 
+  var SIGNUP_COINS = 1000;
+  function isGuest(){ return !NS && !store('unsu_auth'); }
   function getCoins(){ var c = store('unsu_coin'); return typeof c === 'number' ? c : 0; }
   function renderCoin(bump){
-    $('coinVal').textContent = getCoins();
+    $('coinVal').textContent = isGuest() ? SIGNUP_COINS.toLocaleString() + '닢 받기' : getCoins();
     if (bump && !reduceMotion){ var c = $('coinChip'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
   }
   function addCoins(n, why){
+    if (isGuest()) return;   /* 로그인하지 않으면 엽전을 쌓지 않는다 */
     store('unsu_coin', Math.max(0, getCoins() + n));
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     log.unshift({ t:Date.now(), n:n, why:why }); if (log.length > 30) log.length = 30;
     store('unsu_coinlog', log);
     renderCoin(true);
+    if (n > 0) setTimeout(function(){ coinBurst(n, why); }, 250);
+  }
+
+  /* ---- 엽전 획득 연출: 금빛 엽전이 튀어 올라 상단 엽전 칸으로 날아간다 ---- */
+  var COIN_FX_SVG = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="cfG" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#f0c35b"/><stop offset="1" stop-color="#a8721a"/></radialGradient></defs>' +
+    '<circle cx="32" cy="32" r="30" fill="url(#cfG)" stroke="#8a5a12" stroke-width="2"/><circle cx="32" cy="32" r="24" fill="none" stroke="rgba(120,74,10,.55)" stroke-width="2"/>' +
+    '<rect x="23" y="23" width="18" height="18" rx="2" fill="#1a1245" stroke="#8a5a12" stroke-width="2"/><path d="M14 20a22 22 0 0 1 14-9" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round"/></svg>';
+  function coinBurst(n, why){
+    var big = n >= 100, chip = $('coinChip'), cr = chip && !chip.hidden ? chip.getBoundingClientRect() : { left:window.innerWidth - 120, top:24, width:90, height:36 };
+    var tx = cr.left + cr.width / 2, ty = cr.top + cr.height / 2;
+    var el = document.createElement('div'); el.className = 'cfx' + (big ? ' big' : ''); el.setAttribute('role', 'status');
+    var label = '+' + n.toLocaleString() + ' 엽전';
+    el.innerHTML = (big ? '<div class="cfx-glow"></div><div class="cfx-main">' + COIN_FX_SVG + '</div>' : '') +
+      '<div class="cfx-txt"><b id="cfxNum">' + (reduceMotion ? label : '+0') + '</b><small>' + esc(why || '') + '</small></div>';
+    document.body.appendChild(el);
+    var life = big ? 2600 : 1500;
+    if (reduceMotion){ setTimeout(function(){ el.remove(); }, big ? 1600 : 1200); return; }
+    var W2 = window.innerWidth, H2 = window.innerHeight, ox = W2 / 2, oy = big ? H2 * .42 : H2 * .3;
+    var main = el.querySelector('.cfx-main');
+    if (main) main.animate([{ transform:'translateY(60px) scale(.2) rotateY(0deg)', opacity:0 }, { transform:'translateY(-14px) scale(1.15) rotateY(540deg)', opacity:1, offset:.6 }, { transform:'translateY(0) scale(1) rotateY(720deg)', opacity:1 }], { duration:900, easing:'cubic-bezier(.2,.9,.3,1.1)', fill:'forwards' });
+    /* 숫자 올라가기 */
+    var num = $('cfxNum'), t0 = performance.now(), dur = big ? 1100 : 600;
+    (function tick(now){ var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); num.textContent = '+' + Math.round(n * e).toLocaleString() + ' 엽전'; if (k < 1 && el.isConnected) requestAnimationFrame(tick); })(t0);
+    /* 튀어나온 엽전들이 엽전 칸으로 */
+    var cnt = big ? 16 : 6;
+    for (var i = 0; i < cnt; i++) (function(i){
+      var c = document.createElement('div'); c.className = 'cfx-c'; c.innerHTML = COIN_FX_SVG; el.appendChild(c);
+      var ang = (Math.PI * 2 * i) / cnt + Math.random() * .5, rad = (big ? 90 : 46) + Math.random() * (big ? 90 : 40);
+      var mx = ox + Math.cos(ang) * rad, my = oy + Math.sin(ang) * rad - 30, sz = (big ? 26 : 22) + Math.random() * 8;
+      c.style.width = c.style.height = sz + 'px';
+      var d0 = 250 + i * (big ? 55 : 70);
+      c.animate([
+        { transform:'translate(' + (ox - sz / 2) + 'px,' + (oy - sz / 2) + 'px) scale(.3) rotate(0deg)', opacity:0 },
+        { transform:'translate(' + (mx - sz / 2) + 'px,' + (my - sz / 2) + 'px) scale(1) rotate(' + (180 + Math.random() * 180) + 'deg)', opacity:1, offset:.35 },
+        { transform:'translate(' + (tx - sz / 2) + 'px,' + (ty - sz / 2) + 'px) scale(.35) rotate(540deg)', opacity:.9 }
+      ], { duration:900, delay:d0, easing:'cubic-bezier(.4,0,.2,1)', fill:'both' }).onfinish = function(){ c.remove(); if (chip && !chip.hidden){ chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); } };
+    })(i);
+    setTimeout(function(){ el.classList.add('out'); setTimeout(function(){ el.remove(); }, 350); }, life);
+    if (big) el.onclick = function(){ el.remove(); };
   }
   function adCount(){ var a = store('unsu_ad'); return a && a.d === todayStr() ? a.n : 0; }
   function useAd(){ store('unsu_ad', { d:todayStr(), n:adCount() + 1 }); }
@@ -851,6 +893,7 @@
   $('coinChip').onclick = openCoinSheet;
   $('fsBtn').onclick = openFsSheet;
   function openCoinSheet(){
+    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 상세 궁합 같은 리포트를 여는 데 쓸 수 있어요.'); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
     var h = '<h3 id="sheetTitle">내 엽전 ' + getCoins() + '닢</h3>' +
@@ -917,7 +960,7 @@
       cells += '<span class="as-d' + (done ? ' on' : '') + (isT ? ' t' : '') + (isT && stampToday ? ' stamp' : '') + '"><i>' + (done ? CHECK_SVG : '') + '</i>' + WD[d.getDay()] + '</span>';
     }
     var left = 7 - (st % 7);
-    return '<button class="att-strip" id="btnAtt" aria-label="출석 캘린더 열기"><span class="as-txt"><b>출석 ' + st + '일째</b><small>' + (left === 7 ? '오늘 보너스 +30닢 받았어요' : '연속 보너스까지 ' + left + '일') + '</small></span><span class="as-week">' + cells + '</span><span class="chev">›</span></button>';
+    return '<button class="att-strip" id="btnAtt" aria-label="출석 캘린더 열기"><span class="as-txt"><b>출석 ' + st + '일째</b><small>' + (isGuest() ? '로그인하면 출석마다 엽전을 모아요' : left === 7 ? '오늘 보너스 +30닢 받았어요' : '연속 보너스까지 ' + left + '일') + '</small></span><span class="as-week">' + cells + '</span><span class="chev">›</span></button>';
   }
   function openAttSheet(me, r){
     calOffset = 0;
@@ -1002,24 +1045,65 @@
       '<p class="body-text" style="margin:0">' + ny.line + '</p>' +
       '<button class="btn-primary btn-block" id="btnNY">12개월 운세 미리보기</button></div>';
   }
+  /* 신년운세 구조 (확정)
+     무료: 1장 총운·키워드 + 총점·분야별 점수 + 1~3월 흐름
+     유료: 2~7장 — 월별 12개월 상세, 재물, 직업·학업, 연애·결혼, 건강·조심할 시기, 행운의 색·방향·숫자와 월별 행운 번호 */
+  var NY_CHAPTERS = [
+    { t:'월별 운세 1월~12월', pv:'1월은 작은 결정이 한 해의 방향을 정해요. 2월에는 오래 미룬 연락이 다시 이어지고' },
+    { t:'재물운 · 돈이 들어오는 달', pv:'수입이 늘어나는 달과 지출을 줄여야 하는 달이 뚜렷하게 나뉘어요' },
+    { t:'직업 · 학업운', pv:'올해 이직이나 새 도전을 하기 좋은 시기는 상반기 중에서도' },
+    { t:'연애 · 결혼운', pv:'인연이 가까워지는 달에는 평소 가지 않던 자리에서 만남이' },
+    { t:'건강운과 조심할 시기', pv:'특히 환절기가 겹치는 달에는 무리하지 말고 수면을' },
+    { t:'2027 행운의 색 · 방향 · 숫자', pv:'월마다 달라지는 행운의 숫자와 함께 로또 번호도 한 달 단위로' }
+  ];
+  function nyScores(me, r){
+    var rnd = mulberry32(seedHash(entryISO(me, r) + '|' + entryTKey(r) + '|ny2027'));
+    var pick = function(lo, hi){ return lo + Math.floor(rnd() * (hi - lo + 1)); };
+    var total = pick(68, 94), f = {};
+    ['재물', '연애', '직업', '건강'].forEach(function(k){ f[k] = Math.max(55, Math.min(98, total + pick(-12, 10))); });
+    var months = []; for (var i = 0; i < 12; i++) months.push(pick(48, 98));
+    return { total:total, f:f, months:months };
+  }
+  function nyPurchaseSheet(me){
+    if (isGuest()){
+      openLoginSheet('결제는 로그인 후에 진행돼요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢도 드려요. 결제한 리포트는 계정에 보관돼요.');
+      return;
+    }
+    var asked = !!store('unsu_ny_alert');
+    openSheet('<h3 id="sheetTitle">결제 준비 중이에요</h3>' +
+      '<p class="body-text">토스페이먼츠 결제 연동을 마무리하고 있어요. ' + NY.open + '에 열리면 기념가 ' + NY.early.toLocaleString() + '원으로 바로 결제할 수 있어요.</p>' +
+      '<button class="btn-primary btn-block" id="btnNYAlert2"' + (asked ? ' disabled' : '') + ' style="margin-top:12px">' + (asked ? '오픈 알림을 신청했어요' : '오픈 알림 받기') + '</button>' +
+      '<button class="text-btn" data-close>닫기</button>');
+    if (!asked) $('btnNYAlert2').onclick = function(){ store('unsu_ny_alert', todayStr()); this.disabled = true; this.textContent = '오픈 알림을 신청했어요'; toast('오픈하면 오늘 탭 맨 위에서 알려 드릴게요'); };
+  }
   function openNYSheet(me, r){
-    var ny = newYear(r), asked = !!store('unsu_ny_alert');
-    var toc = ['월별 운세 1월~12월', '재물운 · 돈이 들어오는 달', '직업 · 학업운', '연애 · 결혼운', '건강운과 조심할 시기', '2027 행운의 색 · 방향 · 숫자'];
+    var ny = newYear(r), sc = nyScores(me, r), agree = false;
+    var bars = '', FREE_M = 3;
+    for (var i = 0; i < 12; i++){
+      bars += i < FREE_M
+        ? '<div class="nm on"><i style="height:' + sc.months[i] + '%"></i><span>' + (i + 1) + '월</span><b>' + sc.months[i] + '</b></div>'
+        : '<div class="nm lock"><i style="height:38%"></i><span>' + (i + 1) + '월</span><b>' + LOCK_SVG + '</b></div>';
+    }
+    var fields = Object.keys(sc.f).map(function(k){ return '<div class="nf"><span>' + k + '</span><i><u style="width:' + sc.f[k] + '%"></u></i><b>' + sc.f[k] + '</b></div>'; }).join('');
+    var chap = NY_CHAPTERS.map(function(c, i){ return '<li class="nc"><div class="nc-h"><span>' + (i + 2) + '장 · ' + c.t + '</span>' + LOCK_SVG + '</div><p class="ny-blur" aria-hidden="true">' + c.pv + '</p></li>'; }).join('');
     openSheet('<h3 id="sheetTitle">' + esc(me.name) + '님의 2027 신년운세</h3>' +
       '<p class="helper" style="margin:-4px 0 12px">' + r.pillars.day.name + '(' + r.pillars.day.hanja + ')일주 기준 · 만세력으로 계산</p>' +
+      '<div class="ny-score"><div class="big"><b>' + sc.total + '</b><span>점</span><small>2027년 흐름</small></div><div class="nfs">' + fields + '</div></div>' +
       '<div class="ny-open"><b style="color:#f3dca0">1장 · 2027년 한 해의 흐름 (무료)</b><br>' +
       '2027년 정미년(丁未年)의 천간 丁은 ' + esc(me.name) + '님에게 <b>' + ny.sT + '</b>, 지지 未는 <b>' + ny.bT + '</b>의 기운이에요. ' +
       '12운성으로는 <b>' + ny.stage + '</b>의 자리에 서요. ' + ny.line + '</div>' +
-      '<p class="ny-blur" aria-hidden="true">1월은 작은 결정이 한 해의 방향을 정해요. 2월에는 오래 미룬 연락이 다시 이어지고, 3월에는 돈의 흐름이 눈에 보이기 시작해요.</p>' +
-      '<ul class="ny-toc">' + toc.map(function(t, i){ return '<li class="lock"><span>' + (i + 2) + '장 · ' + t + '</span><small>잠김</small></li>'; }).join('') + '</ul>' +
-      '<div class="ny-price" style="margin-top:16px">출시 기념가 <s>' + NY.price.toLocaleString() + '원</s> <b>' + NY.early.toLocaleString() + '원</b></div>' +
-      '<button class="btn-primary btn-block" id="btnNYAlert" style="margin-top:12px"' + (asked ? ' disabled' : '') + '>' + (asked ? '오픈 알림을 신청했어요' : NY.open + ' 오픈 · 알림 받기') + '</button>' +
+      '<h4 class="ny-h">월별 흐름 <small>1~3월 무료 · 4~12월 잠김</small></h4><div class="ny-months">' + bars + '</div>' +
+      '<p class="helper" style="text-align:center">가장 좋은 달과 조심할 달은 전체 리포트에서 알려 드려요</p>' +
+      '<h4 class="ny-h">전체 리포트에서 열려요 <small>2~7장</small></h4><ul class="ny-chaps">' + chap + '</ul>' +
+      '<div class="ny-buy"><div class="ny-price">출시 기념가 <s>' + NY.price.toLocaleString() + '원</s> <b>' + NY.early.toLocaleString() + '원</b></div>' +
+      '<ul class="ny-inc"><li>' + OK_SVG + '12개월 월별 상세 풀이</li><li>' + OK_SVG + '재물·직업·연애·건강 분야별 풀이</li><li>' + OK_SVG + '월별 행운 숫자와 행운 번호</li><li>' + OK_SVG + '결과 이미지 카드로 저장·공유</li><li>' + OK_SVG + '계정에 보관, 언제든 다시 보기</li></ul>' +
+      '<button type="button" class="unk-btn" id="nyAgree" aria-pressed="false"><span>디지털 콘텐츠라 열람 후에는 청약철회가 제한되는 것에 동의해요</span><span class="ck"></span></button>' +
+      '<button class="btn-primary btn-block" id="btnNYBuy" style="margin-top:10px" disabled>' + NY.early.toLocaleString() + '원으로 전체 보기</button>' +
+      '<p class="helper" style="text-align:center">' + (isGuest() ? '결제할 때만 로그인해요 · 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢' : '로그인된 계정에 보관돼요') + '</p></div>' +
       '<button class="text-btn" data-close>나중에 볼게요</button>' +
-      '<p class="legal-note">리포트를 연 뒤에는 디지털 콘텐츠 특성상 청약철회가 제한돼요. 열기 전이라면 결제일로부터 7일 안에 환불할 수 있어요. <button class="text-btn" data-doc="refund" style="font-size:inherit;padding:0;text-decoration:underline">환불 정책</button></p>');
-    if (!asked) $('btnNYAlert').onclick = function(){
-      store('unsu_ny_alert', todayStr()); this.disabled = true; this.textContent = '오픈 알림을 신청했어요';
-      toast('오픈하면 오늘 탭 맨 위에서 바로 알려 드릴게요');
-    };
+      '<p class="legal-note">열기 전이라면 결제일로부터 7일 안에 환불할 수 있어요. <button class="text-btn" data-doc="refund" style="font-size:inherit;padding:0;text-decoration:underline">환불 정책 보기</button></p>');
+    $('nyAgree').onclick = function(){ agree = !agree; this.setAttribute('aria-pressed', String(agree)); this.querySelector('.ck').innerHTML = agree ? OK_SVG : ''; $('btnNYBuy').disabled = !agree; };
+    $('btnNYBuy').onclick = function(){ nyPurchaseSheet(me); };
   }
 
   /* =========================================================
@@ -1072,7 +1156,7 @@
     if (r.error){ body.innerHTML = '<div class="card"><p class="body-text">대표 사주를 계산할 수 없어요. 사주 목록에서 다른 사주를 대표로 설정해 주세요.</p></div>'; return; }
     var now = new Date();
     var att = attend(); justStamped = att.newly;
-    if (att.newly){ var wmsg = pendingWelcome ? '환영해요! 환영 선물 30닢 + 첫 출석 10닢을 받았어요' : att.bonus ? att.streak + '일 연속 출석! 엽전 +40' : '출석 완료 · 엽전 +10'; setTimeout(function(){ toast(wmsg); }, 600); }
+    if (att.newly && !isGuest()){ var wmsg = pendingWelcome ? '환영해요! 첫 출석 10닢을 받았어요' : att.bonus ? att.streak + '일 연속 출석! 엽전 +40' : '출석 완료 · 엽전 +10'; setTimeout(function(){ toast(wmsg); }, 600); }
     pendingWelcome = false;
     var f = todayLuck(me, r).f, P = f.pillars;
     var iso = entryISO(me, r), tKey = entryTKey(r);
@@ -1424,9 +1508,9 @@
       h += '<div class="card locked"><div class="sec-head"><h2 class="sec-title">상세 궁합 리포트</h2><span class="sec-meta">잠김</span></div>' +
         '<ul class="lock-list">' + ['두 사람의 기질 비교','관계에서 빛나는 점','부딪히기 쉬운 점과 대화 팁','올해 두 사람의 흐름','함께하면 좋은 활동'].map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
-        '<div class="lock-cta"><button class="btn-primary" id="btnGhCoin"' + (coins < GH_COST ? ' disabled' : '') + '>' + COIN_SVG + '엽전 ' + GH_COST + '닢으로 열기 <span style="opacity:.75;font-size:calc(12.5px*var(--fs))">(보유 ' + coins + ')</span></button>' +
+        '<div class="lock-cta"><button class="btn-primary" id="btnGhCoin"' + (!isGuest() && coins < GH_COST ? ' disabled' : '') + '>' + (isGuest() ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : COIN_SVG + '엽전 ' + GH_COST + '닢으로 열기 <span style="opacity:.75;font-size:calc(12.5px*var(--fs))">(보유 ' + coins + ')</span>') + '</button>' +
         '<button class="btn-soft" id="btnGhAd">광고 보고 바로 열기</button>' +
-        '<p class="helper" style="text-align:center">' + (coins < GH_COST ? '엽전이 ' + (GH_COST - coins) + '닢 부족해요. 매일 출석하면 10닢씩 모여요.' : '한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.') + '</p></div></div>';
+        '<p class="helper" style="text-align:center">' + (isGuest() ? '로그인은 이 리포트를 열 때만 필요해요. 광고를 보고 바로 열 수도 있어요.' : coins < GH_COST ? '엽전이 ' + (GH_COST - coins) + '닢 부족해요. 매일 출석하면 10닢씩 모여요.' : '한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.') + '</p></div></div>';
     } else {
       var ia = ILGAN[ra.pillars.day.stem], ib = ILGAN[rb.pillars.day.stem];
       var extraClash = m.dRel === 'chung' ? ' 일지가 충을 이뤄 생활 리듬이 엇갈리기 쉬우니 함께하는 시간과 혼자 쉬는 시간을 분명히 나눠 두세요.' : m.dRel === 'wonjin' ? ' 일지가 원진이라 작은 말에 서운해지기 쉬워요. 서운함은 그날 바로 가볍게 말하는 게 좋아요.' : '';
@@ -1454,7 +1538,7 @@
     };
     if ($('btnGhInvite')) $('btnGhInvite').onclick = openInvite;
     if (!open){
-      $('btnGhCoin').onclick = function(){ if (getCoins() < GH_COST) return; addCoins(-GH_COST, '상세 궁합 (' + A.name + '·' + B.name + ')'); unlock(); };
+      $('btnGhCoin').onclick = function(){ if (isGuest()){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 상세 궁합은 ' + GH_COST + '닢으로 열 수 있어요.'); return; } if (getCoins() < GH_COST) return; addCoins(-GH_COST, '상세 궁합 (' + A.name + '·' + B.name + ')'); unlock(); };
       $('btnGhAd').onclick = function(){ playAd(unlock); };
     }
   }
@@ -1523,7 +1607,7 @@
       toast('내 사주로 설정했어요. 오늘 탭에서 운세를 확인해 보세요');
     };
   }
-  function welcomeCoins(){ if (!store('unsu_welcomed')){ store('unsu_welcomed', 1); addCoins(30, '가입 환영 선물'); pendingWelcome = true; } }
+  function welcomeCoins(){ if (!store('unsu_welcomed')){ store('unsu_welcomed', 1); pendingWelcome = true; } }
   function prepOtherForm(){
     $('btnReset').onclick();
     show('input');
@@ -1842,7 +1926,7 @@
   function openLoginSheet(reason){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
     openSheet('<h3 id="sheetTitle">로그인하고 기록 지키기</h3>' + (reason ? '<p class="body-text" style="margin:-6px 0 14px">' + reason + '</p>' : '') +
-      '<ul class="benefits"><li>' + OK_SVG + '기기를 바꿔도 출석·엽전이 그대로예요</li><li>' + OK_SVG + '저장한 사주와 궁합 리포트가 계정에 보관돼요</li></ul>' +
+      '<ul class="benefits"><li>' + OK_SVG + '<b>처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요</li><li>' + OK_SVG + '기기를 바꿔도 출석·엽전이 그대로예요</li><li>' + OK_SVG + '저장한 사주와 궁합 리포트가 계정에 보관돼요</li></ul>' +
       '<div class="view" style="gap:8px;margin-top:18px"><button class="btn-social k" data-login="kakao">카카오로 계속하기</button><button class="btn-social g" data-login="google">Google로 계속하기</button>' +
       '<button class="text-btn" data-close>나중에 할게요</button><p class="mock-note">포트폴리오 목업이에요 · 실제 계정과 연결되지 않아요</p></div>');
     $('sheetBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ doLogin(b.dataset.login, b); }; });
@@ -1858,8 +1942,10 @@
       }
       var me = getMe();
       store('unsu_auth', { provider:provider, nick:me ? me.name : (acc && acc.nick) || '운수 사용자', at:Date.now() });
+      var gift = !store('unsu_gift');
+      if (gift){ store('unsu_gift', 1); addCoins(SIGNUP_COINS, '가입 환영 선물'); }
       writeAccount(); closeSheet(); updateSegCount(); updateTopbar();
-      toast(restored ? '다시 오셨네요! 계정의 기록을 불러왔어요' : PROV[provider] + ' 계정으로 로그인했어요 · 기록이 동기화돼요');
+      toast(gift ? PROV[provider] + ' 계정으로 로그인했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : restored ? '다시 오셨네요! 계정의 기록을 불러왔어요' : PROV[provider] + ' 계정으로 로그인했어요 · 기록이 동기화돼요');
       if (currentView === 'my') renderMy(); else go('today');
     }, 900);
   }
