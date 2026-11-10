@@ -8,7 +8,7 @@
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
   var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1 };
-  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert'];
+  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons'];
   function nsk(k){ return GLOBAL_KEYS[k] ? k : NS + k; }
   function store(k, v){
     var key = nsk(k);
@@ -193,6 +193,8 @@
     if (typeof updateTopbar === 'function') updateTopbar();
     if (view === 'input' || view === 'list' || view === 'result') lastSajuView = view;
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === currentTab); b.setAttribute('aria-current', b.dataset.tab === currentTab ? 'page' : 'false'); });
+    var ti = ['today','saju','gunghap','num'].indexOf(currentTab), lens = document.querySelector('.tab-lens');
+    if (lens){ lens.style.opacity = ti < 0 ? '0' : '1'; if (ti >= 0) lens.style.setProperty('--ti', ti); }
     var segKey = view === 'result' ? 'mine' : view;
     document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });
     window.scrollTo(0, 0);
@@ -209,6 +211,18 @@
     else if (t === 'gunghap'){ renderGunghap(); show('gunghap'); }
     else if (t === 'num'){ renderNumToday(); show('fill'); }
   }
+  /* 스크롤: 상단 바 유리 전환 + 탭바 최소화 (iOS 스타일) */
+  (function(){
+    var lastY = 0, ticking = false;
+    function onScroll(){
+      var y = window.scrollY || 0;
+      document.body.classList.toggle('scrolled', y > 8);
+      if (y > 140 && y > lastY + 6) document.body.classList.add('tb-min');
+      else if (y < lastY - 6 || y < 140) document.body.classList.remove('tb-min');
+      lastY = y; ticking = false;
+    }
+    window.addEventListener('scroll', function(){ if (!ticking){ ticking = true; requestAnimationFrame(onScroll); } }, { passive:true });
+  })();
   document.querySelector('.tabbar').addEventListener('click', function(e){ var b = e.target.closest('.tab'); if (b) go(b.dataset.tab); });
   document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ if (b.dataset.sub === 'mine'){ openMine(); return; } if (b.dataset.sub === 'list') renderList(); show(b.dataset.sub); }); });
   function openMine(){ var me = getMe(); if (!me){ startOnboarding('new'); return; } var r = compute(me); if (r.error){ show('input'); return; } openResult(me, r, true); }
@@ -431,6 +445,7 @@
   }
 
   function openResult(entry, r, asTab){
+    setTimeout(function(){ bond('saju'); }, 900);
     if (currentView !== 'result') prevView = currentView;
     cur = { entry:entry, r:r, asTab:!!asTab };
     $('resultSeg').hidden = !asTab; $('resultHead').hidden = !!asTab;
@@ -693,6 +708,7 @@
   (function(){ var v = store('unsu_zbirth'); if (v){ $('zBirth').value = v; var b = parseBirth(v); if (b){ myZ = getZodiac(b.m, b.d).name; renderZGrid(); } } })();
 
   function openZodiac(z, iso){
+    setTimeout(function(){ bond('zodiac'); }, 900);
     var doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
     var seed = iso ? iso + '|unknown|' + todayStr() : z.name + '|' + todayStr();
     var nums = drawSixFromSeed(seed);
@@ -1071,13 +1087,16 @@
       return;
     }
     var asked = !!store('unsu_ny_alert');
+    var cp = getCoupons().filter(function(c){ return c.t === 'ny1000'; })[0];
     openSheet('<h3 id="sheetTitle">결제 준비 중이에요</h3>' +
       '<p class="body-text">토스페이먼츠 결제 연동을 마무리하고 있어요. ' + NY.open + '에 열리면 기념가 ' + NY.early.toLocaleString() + '원으로 바로 결제할 수 있어요.</p>' +
+      (cp ? '<div class="pet-ticket sm" style="margin-top:12px"><small>COUPON 적용 예정</small><b>' + esc(cp.name) + '</b><span>기념가 ' + NY.early.toLocaleString() + '원 → ' + (NY.early - cp.amt).toLocaleString() + '원</span></div>' : '') +
       '<button class="btn-primary btn-block" id="btnNYAlert2"' + (asked ? ' disabled' : '') + ' style="margin-top:12px">' + (asked ? '오픈 알림을 신청했어요' : '오픈 알림 받기') + '</button>' +
       '<button class="text-btn" data-close>닫기</button>');
     if (!asked) $('btnNYAlert2').onclick = function(){ store('unsu_ny_alert', todayStr()); this.disabled = true; this.textContent = '오픈 알림을 신청했어요'; toast('오픈하면 오늘 탭 맨 위에서 알려 드릴게요'); };
   }
   function openNYSheet(me, r){
+    setTimeout(function(){ bond('ny'); }, 900);
     var ny = newYear(r), sc = nyScores(me, r), agree = false;
     var bars = '', FREE_M = 3;
     for (var i = 0; i < 12; i++){
@@ -1150,6 +1169,142 @@
     star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>'
   };
 
+  /* =========================================================
+     키우는 캐릭터 '운이' — 콘텐츠를 볼 때마다 교감이 오르고, 가득 차면 쿠폰
+     · 콘텐츠마다 하루 1번만 오름 (도배 방지 → 2~3일에 한 번 가득 참)
+     · 게이지는 줄지 않음 (안 들어와도 벌 없음)
+     · 쿠폰은 로그인해야 받음 (가입 전환), 받으면 게이지 0 + 한 단계 성장
+     ========================================================= */
+  var PET_PTS = { today:{ n:10, label:'오늘의 운세', go:'today' }, saju:{ n:15, label:'사주 풀이', go:'saju' }, gunghap:{ n:15, label:'궁합', go:'gunghap' },
+    zodiac:{ n:10, label:'별자리 운세', go:'zodiac' }, num:{ n:10, label:'행운 번호 추첨', go:'num' }, ny:{ n:15, label:'신년운세 미리보기', go:'ny' } };
+  var PET_STAGE = ['새싹 별', '아기 별', '꼬마 별', '반짝 별', '보름달 별'];
+  var COUPON_NY = { t:'ny1000', name:'신년운세 1,000원 할인', amt:1000, days:7 };
+  function getPet(){ var p = store('unsu_pet'); return p && typeof p === 'object' ? p : { g:0, lv:1, day:'', done:{}, n:0 }; }
+  function savePet(p){ store('unsu_pet', p); }
+  function petMood(g){ return g >= 100 ? 'love' : g >= 70 ? 'happy' : g >= 30 ? 'calm' : 'sleepy'; }
+  function petStage(lv){ return PET_STAGE[Math.min(lv, PET_STAGE.length) - 1]; }
+  function petDone(p){ return p.day === todayStr() ? (p.done || {}) : {}; }
+  function getCoupons(){ var c = store('unsu_coupons'); return Array.isArray(c) ? c.filter(function(x){ return !x.used && x.exp > Date.now(); }) : []; }
+  var petUid = 0;
+  function petSVG(mood, lv, cls){
+    var u = mood + (++petUid);
+    var eyes, mouth, extra = '', blush = mood === 'love' ? .7 : mood === 'happy' ? .45 : .28;
+    if (mood === 'sleepy'){
+      eyes = '<path d="M40 66q6 5 12 0M68 66q6 5 12 0" fill="none" stroke="#221a4a" stroke-width="3" stroke-linecap="round"/>';
+      mouth = '<ellipse cx="60" cy="79" rx="2.4" ry="2" fill="#2b1d55"/>';
+      extra = '<g class="pz" fill="#d8ecf8" font-family="sans-serif" font-weight="700"><text x="88" y="38" font-size="11">z</text><text x="97" y="27" font-size="8">z</text></g>';
+    } else if (mood === 'love'){
+      eyes = '<path d="M40 68q6 -8 12 0M68 68q6 -8 12 0" fill="none" stroke="#221a4a" stroke-width="3.2" stroke-linecap="round"/>';
+      mouth = '<path d="M51 76q9 11 18 0z" fill="#3a1d5c"/><path d="M55.5 80.5q4.5 3.5 9 0q-4.5 -2 -9 0z" fill="#ff8fb1"/>';
+      extra = '<g class="ph"><path d="M20 40c-3-5 4-8 6-3c2-5 9-2 6 3l-6 6z" fill="#ff8fb1"/><path d="M92 30c-2.4-4 3.2-6.4 4.8-2.4c1.6-4 7.2-1.6 4.8 2.4l-4.8 4.8z" fill="#ffb3c8"/><path d="M98 58c-2-3.4 2.7-5.4 4-2c1.4-3.4 6-1.4 4 2l-4 4z" fill="#ff8fb1"/></g>';
+    } else {
+      var r = mood === 'happy' ? 4.8 : 4;
+      eyes = '<g class="pe"><circle cx="46" cy="67" r="' + r + '" fill="#221a4a"/><circle cx="74" cy="67" r="' + r + '" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/></g>';
+      mouth = mood === 'happy' ? '<path d="M52 77q8 9 16 0z" fill="#3a1d5c"/>' : '<path d="M54 77q6 5 12 0" fill="none" stroke="#2b1d55" stroke-width="2.6" stroke-linecap="round"/>';
+    }
+    var acc = '';
+    if (lv >= 4) acc += '<ellipse cx="60" cy="27" rx="22" ry="5" fill="none" stroke="#f3dca0" stroke-width="2" opacity=".75"/>';
+    if (lv >= 5) acc += '<path d="M47 36l4-9 5 6 4-9 4 9 5-6 4 9z" fill="#f3dca0"/>';
+    var antGlow = lv >= 2 ? '<circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/>' : '';
+    var cheekStar = lv >= 3 ? '<path d="M30 84l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4zM90 84l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4z" fill="#fff4cc"/>' : '';
+    return '<svg class="pet-svg ' + (cls || '') + ' m-' + mood + '" viewBox="0 0 120 120" aria-hidden="true"><defs>' +
+      '<radialGradient id="pb' + u + '" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient>' +
+      '<radialGradient id="pg' + u + '" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="#8f74ff" stop-opacity=".55"/><stop offset="1" stop-color="#8f74ff" stop-opacity="0"/></radialGradient></defs>' +
+      '<circle cx="60" cy="66" r="56" fill="url(#pg' + u + ')"/>' + acc +
+      '<g class="pbody"><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/>' + antGlow +
+      '<path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/>' +
+      '<ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/>' +
+      '<path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#pb' + u + ')"/>' +
+      '<ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/>' +
+      '<ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity="' + blush + '"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity="' + blush + '"/>' +
+      cheekStar + eyes + mouth + '</g>' + extra + '</svg>';
+  }
+  var PET_SAY = {
+    sleepy:['아직 잠이 덜 깼어요… 오늘 운세 같이 볼래요?', '같이 하나만 보면 눈이 번쩍 뜨일 거예요'],
+    calm:['조금씩 친해지고 있어요', '오늘은 어떤 이야기를 볼까요?'],
+    happy:['거의 다 왔어요! 하나만 더 같이 봐요', '두근두근, 선물을 준비하고 있어요'],
+    love:['고마워요! 선물을 준비했어요', '우리 많이 친해졌죠? 쿠폰 받아 가세요']
+  };
+  function petCardHTML(){
+    var p = getPet(), mood = petMood(p.g), done = petDone(p), today = 0;
+    Object.keys(done).forEach(function(k){ today += PET_PTS[k] ? PET_PTS[k].n : 0; });
+    var say = PET_SAY[mood][(new Date().getDate() + p.lv) % 2];
+    var h = '<div class="card pet-card m-' + mood + '" id="petCard"><div class="pet-row">' +
+      '<button type="button" class="pet-fig" id="petFig" aria-label="운이 쓰다듬기">' + petSVG(mood, p.lv) + '</button>' +
+      '<div class="pet-info"><div class="pet-name">운이<small>Lv.' + p.lv + ' · ' + petStage(p.lv) + '</small></div>' +
+      '<p class="pet-say">' + say + '</p>' +
+      '<div class="pet-gauge" role="progressbar" aria-label="교감" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p.g + '"><i style="width:' + p.g + '%"></i></div>' +
+      '<div class="pet-meta"><span>교감 <b>' + p.g + '</b>/100</span><span>' + (today ? '오늘 +' + today : '오늘 아직 0') + '</span></div></div></div>';
+    if (p.g >= 100){
+      h += '<button class="btn-primary btn-block pet-claim" id="btnPetClaim">' + TICKET_SVG + '운이의 선물 받기</button>';
+    } else {
+      var todo = Object.keys(PET_PTS).filter(function(k){ return !done[k]; });
+      if (todo.length) h += '<div class="pet-todo"><span class="helper">함께 보면 교감이 올라요</span><div class="pet-chips">' +
+        todo.map(function(k){ return '<button type="button" data-pet="' + k + '">' + PET_PTS[k].label + ' <b>+' + PET_PTS[k].n + '</b></button>'; }).join('') + '</div></div>';
+      else h += '<p class="helper" style="text-align:center">오늘 함께할 건 다 했어요. 내일 또 만나요!</p>';
+    }
+    return h + '</div>';
+  }
+  var TICKET_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2"/></svg>';
+  function bindPetCard(me, r){
+    if (!$('petCard')) return;
+    $('petFig').onclick = function(){
+      var s = this.querySelector('svg'); s.classList.remove('poke'); void s.getBoundingClientRect(); s.classList.add('poke');
+      var lines = PET_SAY[petMood(getPet().g)]; this.parentNode.querySelector('.pet-say').textContent = lines[Math.floor(Math.random() * lines.length)];
+    };
+    document.querySelectorAll('[data-pet]').forEach(function(b){ b.onclick = function(){
+      var k = b.dataset.pet;
+      if (k === 'today'){ bond('today'); return; }
+      if (k === 'zodiac'){ $('btnQZ').click(); return; }
+      if (k === 'ny'){ openNYSheet(me, r); return; }
+      go(PET_PTS[k].go); window.scrollTo(0, 0);
+    }; });
+    if ($('btnPetClaim')) $('btnPetClaim').onclick = claimPet;
+  }
+  function refreshPetCard(){
+    var c = $('petCard'); if (!c || currentView !== 'today') return;
+    var w = document.createElement('div'); w.innerHTML = petCardHTML(); c.replaceWith(w.firstChild);
+    var me = getMe(); if (me) bindPetCard(me, compute(me));
+  }
+  function bond(kind){
+    var me = getMe(); if (!me || !PET_PTS[kind]) return;
+    var p = getPet(), t = todayStr();
+    if (p.day !== t){ p.day = t; p.done = {}; }
+    if (p.done[kind] || p.g >= 100) return;
+    var before = petMood(p.g);
+    p.done[kind] = 1; p.g = Math.min(100, p.g + PET_PTS[kind].n); savePet(p);
+    var mood = petMood(p.g);
+    petPop(mood, p.lv, p.g >= 100 ? '교감이 가득 찼어요! 오늘 탭에서 선물을 받아요' : '+' + PET_PTS[kind].n + ' 교감 · ' + PET_PTS[kind].label, mood !== before);
+    refreshPetCard();
+  }
+  /* 다이내믹 아일랜드처럼 위에서 내려오는 알림 */
+  function petPop(mood, lv, text, changed){
+    var old = document.querySelector('.pet-pop'); if (old) old.remove();
+    var el = document.createElement('div'); el.className = 'pet-pop' + (changed ? ' changed' : ''); el.setAttribute('role', 'status');
+    el.innerHTML = petSVG(mood, lv, 'mini') + '<span>' + text + '</span>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('in'); });
+    setTimeout(function(){ el.classList.remove('in'); setTimeout(function(){ el.remove(); }, 450); }, 2600);
+  }
+  function claimPet(){
+    var p = getPet(); if (p.g < 100) return;
+    if (isGuest()){ openLoginSheet('운이의 선물은 로그인하면 받을 수 있어요. 교감 게이지는 그대로 남아 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢도 드려요.'); return; }
+    var hasNY = getCoupons().some(function(c){ return c.t === COUPON_NY.t; }), gift;
+    if (!hasNY){
+      var all = store('unsu_coupons'); all = Array.isArray(all) ? all : [];
+      all.unshift({ id:'c' + Date.now().toString(36), t:COUPON_NY.t, name:COUPON_NY.name, amt:COUPON_NY.amt, exp:Date.now() + COUPON_NY.days * 864e5, used:false });
+      store('unsu_coupons', all);
+      gift = '<div class="pet-ticket"><small>COUPON</small><b>' + COUPON_NY.name + '</b><span>받은 날부터 ' + COUPON_NY.days + '일 동안 쓸 수 있어요 · 내 정보에서 확인</span></div>';
+    } else {
+      gift = '<div class="pet-ticket gold"><small>GIFT</small><b>엽전 100닢</b><span>할인 쿠폰은 한 장만 가질 수 있어서 엽전으로 드려요</span></div>';
+    }
+    p.g = 0; p.lv += 1; p.n = (p.n || 0) + 1; savePet(p);
+    openSheet('<div class="pet-levelup">' + petSVG('love', p.lv, 'big') + '<h3 id="sheetTitle">운이가 ' + petStage(p.lv) + '(으)로 자랐어요</h3>' +
+      '<p class="helper">Lv.' + p.lv + ' · 교감 게이지는 처음부터 다시 채워요</p>' + gift + '</div>' +
+      '<button class="btn-primary btn-block" data-close>고마워, 운이야</button>');
+    if (hasNY) setTimeout(function(){ addCoins(100, '운이의 선물'); }, 350);
+    refreshPetCard(); if (currentView === 'today') renderToday();
+  }
   function renderToday(){
     var body = $('todayBody'), me = getMe();
     if (!me){ renderWelcome(); return; }
@@ -1174,6 +1329,7 @@
     h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
+    h += petCardHTML();
     h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
       '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>행운의 팁<span class="chev">›</span></button></div>';
@@ -1198,6 +1354,8 @@
     drawOn($('todayFig'));
     $('btnAtt').onclick = function(){ openAttSheet(me, r); };
     bindDemoBar();
+    bindPetCard(me, r);
+    setTimeout(function(){ bond('today'); }, 1400);
     if ($('btnNudgeLogin')){
       $('btnNudgeLogin').onclick = function(){ openLoginSheet('연속 ' + streakOf(getAtt()) + '일 출석 기록과 엽전 ' + getCoins() + '닢이 지금은 이 기기에만 있어요.'); };
       $('btnNudgeClose').onclick = function(){ store('unsu_nudge', todayStr()); renderToday(); };
@@ -1316,6 +1474,7 @@
         box.innerHTML = nums.slice().sort(function(a, b){ return a - b; }).map(function(n){ return '<div class="ball lt ' + ltColor(n) + '">' + n + '</div>'; }).join('');
         box.hidden = false; btn.disabled = false; btn.textContent = '다시 뽑기';
         toast((kind === 'today' ? '오늘의' : '평생') + ' 행운 번호가 나왔어요');
+        bond('num');
       });
     };
   }
@@ -1490,6 +1649,7 @@
       return;
     }
     var m = DAILY.match(A, ra, B, rb);
+    setTimeout(function(){ bond('gunghap'); }, 900);
     var nm = function(t){ return t.replace(/A/g, esc(A.name)).replace(/B/g, esc(B.name)); };
     h += '<div class="poster"><div class="poster-frame">' +
       '<div class="poster-corner l">宮合<br>MATCH</div><div class="poster-corner r">' + ra.pillars.day.hanja + ' × ' + rb.pillars.day.hanja + '</div>' +
@@ -1868,6 +2028,10 @@
       '<button id="stAtt"><b>' + streakOf(att) + '일</b><span>연속 출석</span></button>' +
       '<button id="stList"><b>' + getList().length + '명</b><span>저장한 사주</span></button>' +
       '<button id="stGh"><b>' + getUnlocks().length + '개</b><span>궁합 리포트</span></button></div>';
+    var cps = getCoupons(), pt = getPet();
+    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">쿠폰함</h2><span class="sec-meta">' + cps.length + '장</span></div>' +
+      (cps.length ? cps.map(function(c){ var d = new Date(c.exp); return '<div class="pet-ticket sm"><small>COUPON</small><b>' + esc(c.name) + '</b><span>' + (d.getMonth()+1) + '월 ' + d.getDate() + '일까지 · 신년운세 결제 때 자동 적용</span></div>'; }).join('')
+        : '<div class="pet-mini-row">' + petSVG(petMood(pt.g), pt.lv, 'mini') + '<p class="helper">운이와 교감 ' + pt.g + '/100 · 가득 차면 신년운세 할인 쿠폰을 받아요</p></div>') + '</div>';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">계정</h2></div>';
     if (NS){
       h += '<p class="body-text">예시 모드에서는 로그인할 수 없어요. 내 사주로 시작하면 기록을 계정에 보관할 수 있어요.</p><button class="btn-primary btn-block" id="btnMyStart">내 사주로 시작하기</button>';
