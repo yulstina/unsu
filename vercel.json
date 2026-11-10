@@ -38,6 +38,10 @@
   "functions": {
     "api/lotto.js": {
       "maxDuration": 10
+    },
+    "api/dream.js": {
+      "maxDuration": 30,
+      "includeFiles": "src/dream.js"
     }
   }
 }

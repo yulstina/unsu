@@ -1092,13 +1092,69 @@
   .faq details[open] summary::after{content:'−';}
   .faq details p{font-size:calc(13.5px*var(--fs));color:var(--text-muted);line-height:1.7;padding-bottom:14px;}
   .benefits.wd li{display:list-item;margin-left:18px;list-style:disc;}
+
+  /* ---- 꿈 해몽 번호 ---- */
+  .dm-card{display:grid;gap:8px;}
+  .dm-lab{font-size:calc(15px*var(--fs));color:#fff;font-weight:600;}
+  .dm-text{min-height:150px;resize:vertical;line-height:1.7;font-size:calc(15px*var(--fs));padding:14px 16px;border-radius:16px;font-family:inherit;}
+  .dm-meta{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;} .dm-meta .helper{margin:0;min-width:0;}
+  .dm-count{flex:none;font-size:calc(12px*var(--fs));color:var(--text-helper);font-variant-numeric:tabular-nums;}
+  .dm-card .field-hint:empty{display:none;} .dm-card .field-hint{color:#f3b4b4;margin:0;}
+  .dm-warn{border-radius:18px;padding:16px 16px 14px;background:linear-gradient(160deg,rgba(243,180,180,.10),rgba(138,124,240,.10));box-shadow:inset 0 0 0 1px rgba(243,180,180,.22);}
+  .dm-warn>b{display:flex;align-items:center;gap:6px;color:#f6d0c4;font-size:calc(14.5px*var(--fs));margin-bottom:8px;} .dm-warn>b svg{width:16px;height:16px;flex:none;}
+  .dm-warn ul{margin:0;padding-left:18px;display:grid;gap:7px;} .dm-warn li{font-size:calc(13px*var(--fs));line-height:1.65;color:var(--text-body);} .dm-warn strong{color:#fff;font-weight:600;}
+  .dm-pay{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:calc(13.5px*var(--fs));color:var(--text-body);padding:0 4px;}
+  .dm-pay>span{display:inline-flex;align-items:center;gap:6px;} .dm-pay svg{width:16px;height:16px;color:#f0c35b;} .dm-pay b{color:#fff;}
+  .dm-pay .pet-ticket.sm{margin:0;width:100%;}
+  #btnDmGo{display:flex;align-items:center;justify-content:center;gap:8px;} #btnDmGo svg{width:18px;height:18px;}
+  .dm-past{display:grid;gap:8px;} .dm-past button{display:grid;gap:2px;text-align:left;padding:12px 14px;border-radius:14px;border:none;background:rgba(214,208,236,.06);color:#fff;cursor:pointer;font:inherit;}
+  .dm-past b{font-size:calc(14.5px*var(--fs));font-weight:600;} .dm-past span{font-size:calc(12.5px*var(--fs));color:var(--text-helper);font-variant-numeric:tabular-nums;}
+  .dm-loading{display:grid;justify-items:center;text-align:center;gap:8px;padding:34px 20px;} .dm-loading b{color:#fff;font-size:calc(16px*var(--fs));}
+  .dm-loading .pet-svg,.dm-loading svg:first-child{width:84px;height:84px;}
+  .dm-dots{display:flex;gap:6px;margin-top:6px;} .dm-dots i{width:7px;height:7px;border-radius:50%;background:var(--violet);animation:dmDot 1.2s infinite ease-in-out;} .dm-dots i:nth-child(2){animation-delay:.15s;} .dm-dots i:nth-child(3){animation-delay:.3s;}
+  @keyframes dmDot{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:1;transform:translateY(-4px);}}
+  .dm-res{display:grid;gap:4px;}
+  .dm-tag{display:flex;justify-content:space-between;align-items:center;} .dm-tag .chip{font-size:calc(12px*var(--fs));padding:4px 10px;border-radius:999px;background:rgba(138,124,240,.2);color:#d9d2ff;} .dm-tag small{color:var(--text-helper);font-size:calc(12px*var(--fs));}
+  .dm-title{margin:8px 0 10px;font-size:calc(22px*var(--fs));line-height:1.35;color:#fff;font-weight:600;letter-spacing:-.01em;}
+  .dm-quote{border-radius:14px;padding:12px 14px;background:rgba(214,208,236,.05);} .dm-quote small{display:block;font-size:calc(12px*var(--fs));color:var(--text-helper);margin-bottom:4px;}
+  .dm-quote p{margin:0;font-size:calc(14.5px*var(--fs));line-height:1.85;color:var(--text-body);word-break:keep-all;overflow-wrap:anywhere;}
+  .dm-quote mark{background:linear-gradient(transparent 55%,rgba(179,168,255,.35) 55%);color:#fff;padding:0 1px;} .dm-quote sup{color:#cfc6fb;font-size:.72em;margin-left:1px;font-variant-numeric:tabular-nums;}
+  .dm-syms{list-style:none;margin:0;padding:0;display:grid;gap:8px;} .dm-syms li{border-radius:12px;padding:12px 14px;background:rgba(214,208,236,.05);}
+  .dm-sh{display:flex;justify-content:space-between;align-items:center;gap:8px;} .dm-sh b{color:#fff;font-size:calc(15px*var(--fs));min-width:0;overflow-wrap:anywhere;}
+  .dm-syms p{margin:6px 0 0;font-size:calc(13.5px*var(--fs));line-height:1.65;color:var(--text-body);}
+  .dm-mini,.dm-rel{display:flex;gap:5px;flex-wrap:wrap;} .dm-mini{flex:none;}
+  .dm-mini i,.dm-rel i{font-style:normal;min-width:26px;height:26px;padding:0 6px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:calc(12.5px*var(--fs));color:#1a1433;background:linear-gradient(180deg,#d7d0ff,#b3a8ff);font-variant-numeric:tabular-nums;font-weight:600;}
+  .dm-rel i{background:rgba(214,208,236,.10);color:#e9e5fb;font-weight:500;}
+  .dm-res .balls{margin:4px 0 6px;}
+  .dm-promo{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;padding:16px;border-radius:var(--r-card);border:none;cursor:pointer;font:inherit;color:#fff;
+    background:linear-gradient(140deg,rgba(138,124,240,.22),rgba(140,214,200,.10));box-shadow:inset 0 0 0 1px var(--border-hairline);}
+  .dm-promo .dm-ic{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(179,168,255,.18);color:#d9d2ff;} .dm-promo .dm-ic svg{width:24px;height:24px;}
+  .dm-promo b{display:block;font-size:calc(15.5px*var(--fs));} .dm-promo small{display:block;font-size:calc(12.5px*var(--fs));color:var(--text-helper);line-height:1.5;margin-top:2px;}
+  .dm-promo .dm-go{font-size:22px;color:var(--text-helper);}
+  .dm-tips{list-style:none;margin:12px 0 16px;padding:0;display:grid;gap:8px;} .dm-tips li{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(214,208,236,.05);font-size:calc(13.5px*var(--fs));}
+  .dm-tips b{color:#fff;font-weight:600;} .dm-tips span{color:var(--text-helper);text-align:right;}
+  /* ---- 신년운세 무료 전체 ---- */
+  .ny-free{margin-top:16px;padding:16px;border-radius:16px;background:linear-gradient(150deg,rgba(140,214,200,.12),rgba(138,124,240,.2));display:grid;gap:8px;} .ny-free b{color:#fff;font-size:calc(15px*var(--fs));} .ny-free .helper{margin:0;}
+  .ny-full{display:grid;gap:10px;margin-top:14px;}
+  .nf-sec{border-radius:14px;padding:14px;background:rgba(214,208,236,.05);} .nf-sec h4{margin:0 0 6px;display:flex;justify-content:space-between;align-items:baseline;color:#f3dca0;font-size:calc(14.5px*var(--fs));font-weight:600;} .nf-sec h4 small{color:var(--text-helper);font-weight:400;font-size:calc(12px*var(--fs));}
+  .nf-sec p{margin:0;font-size:calc(14px*var(--fs));line-height:1.7;color:var(--text-body);} .nf-sec p+p{margin-top:6px;}
+  .nf-months{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;} .nf-months li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;font-size:calc(13.5px*var(--fs));line-height:1.6;color:var(--text-body);}
+  .nf-months b{color:#fff;font-weight:600;} .nf-months b small{color:var(--text-helper);font-weight:400;margin-left:2px;} .nf-lotto span{font-variant-numeric:tabular-nums;color:#e9e5fb;}
+  .nf-lucky{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;} .nf-lucky span{display:grid;gap:2px;padding:10px;border-radius:12px;background:rgba(234,197,111,.08);font-size:calc(13.5px*var(--fs));color:#fff;text-align:center;} .nf-lucky small{font-size:calc(11.5px*var(--fs));color:var(--text-helper);}
+
+  /* 운이 = 앱 얼굴: 상단 로고 · 시작 화면 */
+  .brand-woni{flex:none;margin:-4px 0;filter:drop-shadow(0 2px 8px rgba(143,116,255,.45));}
+  .intro-woni{width:132px;height:132px;opacity:0;filter:drop-shadow(0 10px 30px rgba(143,116,255,.55));animation:woniIn .9s .1s cubic-bezier(.2,.9,.3,1.25) forwards, woniFloat 3s 1.1s ease-in-out infinite;}
+  @keyframes woniIn{from{opacity:0;transform:translateY(24px) scale(.7);}to{opacity:1;transform:none;}}
+  @keyframes woniFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+  @media (prefers-reduced-motion:reduce){.intro-woni{animation:none;opacity:1;}}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
 
 <header class="topbar">
   <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="Woon 홈으로" style="cursor:pointer">
-    <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="none" stroke="#e3def5" stroke-width="1.4" opacity=".5"/><circle cx="20" cy="9" r="2.2" fill="#ece8fb"/><circle cx="30" cy="26" r="1.6" fill="#c3b8f0"/><circle cx="10" cy="26" r="1.6" fill="#c3b8f0"/><path d="M20 9 L30 26 L10 26 Z" fill="none" stroke="#c3b8f0" stroke-width=".8" opacity=".6"/></svg>
+    <svg class="brand-woni" width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="bwb" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/><path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/><ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/><path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#bwb)"/><ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/><ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><circle cx="46" cy="67" r="4.8" fill="#221a4a"/><circle cx="74" cy="67" r="4.8" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/><path d="M52 77q8 9 16 0z" fill="#3a1d5c"/></svg>
     Woon<small>運</small>
   </div>
   <div class="top-actions">
@@ -1277,6 +1333,12 @@
       <p class="disclaimer" id="fillDisclaimer" hidden>재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p>
     </div>
   </section>
+
+  <!-- ================= 꿈 해몽 번호 ================= -->
+  <section class="view" id="v-dream" hidden>
+    <div id="dmInput" class="view"></div>
+    <div id="dmResult" class="view" hidden></div>
+  </section>
 </main>
 
 <nav class="tabbar" aria-label="주요 메뉴">
@@ -1290,7 +1352,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="intro" id="intro" hidden aria-hidden="true">
   <div class="intro-in">
-    <svg class="intro-logo" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#e3def5" stroke-width="1.2" opacity=".35" pathLength="1" class="il-c"/><path d="M60 22 L92 78 L28 78 Z" fill="none" stroke="#cfc6fb" stroke-width="1.2" pathLength="1" class="il-t"/><circle cx="60" cy="22" r="4" fill="#fff" class="il-s s1"/><circle cx="92" cy="78" r="3" fill="#ece8fb" class="il-s s2"/><circle cx="28" cy="78" r="3" fill="#ece8fb" class="il-s s3"/></svg>
+    <svg class="intro-logo intro-woni" viewBox="0 0 120 120"><defs><radialGradient id="iwb" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/><path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/><ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/><path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#iwb)"/><ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/><ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><circle cx="46" cy="67" r="4.8" fill="#221a4a"/><circle cx="74" cy="67" r="4.8" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/><path d="M52 77q8 9 16 0z" fill="#3a1d5c"/></svg>
     <div class="intro-name">Woon<small>運</small></div>
     <div class="intro-sub" id="introSub">태어난 순간의 하늘로 읽는 오늘</div>
   </div>
