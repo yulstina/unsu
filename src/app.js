@@ -794,6 +794,7 @@
   function isGuest(){ return !NS && !store('unsu_auth'); }
   function getCoins(){ var c = store('unsu_coin'); return typeof c === 'number' ? c : 0; }
   function renderCoin(bump){
+    $('coinChip').classList.toggle('guest', isGuest());
     $('coinVal').textContent = isGuest() ? SIGNUP_COINS.toLocaleString() + '닢 받기' : getCoins();
     if (bump && !reduceMotion){ var c = $('coinChip'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
   }
