@@ -13,5 +13,8 @@
     "korean-lunar-calendar": "0.4.0",
     "terser": "^5.31.0"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.7.0"
+  }
 }
