@@ -176,7 +176,7 @@
     var r = MS.calc({ y:now.getFullYear(), m:now.getMonth()+1, d:now.getDate(), cal:'solar', hour:now.getHours(), minute:now.getMinutes(), gender:'M', lonCorr:false });
     var yb = r.error ? 6 : r.pillars.year.br;
     var an = MS.BR_ANIMAL[yb];
-    $('heroFig').innerHTML = woniFigSVG() + '<figcaption>' + (r.error ? '' : r.seun.year + ' ' + r.pillars.year.hanja + ' · ' + r.color + ' ' + an) + '</figcaption>';
+    $('heroFig').innerHTML = petSVG('happy', 2, 'fig') + '<figcaption>' + (r.error ? '' : r.seun.year + ' ' + r.pillars.year.hanja + ' · ' + r.color + ' ' + an) + '</figcaption>';
     $('heroFig').querySelector('svg').classList.add('fig');
   })();
 
@@ -2057,7 +2057,7 @@
     var h = INVITE ? inviteHeroHTML() : '<div class="wel-hero">' +
       '<div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日</div>' +
       '<h1 class="hero-title">내 사주로 여는 오늘의 운세</h1>' +
-      '<div class="wel-fig" id="welFig">' + woniFigSVG() + '</div>' +
+      '<div class="wel-fig" id="welFig">' + petSVG('happy', 2, 'fig') + '</div>' +
       '<p class="helper" style="max-width:24em">생년월일만 알려 주면 만세력으로 여덟 글자를 풀고, 매일 오늘의 운세와 행운 번호를 챙겨 드려요.</p>' +
       '<div class="wel-cta"><button class="btn-primary btn-block" id="btnWelStart">내 사주 입력하고 시작하기</button><button class="text-btn" id="btnWelDemo">예시로 먼저 둘러보기</button></div></div>';
     if (acc && acc.snapshot && acc.snapshot.unsu_me){

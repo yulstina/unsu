@@ -39,24 +39,3 @@ function figSVG(key, el, cls){
   });
   return s + '</svg>';
 }
-
-/* 우니 일러스트 (단순·귀여운 버전) — 반투명 라벤더 몸통 + 점 눈 + 작은 미소 + 별 더듬이 + 반짝이.
-   첫 화면·사주 입력 화면의 큰 그림으로 쓴다. 120×120 좌표계 */
-function woniFigSVG(cls){
-  var u = 'wf' + (++FIG_UID);
-  var body = 'M60 38c22 0 38 15 38 36c0 18-16 30-38 30S22 92 22 74c0-21 16-36 38-36z';
-  function spark(x, y, k, d){ var w = k * .32; return '<path class="fig-star" style="--d:' + d + 's" fill="#fff" d="M' + x + ' ' + (y - k) + ' L' + (x + w) + ' ' + (y - w) + ' L' + (x + k) + ' ' + y + ' L' + (x + w) + ' ' + (y + w) + ' L' + x + ' ' + (y + k) + ' L' + (x - w) + ' ' + (y + w) + ' L' + (x - k) + ' ' + y + ' L' + (x - w) + ' ' + (y - w) + ' Z"/>'; }
-  return '<svg class="' + (cls || 'fig') + ' woni-fig" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>'
-    + '<radialGradient id="' + u + 'a" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#b3a8ff" stop-opacity=".4"/><stop offset="1" stop-color="#b3a8ff" stop-opacity="0"/></radialGradient>'
-    + '<radialGradient id="' + u + 'b" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#f4f1ff"/><stop offset=".5" stop-color="#c4b8ff"/><stop offset="1" stop-color="#8f7df0"/></radialGradient>'
-    + '</defs><circle cx="60" cy="70" r="56" fill="url(#' + u + 'a)"/>'
-    + '<path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#dcd5ff" stroke-width="2.2" stroke-linecap="round"/>'
-    + '<ellipse cx="45" cy="101" rx="9" ry="5" fill="#9f8ff5" opacity=".85"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#9f8ff5" opacity=".85"/>'
-    + '<path d="' + body + '" fill="url(#' + u + 'b)" fill-opacity=".92" stroke="#f1edff" stroke-opacity=".7" stroke-width="1"/>'
-    + '<ellipse cx="45" cy="52" rx="11" ry="6" fill="#fff" opacity=".5" transform="rotate(-22 45 52)"/>'
-    + '<circle cx="47" cy="72" r="4.6" fill="#2a2058"/><circle cx="73" cy="72" r="4.6" fill="#2a2058"/><circle cx="48.6" cy="70.2" r="1.6" fill="#fff"/><circle cx="74.6" cy="70.2" r="1.6" fill="#fff"/>'
-    + '<path d="M54 82q6 5 12 0" fill="none" stroke="#2a2058" stroke-width="2.2" stroke-linecap="round"/>'
-    + '<path d="M70 11l2.4 5 5.4.8-3.9 3.8.9 5.4L70 23.5 65.2 26l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/>'
-    + spark(20, 46, 5, '0') + spark(102, 36, 4, '.8') + spark(100, 92, 3.4, '1.6') + spark(16, 96, 3, '.4')
-    + '</svg>';
-}
