@@ -28,12 +28,16 @@
   var off = document.createElement('canvas'), ox = off.getContext('2d');
   var W = 0, H = 0, DPR = 1, stars = [];
   var OS = 6; /* 1/6 해상도로 그린 뒤 업스케일 → 결 없이 부드러운 블러 */
-  /* 신뢰의 블루 + 신비로운 바이올렛 (초록·마젠타 제거) */
+  /* 블루·바이올렛 중심 + 청록·연두·분홍을 은은하게 */
   var RIBBONS = [
-    { c:[76,128,255],  y:.30, amp:.07, k:2.1, sp:.00018, ph:0.0, hgt:.46, a:.34 },
-    { c:[124,86,246],  y:.38, amp:.09, k:1.6, sp:.00023, ph:2.2, hgt:.52, a:.32 },
-    { c:[64,176,255],  y:.24, amp:.06, k:2.7, sp:.00026, ph:4.1, hgt:.34, a:.20 },
-    { c:[168,110,255], y:.46, amp:.08, k:1.3, sp:.00016, ph:5.3, hgt:.40, a:.22 }
+    { c:[76,128,255],  y:.30, amp:.07, k:2.1, sp:.00009,  ph:0.0, hgt:.46, a:.30 },
+    { c:[124,86,246],  y:.38, amp:.09, k:1.6, sp:.00011,  ph:2.2, hgt:.52, a:.30 },
+    { c:[64,176,255],  y:.24, amp:.06, k:2.7, sp:.00012,  ph:4.1, hgt:.34, a:.18 },
+    { c:[168,110,255], y:.46, amp:.08, k:1.3, sp:.00008,  ph:5.3, hgt:.40, a:.20 },
+    /* 예전 오로라 색: 청록 · 연두 · 분홍 (낮은 농도로 은은하게) */
+    { c:[61,214,190],  y:.34, amp:.08, k:1.8, sp:.000095, ph:1.2, hgt:.44, a:.20 },
+    { c:[120,236,160], y:.42, amp:.07, k:2.3, sp:.00007,  ph:3.4, hgt:.36, a:.13 },
+    { c:[214,92,214],  y:.28, amp:.08, k:1.4, sp:.000085, ph:6.0, hgt:.38, a:.14 }
   ];
   function size(){
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -62,7 +66,7 @@
     RIBBONS.forEach(function(r, ri){
       for (var x = 0; x < w; x++){
         var u = x / w;
-        var wave = Math.sin(u*Math.PI*2*r.k + t*r.sp*3 + r.ph) * .6 + Math.sin(u*Math.PI*2*r.k*.47 - t*r.sp*2 + r.ph*1.3) * .4;
+        var wave = Math.sin(u*Math.PI*2*r.k + t*r.sp*2 + r.ph) * .6 + Math.sin(u*Math.PI*2*r.k*.47 - t*r.sp*1.5 + r.ph*1.3) * .4;
         var cy = (r.y + r.amp * wave) * h;
         var inten = .55 + .45 * Math.sin(u*Math.PI*3.1 + t*r.sp*4 + ri*1.9);
         var edge = Math.sin(u*Math.PI); edge = Math.pow(edge, .55);
@@ -1197,7 +1201,7 @@
      ========================================================= */
   var machine = null;
   function machineCardHTML(canDraw){
-    return '<div class="card machine-card"><div class="sec-head"><h2 class="sec-title">행운 추첨기</h2><span class="sec-meta">내 사주로 뽑기</span></div>' +
+    return '<div class="card machine-card">' +
       (canDraw ? '<div class="mc-seg" role="group" aria-label="번호 종류"><button type="button" data-mk="today" aria-pressed="true">오늘 번호</button><button type="button" data-mk="life" aria-pressed="false">평생 번호</button></div>' : '') +
       '<canvas id="mcCanvas" class="mc-canvas" role="img" aria-label="로또 추첨기 일러스트. 버튼을 누르면 내 사주로 계산한 번호 6개가 하나씩 나와요."></canvas>' +
       '<div class="balls mc-result" id="mcResult" aria-live="polite" hidden></div>' +
@@ -1231,15 +1235,30 @@
   /* =========================================================
      번호 탭 상단: 내 번호
      ========================================================= */
-  var extraLines = [];
+  var extraLines = [], numTab = 'draw';
+  function numHeadHTML(title, life){
+    return '<div class="num-head"><h1 class="num-title">' + title + '</h1><button type="button" class="chip-btn" id="btnLatest">지난 1등 번호</button></div>' +
+      '<div class="num-tabs" role="tablist" aria-label="번호 뽑는 방법">' +
+      '<button type="button" role="tab" data-nt="draw" aria-selected="' + (numTab === 'draw') + '">행운 추첨기</button>' +
+      '<button type="button" role="tab" data-nt="pick" aria-selected="' + (numTab === 'pick') + '">직접 골라 채우기</button></div>';
+  }
+  function bindNumTabs(life){
+    function apply(){
+      var d = $('numDraw'), pk = $('pickCard');
+      if (d) d.hidden = numTab !== 'draw'; if (pk) pk.hidden = numTab !== 'pick';
+      document.querySelectorAll('[data-nt]').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.nt === numTab)); });
+    }
+    document.querySelectorAll('[data-nt]').forEach(function(b){ b.onclick = function(){ numTab = b.dataset.nt; apply(); }; });
+    $('btnLatest').onclick = function(){ openSheet('<h3 id="sheetTitle">최근 발표된 1등 번호</h3>' + lottoCardHTML(life) + '<button class="btn-ghost btn-block" data-close style="margin-top:12px">닫기</button>'); };
+    apply();
+  }
   function renderNumToday(){
     var me = getMe(), box = $('numToday');
     if (!me){
-      box.innerHTML = '<div class="hero-copy" style="padding-inline:2px"><div class="eyebrow">LOTTO 6/45</div><h1 class="hero-title">내 사주로 뽑는<br>행운 번호</h1></div>' + machineCardHTML(false) +
-        '<div class="card gate"><div class="balls">' + [3,8,17,26,33,41].map(function(n){ return '<div class="ball" style="opacity:.35">?</div>'; }).join('') + '</div><p class="helper">내 사주를 등록하면 평생 번호와 매일 바뀌는 오늘의 행운 번호가 생겨요.</p><button class="btn-primary btn-block" id="btnNumOnb">내 사주 등록하고 번호 받기</button></div>' + lottoCardHTML(null) +
-        '<div class="sec-head" style="padding-inline:2px;margin-top:6px"><h2 class="sec-title">직접 골라 채우기</h2><span class="sec-meta">MY PICK</span></div>';
+      box.innerHTML = numHeadHTML('내 사주로 뽑는 행운 번호', null) + '<div id="numDraw">' + machineCardHTML(false) +
+        '<div class="card gate"><div class="balls">' + [3,8,17,26,33,41].map(function(n){ return '<div class="ball" style="opacity:.35">?</div>'; }).join('') + '</div><p class="helper">내 사주를 등록하면 평생 번호와 매일 바뀌는 오늘의 행운 번호가 생겨요.</p><button class="btn-primary btn-block" id="btnNumOnb">내 사주 등록하고 번호 받기</button></div></div>';
       $('btnNumOnb').onclick = function(){ startOnboarding('new'); };
-      mountMachine(null);
+      mountMachine(null); bindNumTabs(null);
       return;
     }
     var r = compute(me); if (r.error){ box.innerHTML = ''; return; }
@@ -1247,16 +1266,15 @@
     var life = drawSixFromSeed(iso + '|' + tKey + '|life');
     var luck = todayLuck(me, r), yong = luck.nums, lEl = luck.el;
     var extra = store('unsu_extra'); if (!extra || extra.d !== todayStr()) extra = { d:todayStr(), lines:[] };
-    var h = '<div class="hero-copy" style="padding-inline:2px"><div class="eyebrow">LOTTO 6/45</div><h1 class="hero-title">' + esc(me.name) + '님의<br>행운 번호</h1></div>';
+    var h = numHeadHTML(esc(me.name) + '님의 행운 번호', life) + '<div id="numDraw">';
     h += machineCardHTML(true);
     h += '<div class="card"><div class="num-set"><div class="lab">평생 행운 번호 <small>사주 원국 · 고정</small></div><div class="balls">' + life.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>' +
       '<div class="num-set"><div class="lab">오늘의 행운 번호 <small>행운 숫자 ' + EL_TEXT[lEl].num.join('·') + '</small></div><div class="balls">' + yong.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + EL_CLASS[lEl] : '') + '">' + o.n + '</div>'; }).join('') + '</div></div>' +
       extra.lines.map(function(l, i){ return '<div class="num-set"><div class="lab">보너스 한 줄 ' + (i+1) + ' <small>광고 보상</small></div><div class="balls">' + l.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>'; }).join('') +
       '<div class="row"><button class="btn-soft grow" id="btnExtra"' + (extra.lines.length >= 3 ? ' disabled' : '') + '>' + (extra.lines.length >= 3 ? '오늘은 모두 받았어요' : '광고 보고 한 줄 더 뽑기') + '</button><button class="btn-ghost" id="btnNumCopy">공유</button></div>' +
-      '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div>';
-    h += lottoCardHTML(life);
-    h += '<div class="sec-head" style="padding-inline:2px;margin-top:6px"><h2 class="sec-title">직접 골라 채우기</h2><span class="sec-meta">MY PICK</span></div>';
+      '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div></div>';
     box.innerHTML = h;
+    bindNumTabs(life);
     mountMachine({ today:yong.map(function(o){ return o.n; }), life:life });
     $('btnExtra').onclick = function(){
       playAd(function(){

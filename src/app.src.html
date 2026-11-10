@@ -784,7 +784,16 @@
   .doc-sheet .todo{display:inline-block;background:rgba(255,154,138,.12);color:#ffb4a8;border-radius:6px;padding:1px 7px;font-size:calc(12.5px*var(--fs));}
   /* 행운 추첨기 */
   .machine-card{align-items:stretch;}
-  .mc-canvas{width:100%;height:auto;display:block;border-radius:12px;}
+  .mc-canvas{display:block;border-radius:12px;}
+  .num-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 2px 0;}
+  .num-title{font-family:var(--font-display);font-weight:500;font-size:calc(21px*var(--fs));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .chip-btn{flex:none;border:1px solid var(--border-hairline-strong);background:rgba(124,86,246,.16);color:#dfe6ff;border-radius:999px;padding:8px 14px;font-size:calc(13px*var(--fs));cursor:pointer;}
+  .num-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:rgba(199,211,234,.08);}
+  .num-tabs button{border:none;border-radius:11px;padding:12px 0;background:transparent;color:var(--text-helper);font-size:calc(15px*var(--fs));font-weight:500;cursor:pointer;}
+  .num-tabs button[aria-selected="true"]{background:var(--violet-soft);color:#fff;box-shadow:inset 0 0 0 1px var(--violet);}
+  /* 추첨기가 첫 화면에 잘리지 않도록 화면 높이에 맞춰 줄임 */
+  .machine-card{padding-top:12px;gap:10px;}
+  .mc-canvas{width:auto;max-width:100%;height:min(392px,calc(100svh - 445px));min-height:200px;aspect-ratio:320/350;margin:0 auto;}
   .mc-seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;border-radius:999px;background:rgba(199,211,234,.08);}
   .mc-seg button{border:none;border-radius:999px;padding:10px 0;cursor:pointer;background:transparent;color:var(--text-helper);font-size:calc(14px*var(--fs));font-weight:500;}
   .mc-seg button[aria-pressed="true"]{background:var(--violet-soft);color:#fff;box-shadow:inset 0 0 0 1px var(--violet);}
@@ -962,7 +971,7 @@
   <!-- ================= 번호 채우기 ================= -->
   <section class="view" id="v-fill" hidden>
     <div id="numToday" class="view"></div>
-    <div class="card">
+    <div class="card" id="pickCard" hidden>
       <p class="helper">최대 6개까지 고르면 나머지는 자동으로 채워 드려요.</p>
       <div class="number-grid" id="numberGrid"></div>
       <div class="fill-status"><b id="fillCount">0</b>/6 선택됨</div>
