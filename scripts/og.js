@@ -8,12 +8,12 @@ const fs = require('fs');
   const stars = Array.from({ length: 90 }, () => { const x = Math.random() * 1200, y = Math.random() * 420, r = Math.random() * 1.3 + .4, o = Math.random() * .6 + .25; return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="#e2f0ff" opacity="${o.toFixed(2)}"/>`; }).join('');
   const html = `<html><head><style>
   *{margin:0;box-sizing:border-box}
-  body{width:1200px;height:630px;overflow:hidden;background:#05060f;font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif;color:#d8ecf8;position:relative}
+  body{width:1200px;height:630px;overflow:hidden;background:#0d0b1e;font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif;color:#d8ecf8;position:relative}
   .aur{position:absolute;inset:0;background:
-    radial-gradient(38% 70% at 12% 110%,rgba(102,58,243,.75),transparent 70%),
-    radial-gradient(30% 60% at 42% 115%,rgba(214,92,214,.45),transparent 70%),
-    radial-gradient(34% 75% at 68% 112%,rgba(61,214,190,.55),transparent 70%),
-    radial-gradient(30% 70% at 92% 110%,rgba(88,140,255,.6),transparent 70%);filter:blur(6px)}
+    radial-gradient(38% 70% at 12% 110%,rgba(170,160,240,.6),transparent 70%),
+    radial-gradient(30% 60% at 42% 115%,rgba(226,178,226,.4),transparent 70%),
+    radial-gradient(34% 75% at 68% 112%,rgba(160,222,206,.4),transparent 70%),
+    radial-gradient(30% 70% at 92% 110%,rgba(160,190,236,.5),transparent 70%);filter:blur(6px)}
   .rays{position:absolute;left:0;right:0;bottom:0;height:360px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 2px,transparent 2px 22px);-webkit-mask-image:linear-gradient(0deg,#000,transparent)}
   svg.st{position:absolute;inset:0}
   .l{position:absolute;left:84px;top:92px;width:640px}
@@ -29,7 +29,7 @@ const fs = require('fs');
   <div class="aur"></div><div class="rays"></div>
   <svg class="st" viewBox="0 0 1200 630">${stars}</svg>
   <div class="l">
-    <div class="brand"><svg width="44" height="44" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#d1e4fa" stroke-width="1.4" opacity=".6"/><circle cx="20" cy="9" r="2.4" fill="#fff"/><circle cx="30" cy="26" r="1.8" fill="#98c0ef"/><circle cx="10" cy="26" r="1.8" fill="#98c0ef"/><path d="M20 9 L30 26 L10 26 Z" fill="none" stroke="#98c0ef" stroke-width=".9" opacity=".8"/></svg>운수<small>運數</small></div>
+    <div class="brand"><svg width="44" height="44" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#d1e4fa" stroke-width="1.4" opacity=".6"/><circle cx="20" cy="9" r="2.4" fill="#fff"/><circle cx="30" cy="26" r="1.8" fill="#98c0ef"/><circle cx="10" cy="26" r="1.8" fill="#98c0ef"/><path d="M20 9 L30 26 L10 26 Z" fill="none" stroke="#98c0ef" stroke-width=".9" opacity=".8"/></svg>Woon<small>運</small></div>
     <h1>내 사주로 여는<br>오늘의 운세</h1>
     <p>만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호</p>
     <div class="url">생년월일만 넣으면 30초 · unsu.vercel.app</div>

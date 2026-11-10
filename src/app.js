@@ -29,15 +29,15 @@
   var W = 0, H = 0, DPR = 1, stars = [];
   var OS = 6; /* 1/6 해상도로 그린 뒤 업스케일 → 결 없이 부드러운 블러 */
   /* 블루·바이올렛 중심 + 청록·연두·분홍을 은은하게 */
+  /* 파스텔 + 신비로움: 라벤더 · 페리윙클 · 라일락 핑크 · 민트 · 복숭아 (채도 낮게, 아주 느리게) */
   var RIBBONS = [
-    { c:[76,128,255],  y:.30, amp:.07, k:2.1, sp:.00009,  ph:0.0, hgt:.46, a:.30 },
-    { c:[124,86,246],  y:.38, amp:.09, k:1.6, sp:.00011,  ph:2.2, hgt:.52, a:.30 },
-    { c:[64,176,255],  y:.24, amp:.06, k:2.7, sp:.00012,  ph:4.1, hgt:.34, a:.18 },
-    { c:[168,110,255], y:.46, amp:.08, k:1.3, sp:.00008,  ph:5.3, hgt:.40, a:.20 },
-    /* 예전 오로라 색: 청록 · 연두 · 분홍 (낮은 농도로 은은하게) */
-    { c:[61,214,190],  y:.34, amp:.08, k:1.8, sp:.000095, ph:1.2, hgt:.44, a:.20 },
-    { c:[120,236,160], y:.42, amp:.07, k:2.3, sp:.00007,  ph:3.4, hgt:.36, a:.13 },
-    { c:[214,92,214],  y:.28, amp:.08, k:1.4, sp:.000085, ph:6.0, hgt:.38, a:.14 }
+    { c:[170,160,240], y:.30, amp:.07, k:2.1, sp:.00008,  ph:0.0, hgt:.46, a:.22 },
+    { c:[196,170,240], y:.38, amp:.09, k:1.6, sp:.00010,  ph:2.2, hgt:.52, a:.22 },
+    { c:[160,190,236], y:.24, amp:.06, k:2.7, sp:.00011,  ph:4.1, hgt:.34, a:.13 },
+    { c:[226,178,226], y:.46, amp:.08, k:1.3, sp:.00007,  ph:5.3, hgt:.40, a:.15 },
+    { c:[160,222,206], y:.34, amp:.08, k:1.8, sp:.000085, ph:1.2, hgt:.44, a:.12 },
+    { c:[244,200,184], y:.42, amp:.07, k:2.3, sp:.00006,  ph:3.4, hgt:.36, a:.09 },
+    { c:[214,160,220], y:.28, amp:.08, k:1.4, sp:.000075, ph:6.0, hgt:.38, a:.10 }
   ];
   function size(){
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -84,7 +84,7 @@
   function frame(t){
     cx.globalCompositeOperation = 'source-over';
     var bg = cx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#04061a'); bg.addColorStop(.6, '#0a0f2e'); bg.addColorStop(1, '#14103a');
+    bg.addColorStop(0, '#0b0a1a'); bg.addColorStop(.6, '#13112a'); bg.addColorStop(1, '#1e1834');
     cx.fillStyle = bg; cx.fillRect(0, 0, W, H);
     /* aurora */
     drawOff(t);
@@ -569,6 +569,7 @@
       '<div class="row"><button class="btn-ghost grow" id="btnCopyRes">결과 복사</button><button class="btn-soft grow" id="btnShareRes">공유하기</button></div>' +
       '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div></div>';
 
+    h += adSlotHTML('사주 풀이를 다 읽은 뒤');
     h += '<p class="disclaimer">전통 명리 이론을 바탕으로 계산한 참고용 풀이예요. 절기가 바뀌는 시각 전후 10분 이내에 태어났다면 월주가 달라질 수 있어요.</p>';
 
     $('resultBody').innerHTML = h;
@@ -588,7 +589,7 @@
       var ig0 = ILGAN[P.day.stem];
       openShare({ sheetTitle:'사주 풀이 공유', title:entry.name + '님의 사주 · ' + P.day.name + '(' + P.day.hanja + ')일주', desc:ig0.t + ' — ' + ig0.img,
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-        text:'[운수] ' + entry.name + '님의 사주\n' + P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주\n일간 ' + ig0.t + ' — ' + ig0.img,
+        text:'[Woon] ' + entry.name + '님의 사주\n' + P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주\n일간 ' + ig0.t + ' — ' + ig0.img,
         cta:'생년월일만 넣으면 내 여덟 글자도 풀어 줘요 →', link:linkFor('') });
     };
   }
@@ -604,7 +605,7 @@
       var rg = g.createRadialGradient(o[0],o[1],0,o[0],o[1],o[2]); rg.addColorStop(0,o[3]); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0,0,1080,1350); });
     for (var i = 0; i < 70; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
     function rr(x,y,w,h,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); }
-    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('운수 運數  ·  나의 사주 리포트', 540, 96);
+    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('Woon 運  ·  나의 사주 리포트', 540, 96);
     g.fillStyle = '#fff'; g.font = '700 64px ' + F; g.fillText(entry.name + '님', 540, 650);
     g.fillStyle = '#c9d4ff'; g.font = '400 34px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 706);
     /* 사주 네 기둥 */
@@ -644,7 +645,7 @@
         if (!blob){ toast('이미지를 만들지 못했어요'); return; }
         var file = null; try { file = new File([blob], 'unsu-saju.png', { type:'image/png' }); } catch(_){}
         if (file && navigator.canShare && navigator.canShare({ files:[file] })){
-          navigator.share({ files:[file], title:'운수 · ' + entry.name + '님의 사주', text:'[운수] ' + entry.name + '님의 사주 리포트' }).catch(function(){});
+          navigator.share({ files:[file], title:'Woon · ' + entry.name + '님의 사주', text:'[Woon] ' + entry.name + '님의 사주 리포트' }).catch(function(){});
         } else {
           var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'unsu-saju-' + entry.name + '.png';
           document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요');
@@ -655,7 +656,7 @@
   function summaryText(){
     var e = cur.entry, r = cur.r, P = r.pillars;
     var g = ['hour','day','month','year'].map(function(k){ return P[k] ? P[k].hanja : '??'; }).join(' ');
-    return '운수 — ' + e.name + '님의 사주\n' +
+    return 'Woon — ' + e.name + '님의 사주\n' +
       '원국(시일월년): ' + g + '\n' +
       P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · 일간 ' + ILGAN[P.day.stem].t + ' (' + ILGAN[P.day.stem].img + ')\n' +
       '오행 목' + r.cnt[0] + ' 화' + r.cnt[1] + ' 토' + r.cnt[2] + ' 금' + r.cnt[3] + ' 수' + r.cnt[4] + ' · ' + r.strength + ' · 용신 ' + MS.EL_K[r.yong] + '\n' +
@@ -728,17 +729,18 @@
       '<div id="zNums" hidden class="view" style="gap:14px"><div class="balls" id="ballsZ">' + nums.map(function(n){ return '<div class="ball pre">' + n + '</div>'; }).join('') + '</div>' +
       '<div class="row"><button class="btn-ghost grow" id="btnZCopy">결과 복사</button><button class="btn-soft grow" id="btnZShare">공유하기</button></div>' +
       '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div></div>';
+    h += adSlotHTML('별자리 운세를 본 뒤');
     $('zResult').innerHTML = h;
     $('zHome').hidden = true; $('zResult').hidden = false; window.scrollTo(0, 0);
     drawOn($('zFig'));
     $('btnZBack').onclick = function(){ $('zResult').hidden = true; $('zHome').hidden = false; };
     $('btnZDraw').onclick = function(){ $('zNums').hidden = false; this.hidden = true; revealBalls($('ballsZ')); };
-    var txt = '운수 — ' + z.name + '(' + z.en + ') ' + todayStr() + '\n오늘의 행운 번호: ' + nums.join(', ');
+    var txt = 'Woon — ' + z.name + '(' + z.en + ') ' + todayStr() + '\n오늘의 행운 번호: ' + nums.join(', ');
     $('btnZCopy').onclick = function(){ copyText(txt, '결과를 복사했어요'); };
     $('btnZShare').onclick = function(){
       openShare({ sheetTitle:'별자리 운세 공유', title:'오늘의 ' + z.name + ' (' + z.en + ')', desc:'오늘의 행운 번호 ' + nums.join(' · '),
         fig:figSVG(z.name, z.el, 'mini'),
-        text:'[운수] 오늘의 ' + z.name + '(' + z.en + ') 운세\n행운 번호 ' + nums.join(' · '),
+        text:'[Woon] 오늘의 ' + z.name + '(' + z.en + ') 운세\n행운 번호 ' + nums.join(' · '),
         cta:'내 별자리 운세도 보기 →', link:linkFor('zodiac') });
     };
   }
@@ -777,7 +779,7 @@
     grid.querySelectorAll('.num-cell').forEach(function(c){ c.classList.remove('selected'); });
     $('ballsFill').hidden = $('fillResultActions').hidden = $('fillDisclaimer').hidden = $('fillCompare').hidden = true; $('ballsFill').innerHTML = '';
   };
-  $('btnCopyFill').onclick = function(){ copyText('운수 — 내 번호 채우기\n' + lastFill.join(', '), '번호를 복사했어요'); };
+  $('btnCopyFill').onclick = function(){ copyText('Woon — 내 번호 채우기\n' + lastFill.join(', '), '번호를 복사했어요'); };
 
   /* =========================================================
      대표 사주 · 엽전 · 바텀시트 · 광고 목업
@@ -829,7 +831,7 @@
     '<circle cx="32" cy="32" r="30" fill="url(#cfG)" stroke="#8a5a12" stroke-width="2"/><circle cx="32" cy="32" r="24" fill="none" stroke="rgba(120,74,10,.55)" stroke-width="2"/>' +
     '<rect x="23" y="23" width="18" height="18" rx="2" fill="#1a1245" stroke="#8a5a12" stroke-width="2"/><path d="M14 20a22 22 0 0 1 14-9" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round"/></svg>';
   function coinBurst(n, why){
-    var big = n >= 100, chip = $('coinChip'), cr = chip && !chip.hidden ? chip.getBoundingClientRect() : { left:window.innerWidth - 120, top:24, width:90, height:36 };
+    var big = n >= 100, chip = $('setBtn'), cr = chip && !chip.hidden ? chip.getBoundingClientRect() : { left:window.innerWidth - 120, top:24, width:90, height:36 };
     var tx = cr.left + cr.width / 2, ty = cr.top + cr.height / 2;
     var el = document.createElement('div'); el.className = 'cfx' + (big ? ' big' : ''); el.setAttribute('role', 'status');
     var label = '+' + n.toLocaleString() + ' 엽전';
@@ -868,6 +870,7 @@
   var sheetReturn = null;
   function openSheet(html){
     sheetReturn = document.activeElement;
+    $('sheetBody').classList.remove('st-sheet');
     $('sheetBody').innerHTML = html;
     $('sheetWrap').hidden = false;
     document.body.style.overflow = 'hidden';
@@ -1305,6 +1308,10 @@
     if (hasNY) setTimeout(function(){ addCoins(100, '운이의 선물'); }, 350);
     refreshPetCard(); if (currentView === 'today') renderToday();
   }
+  /* 네이티브 광고 자리 (애드핏/애드센스 심사 후 실제 광고로 교체). 원칙: 한 화면에 1개, 결과를 다 본 뒤, 결제 화면에는 넣지 않음 */
+  function adSlotHTML(where){
+    return '<div class="ad-slot" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>네이티브 광고 영역</b><small>' + where + ' · 콘텐츠 카드와 같은 모양으로 1개만</small></div></div>';
+  }
   function renderToday(){
     var body = $('todayBody'), me = getMe();
     if (!me){ renderWelcome(); return; }
@@ -1338,7 +1345,7 @@
     h += '<div class="card"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:#fff;font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += nyCardHTML(me, r);
-    h += '<div class="ad-slot" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>네이티브 광고 영역</b><small>콘텐츠 카드와 같은 모양 · 오늘의 결론을 본 뒤 1개만 노출</small></div></div>';
+    h += adSlotHTML('오늘의 결론을 본 뒤');
     h += '<div class="card ' + elc + '"><div class="sec-head"><h2 class="sec-title">오늘의 행운 번호</h2><span class="sec-meta">행운 숫자 ' + f.tip.nums.join('·') + '</span></div>' +
       '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
       '<p class="helper">빛나는 번호는 오늘의 행운 숫자 <b style="color:var(--elc)">' + f.tip.nums.join('·') + '</b>로 끝나요. 행운의 팁과 같은 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운에서 나온 숫자예요.</p>' +
@@ -1364,7 +1371,7 @@
       var md = (now.getMonth()+1) + '월 ' + now.getDate() + '일';
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         fig:figSVG(r.animal, f.auraEl, 'mini'),
-        text:'[운수] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j + '\n오늘의 행운 번호 ' + nums.map(function(o){ return o.n; }).join(' · '),
+        text:'[Woon] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j + '\n오늘의 행운 번호 ' + nums.map(function(o){ return o.n; }).join(' · '),
         cta:'너의 오늘 운세도 확인해 봐 →', link:linkFor('') });
     };
     $('btnTips').onclick = function(){
@@ -1450,7 +1457,7 @@
     return '<div class="card machine-card">' +
       (canDraw ? '<div class="mc-seg" role="group" aria-label="번호 종류"><button type="button" data-mk="today" aria-pressed="true">오늘 번호</button><button type="button" data-mk="life" aria-pressed="false">평생 번호</button></div>' : '') +
       '<canvas id="mcCanvas" class="mc-canvas" role="img" aria-label="로또 추첨기 일러스트. 버튼을 누르면 내 사주로 계산한 번호 6개가 하나씩 나와요."></canvas>' +
-      '<div class="balls mc-result" id="mcResult" aria-live="polite" hidden></div>' +
+      '<span class="sr-only" id="mcResult" aria-live="polite"></span>' +
       '<button class="btn-primary btn-block" id="btnMcDraw">' + (canDraw ? '추첨 시작' : '내 사주 등록하고 뽑기') + '</button>' +
       '<p class="helper" style="text-align:center">번호는 사주로 계산해요. 추첨 연출은 재미 요소이고 당첨을 보장하지 않아요.</p></div>';
   }
@@ -1463,16 +1470,16 @@
       b.onclick = function(){
         if (machine.isBusy()) return; kind = b.dataset.mk;
         document.querySelectorAll('[data-mk]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
-        machine.reset(); box.hidden = true; btn.textContent = '추첨 시작';
+        machine.reset(); box.textContent = ''; btn.textContent = '추첨 시작';
       };
     });
     btn.onclick = function(){
       if (!sets){ startOnboarding('new'); return; }
       if (machine.isBusy()) return;
-      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '추첨 중…'; box.hidden = true;
+      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '추첨 중…'; box.textContent = '';
       machine.draw(nums, null, function(){
-        box.innerHTML = nums.slice().sort(function(a, b){ return a - b; }).map(function(n){ return '<div class="ball lt ' + ltColor(n) + '">' + n + '</div>'; }).join('');
-        box.hidden = false; btn.disabled = false; btn.textContent = '다시 뽑기';
+        box.textContent = '뽑힌 번호 ' + nums.slice().sort(function(a, b){ return a - b; }).join(', ');
+        btn.disabled = false; btn.textContent = '다시 뽑기';
         toast((kind === 'today' ? '오늘의' : '평생') + ' 행운 번호가 나왔어요');
         bond('num');
       });
@@ -1520,6 +1527,7 @@
       extra.lines.map(function(l, i){ return '<div class="num-set"><div class="lab">보너스 한 줄 ' + (i+1) + ' <small>광고 보상</small></div><div class="balls">' + l.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>'; }).join('') +
       '<div class="row"><button class="btn-soft grow" id="btnExtra"' + (extra.lines.length >= 3 ? ' disabled' : '') + '>' + (extra.lines.length >= 3 ? '오늘은 모두 받았어요' : '광고 보고 한 줄 더 뽑기') + '</button><button class="btn-ghost" id="btnNumCopy">공유</button></div>' +
       '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div></div>';
+    h += adSlotHTML('번호를 뽑은 뒤');
     box.innerHTML = h;
     bindNumTabs(life);
     mountMachine({ today:yong.map(function(o){ return o.n; }), life:life });
@@ -1533,7 +1541,7 @@
     $('btnNumCopy').onclick = function(){
       openShare({ sheetTitle:'행운 번호 공유', title:me.name + '님의 오늘 행운 번호', desc:yong.map(function(o){ return o.n; }).join(' · ') + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·'),
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-        text:'[운수] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n보너스 ' + (i+1) + ' ' + l.join(' · '); }).join(''),
+        text:'[Woon] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n보너스 ' + (i+1) + ' ' + l.join(' · '); }).join(''),
         cta:'내 사주로 뽑는 행운 번호 받기 →', link:linkFor('num') });
     };
   }
@@ -1685,6 +1693,7 @@
         '<div class="sub-block"><h4>' + ra.seun.year + '년 두 사람의 흐름</h4><p class="body-text"><strong>' + esc(A.name) + '</strong> — ' + ra.seun.tenStem + '의 해. ' + SEUN_TEXT[ra.seun.tenStem].split('. ')[0] + '.<br><strong>' + esc(B.name) + '</strong> — ' + rb.seun.tenStem + '의 해. ' + SEUN_TEXT[rb.seun.tenStem].split('. ')[0] + '.</p></div>' +
         '<div class="sub-block"><h4>함께하면 좋은 활동</h4><p class="body-text">' + EL_TEXT[ra.yong].act + (ra.yong !== rb.yong ? ', 그리고 ' + EL_TEXT[rb.yong].act : '') + '. 두 사람의 용신(' + MS.EL_K[ra.yong] + (ra.yong !== rb.yong ? '·' + MS.EL_K[rb.yong] : '') + ')을 채워 주는 시간이 돼요.</p></div></div>';
     }
+    h += adSlotHTML('궁합 요약을 본 뒤');
     h += '<p class="disclaimer">궁합은 일간·일지·띠·오행 구성을 비교한 재미용 풀이예요.</p>';
     box.innerHTML = h;
     bindGh();
@@ -1693,7 +1702,7 @@
       var me = getMe();
       openShare({ sheetTitle:'궁합 결과 공유', title:A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점', desc:m.grade + ' · ' + m.summary,
         fig:figSVG(ra.animal, ANIMAL_EL[ra.animal], 'mini'),
-        text:'[운수] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
+        text:'[Woon] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
         cta:me ? '나랑도 궁합 볼래? 생년월일만 넣으면 바로 나와 →' : '너희 궁합도 확인해 봐 →',
         inviteEntry:me || null, link:linkFor('gunghap') });
     };
@@ -1731,10 +1740,46 @@
     $('avatarBtn').hidden = !me;
     if (me) $('avatarTxt').textContent = me.name.charAt(0);
     $('syncDot').hidden = !(auth && !NS);
+    $('setBtn').hidden = !me;
+    $('setDot').hidden = !(me && isGuest());
     renderCoin();
   }
   $('startChip').onclick = function(){ startOnboarding('new'); };
   $('avatarBtn').onclick = function(){ openMy(); };
+  /* ---- 설정 시트: 상단 오른쪽 버튼 하나로 내 정보·엽전·운이·쿠폰·글자 크기·앱 정보 ---- */
+  var SET_IC = {
+    coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><rect x="9.5" y="9.5" width="5" height="5"/></svg>',
+    ticket:TICKET_SVG,
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>',
+    doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M10 12h5M10 15.5h5"/></svg>',
+    user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.6"/><path d="M5.5 19.5c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>'
+  };
+  function openSettings(){
+    var me = getMe(); if (!me){ startOnboarding('new'); return; }
+    var p = getPet(), cps = getCoupons().length, guest = isGuest(), auth = store('unsu_auth');
+    var row = function(id, ic, label, val, cls){ return '<button class="st-row' + (cls ? ' ' + cls : '') + '" id="' + id + '"><span class="st-ic">' + ic + '</span><span class="st-l">' + label + '</span><span class="st-v">' + val + '</span><span class="chev">›</span></button>'; };
+    var h = '<h3 id="sheetTitle" class="sr-only">설정</h3>' +
+      '<button class="st-prof" id="stProf"><span class="st-av">' + esc(me.name.charAt(0)) + '</span><span class="st-pn"><b>' + esc(me.name) + '</b><small>' + (NS ? '예시 모드' : guest ? '게스트 · 이 기기에만 저장 중' : PROV[auth.provider] + ' 계정으로 로그인됨') + '</small></span><span class="chev">›</span></button>' +
+      '<button class="st-pet" id="stPet">' + petSVG(petMood(p.g), p.lv, 'mini') + '<span class="st-pn"><b>운이 <small>Lv.' + p.lv + ' · ' + petStage(p.lv) + '</small></b><span class="pet-gauge"><i style="width:' + p.g + '%"></i></span><small>교감 ' + p.g + '/100' + (p.g >= 100 ? ' · 선물을 받을 수 있어요' : '') + '</small></span><span class="chev">›</span></button>' +
+      '<div class="st-group">' +
+        row('stCoins', SET_IC.coin, '엽전', guest && !NS ? '<em>가입하면 ' + SIGNUP_COINS.toLocaleString() + '닢</em>' : getCoins().toLocaleString() + '닢', 'gold') +
+        row('stCoupons', SET_IC.ticket, '쿠폰함', cps + '장') +
+        row('stMy', SET_IC.user, '내 정보', '사주·계정 관리') +
+      '</div>' +
+      '<div class="st-group st-fs"><div class="st-cap">글자 크기</div>' + fsSegHTML() + '</div>' +
+      '<div class="st-group">' +
+        '<div class="st-row static"><span class="st-ic">' + SET_IC.info + '</span><span class="st-l">앱 정보</span><span class="st-v">Woon v1.0</span></div>' +
+      '</div>' +
+      (guest && !NS ? '<button class="btn-primary btn-block" id="stLogin" style="margin-top:14px">로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button>' : '') +
+      bizFootHTML();
+    openSheet(h);
+    var sb = $('sheetBody'); sb.classList.add('st-sheet'); bindFsSeg(sb);
+    $('stProf').onclick = $('stMy').onclick = $('stCoupons').onclick = function(){ closeSheet(); openMy(); };
+    $('stCoins').onclick = function(){ closeSheet(); setTimeout(openCoinSheet, 260); };
+    $('stPet').onclick = function(){ closeSheet(); go('today'); setTimeout(function(){ var c = $('petCard'); if (c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 120); };
+    if ($('stLogin')) $('stLogin').onclick = function(){ closeSheet(); setTimeout(function(){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요.'); }, 260); };
+  }
+  $('setBtn').onclick = openSettings;
 
   /* ---- 예시 모드 (별도 저장 공간) ---- */
   function demoBarHTML(){ return '<div class="demo-bar"><span><b>예시 모드</b> · 김운수님의 하루를 둘러보는 중</span><button id="btnDemoExit">내 사주로 시작</button></div>'; }
@@ -2055,7 +2100,7 @@
       (NS ? '<button class="set-row" id="setDemo"><span>예시 모드 끝내기</span><span class="s">첫 화면으로 ›</span></button>' : '') +
       '<button class="set-row danger" id="setReset"><span>이 기기의 데이터 초기화</span><span class="s">›</span></button>' +
       (myConfirm === 'reset' ? '<div class="inline-confirm">이 기기에 저장된 사주, 출석, 엽전이 모두 지워져요.' + (auth ? ' 계정에 보관된 기록은 남아 있어요.' : ' 로그인하지 않았다면 되돌릴 수 없어요.') + '<div class="row"><button class="btn-ghost grow" data-mc="cancel">취소</button><button class="btn-ghost btn-danger grow" id="btnResetOk">초기화</button></div></div>' : '') +
-      '<div class="set-row" style="cursor:default"><span>앱 정보</span><span class="s">운수 v1.0 · 재미로 즐기는 콘텐츠</span></div>' +
+      '<div class="set-row" style="cursor:default"><span>앱 정보</span><span class="s">Woon v1.0 · 재미로 즐기는 콘텐츠</span></div>' +
       '</div></div>' + bizFootHTML();
     $('myBody').innerHTML = h;
     bindFsSeg($('myBody'));
@@ -2106,7 +2151,7 @@
         restored = true;
       }
       var me = getMe();
-      store('unsu_auth', { provider:provider, nick:me ? me.name : (acc && acc.nick) || '운수 사용자', at:Date.now() });
+      store('unsu_auth', { provider:provider, nick:me ? me.name : (acc && acc.nick) || 'Woon 사용자', at:Date.now() });
       var gift = !store('unsu_gift');
       if (gift){ store('unsu_gift', 1); addCoins(SIGNUP_COINS, '가입 환영 선물'); }
       writeAccount(); closeSheet(); updateSegCount(); updateTopbar();
@@ -2180,7 +2225,7 @@
     var o = shareState, link = currentLink();
     var h = '<h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
       '<div class="share-card">' + (o.fig ? '<span class="sc-fig">' + o.fig + '</span>' : '') +
-      '<div class="sc-txt"><span class="sc-brand">운수 運數</span><b>' + esc(o.title) + '</b><p>' + esc(o.desc) + '</p><span class="sc-url">' + SH_IC.link + esc(shortUrl(link)) + '</span></div></div>';
+      '<div class="sc-txt"><span class="sc-brand">Woon 運</span><b>' + esc(o.title) + '</b><p>' + esc(o.desc) + '</p><span class="sc-url">' + SH_IC.link + esc(shortUrl(link)) + '</span></div></div>';
     if (o.inviteEntry){
       h += '<button type="button" class="unk-btn" id="shTime" aria-pressed="' + !o.withTime + '"' + (o.inviteEntry.unknown ? ' hidden' : '') + '><span>태어난 시간은 빼고 보내기</span><span class="ck">' + (!o.withTime ? OK_SVG : '') + '</span></button>' +
         '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>이 링크에는 궁합 계산을 위해 ' + esc(o.inviteEntry.name) + '님의 이름·생년월일' + (o.withTime && !o.inviteEntry.unknown ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
@@ -2217,7 +2262,7 @@
     var r = compute(me);
     openShare({ sheetTitle:'친구에게 궁합 신청하기', title:me.name + '님의 궁합 신청', desc:'생년월일만 입력하면 두 사람의 궁합이 바로 나와요',
       fig:r.error ? '' : figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-      text:'[운수] ' + me.name + '님이 궁합 신청을 보냈어요\n생년월일만 입력하면 우리 둘의 궁합 점수와 풀이가 바로 나와요. 가입은 필요 없어요.',
+      text:'[Woon] ' + me.name + '님이 궁합 신청을 보냈어요\n생년월일만 입력하면 우리 둘의 궁합 점수와 풀이가 바로 나와요. 가입은 필요 없어요.',
       cta:'궁합 보러 가기 →', inviteEntry:me });
   }
 
