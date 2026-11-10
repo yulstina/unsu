@@ -1085,6 +1085,7 @@
       '<h1 class="today-title">' + f.head + '</h1>' +
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
+    h += '<div class="quick-row"><button type="button" id="btnQZ">' + TIP_IC.star + '별자리 운세</button><button type="button" id="btnQNum">' + TIP_IC.star + '행운 번호</button><button type="button" id="btnQNY" class="new">' + TIP_IC.star + '2027 신년운세</button></div>';
     h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -1131,7 +1132,9 @@
         '<div class="tip"><span class="ic">' + TIP_IC.num + '</span><div><small>행운의 숫자</small><b>' + f.tip.nums.join(', ') + '</b><small style="margin-top:3px">오늘의 행운 번호 ' + nums.map(function(o){ return o.y ? '<b style="font-size:calc(13px*var(--fs));color:var(--elc)">' + o.n + '</b>' : o.n; }).join(' · ') + '</small></div></div>' +
         '</div><button class="btn-primary btn-block" data-close>확인</button>');
     };
-    $('btnTodayZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
+    $('btnTodayZ').onclick = $('btnQZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
+    $('btnQNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
+    $('btnQNY').onclick = function(){ openNYSheet(me, r); };
   }
 
   /* =========================================================
@@ -1326,13 +1329,7 @@
     var cands = getList().filter(function(x){ return x.id !== other; });
     var who = which === 'a' ? (getMe() ? '첫 번째 사람' : '나') : '상대';
     var h = '<div class="ge" id="ghEditor"><div class="ge-head"><b>' + who + '의 사주</b>' + ((which === 'a' ? gh.a : gh.b) ? '<button class="ge-x" id="geClose" aria-label="입력 닫기">✕</button>' : '') + '</div>';
-    if (cands.length){
-      h += '<div class="ge-label">저장 목록에서 고르기</div><div class="ge-chips">' + cands.map(function(e){
-        var r = compute(e); if (r.error) return '';
-        var cur = e.id === (which === 'a' ? gh.a : gh.b);
-        return '<button class="ge-chip' + (cur ? ' on' : '') + '" data-pick="' + e.id + '"' + (cur ? ' aria-current="true"' : '') + '>' + figSVG(r.animal, ANIMAL_EL[r.animal], 'mini') + '<span><b>' + esc(e.name) + '</b><small>' + r.pillars.day.name + '일주 · ' + (e.gender === 'M' ? '남' : '여') + (cur ? ' · 선택됨' : '') + '</small></span></button>';
-      }).join('') + '</div><div class="ge-or"><span>또는 직접 입력</span></div>';
-    }
+    h += '<button type="button" class="btn-soft btn-block" id="geList">저장 목록에서 가져오기' + (cands.length ? ' (' + cands.length + '명)' : '') + '</button><div class="ge-or"><span>또는 직접 입력</span></div>';
     var hours = '<option value="">태어난 시 · 모름</option>'; for (var i = 0; i < 24; i++) hours += '<option value="' + i + '"' + (f.hour === String(i) ? ' selected' : '') + '>' + pad2(i) + '시</option>';
     var mins = ''; for (var j = 0; j < 60; j++) mins += '<option value="' + j + '"' + (f.minute === String(j) ? ' selected' : '') + '>' + pad2(j) + '분</option>';
     h += '<div class="ge-form">' +
@@ -1359,7 +1356,16 @@
     var box = $('ghEditor');
     box.querySelectorAll('[data-gg]').forEach(function(b){ b.onclick = function(){ f.gender = b.dataset.gg; box.querySelectorAll('[data-gg]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); }); }; });
     box.querySelectorAll('[data-gc],[data-gl]').forEach(function(b){ b.onclick = function(){ if (b.dataset.gc){ f.cal = b.dataset.gc; if (f.cal === 'solar') f.leap = false; } else f.leap = b.dataset.gl === '1'; renderGunghap(); }; });
-    box.querySelectorAll('[data-pick]').forEach(function(b){ b.onclick = function(){ gh[which] = b.dataset.pick; if (which === 'b') gh.bCleared = false; gh.edit = null; gh.f = null; renderGunghap(); }; });
+    $('geList').onclick = function(){
+      var other = which === 'a' ? gh.b : gh.a, cands = getList().filter(function(x){ return x.id !== other; });
+      var hh = '<h3 id="sheetTitle">저장 목록에서 가져오기</h3>';
+      if (!cands.length) hh += '<p class="body-text">저장된 사주가 아직 없어요. 아래에서 직접 입력하면 저장 목록에 자동으로 쌓여요.</p><button class="btn-ghost btn-block" data-close style="margin-top:12px">닫기</button>';
+      else hh += '<div class="ge-list">' + cands.map(function(e){
+        var r = compute(e); if (r.error) return '';
+        return '<button type="button" class="ge-chip" data-spick="' + e.id + '">' + figSVG(r.animal, ANIMAL_EL[r.animal], 'mini') + '<span><b>' + esc(e.name) + '</b><small>' + r.pillars.day.name + '일주 · ' + r.animal + '띠 · ' + (e.gender === 'M' ? '남' : '여') + '</small></span></button>'; }).join('') + '</div>';
+      openSheet(hh);
+      $('sheetBody').querySelectorAll('[data-spick]').forEach(function(b){ b.onclick = function(){ gh[which] = b.dataset.spick; if (which === 'b') gh.bCleared = false; gh.edit = null; gh.f = null; closeSheet(); renderGunghap(); }; });
+    };
     if ($('geClose')) $('geClose').onclick = function(){ gh.edit = null; gh.f = null; renderGunghap(); };
     $('geBirth').onkeydown = function(e){ if (e.key === 'Enter') $('geDone').click(); };
     $('geDone').onclick = function(){
@@ -1540,7 +1546,7 @@
     var acc = store('unsu_account');
     var h = INVITE ? inviteHeroHTML() : '<div class="wel-hero">' +
       '<div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日</div>' +
-      '<h1 class="hero-title">내 사주로 여는<br>오늘의 운세</h1>' +
+      '<h1 class="hero-title">내 사주로 여는 오늘의 운세</h1>' +
       '<div class="wel-fig" id="welFig">' + figSVG(an, MS.EL_KEY[P.day.sEl]) + '</div>' +
       '<p class="helper" style="max-width:24em">생년월일만 알려 주면 만세력으로 여덟 글자를 풀고, 매일 오늘의 운세와 행운 번호를 챙겨 드려요.</p>' +
       '<div class="wel-cta"><button class="btn-primary btn-block" id="btnWelStart">내 사주 입력하고 시작하기</button><button class="text-btn" id="btnWelDemo">예시로 먼저 둘러보기</button></div></div>';
@@ -1990,7 +1996,7 @@
       '<span class="inv-badge">' + SH_IC.heart + '궁합 신청이 도착했어요</span>' +
       '<div class="inv-pair"><div class="inv-p">' + figSVG(ri.animal, MS.EL_KEY[ri.pillars.day.sEl]) + '<b>' + esc(inv.name) + '</b><small>' + ri.pillars.year.name + '년생 ' + ri.animal + '띠</small></div>' +
       '<span class="gh-amp">合</span><div class="inv-p"><span class="inv-q">?</span><b>나</b><small>생년월일 입력</small></div></div>' +
-      '<h1 class="hero-title">' + esc(inv.name) + '님이<br>궁합을 보자고 해요</h1>' +
+      '<h1 class="hero-title">' + esc(inv.name) + '님의 궁합 신청</h1>' +
       '<p class="helper">내 생년월일만 알려 주면 두 사람의 궁합 점수와 풀이가 바로 나와요. 가입 없이 30초면 끝나요.</p>' +
       '<div class="wel-cta"><button class="btn-primary btn-block" id="btnInvStart">내 생년월일 입력하기</button><button class="text-btn" id="btnInvSkip">초대는 나중에 볼게요</button></div></div>';
   }
