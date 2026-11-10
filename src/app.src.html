@@ -1053,6 +1053,45 @@
   .st-fs{padding:12px 14px 14px;}
   .st-cap{font-size:calc(13px*var(--fs));color:var(--text-helper);margin-bottom:8px;font-weight:600;}
   .st-sheet .biz-foot{margin-top:4px;}
+
+  /* ---------- 출시 필수 화면: 약관 동의 · 알림 설정 · 구매 내역 · 고객센터 ---------- */
+  .cs-all,.cs-ck{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;align-items:center;width:100%;border:none;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0;}
+  .cs-all{grid-template-rows:auto auto;padding:14px;border-radius:18px;background:rgba(255,255,255,.07);box-shadow:var(--glass-edge);row-gap:2px;}
+  .cs-all b{font-size:calc(16px*var(--fs));color:#fff;} .cs-all small{grid-column:2;font-size:calc(12px*var(--fs));color:var(--text-helper);}
+  .cs-all .ck{grid-row:1 / span 2;}
+  .ck{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(226,220,255,.35);display:block;position:relative;transition:background .2s;}
+  [aria-pressed="true"] > .ck{background:var(--violet);box-shadow:none;}
+  [aria-pressed="true"] > .ck::after{content:'';position:absolute;left:8px;top:4px;width:6px;height:11px;border:solid #1a1433;border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .cs-list{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding:0 4px;}
+  .cs-item{display:flex;align-items:center;gap:8px;padding:9px 0;}
+  .cs-item .cs-ck{flex:1;font-size:calc(14px*var(--fs));color:var(--text-body);}
+  .cs-ck em{font-style:normal;font-size:calc(12px*var(--fs));font-weight:700;margin-right:6px;}
+  .cs-ck em.req{color:#cfc6fb;} .cs-ck em.opt{color:var(--text-helper);}
+  .cs-view,.link-btn{border:none;background:none;color:var(--text-helper);font-size:calc(12.5px*var(--fs));text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .nt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;border:none;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:13px 14px;}
+  .nt-row + .nt-row,.nt-time + .nt-row{box-shadow:inset 0 .5px 0 rgba(226,220,255,.12);}
+  .nt-t{display:flex;flex-direction:column;gap:2px;}
+  .nt-t b{font-size:calc(15px*var(--fs));color:#fff;font-weight:500;} .nt-t small{font-size:calc(12px*var(--fs));color:var(--text-helper);}
+  .sw{width:51px;height:31px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;transition:background .25s;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12);}
+  .sw i{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.3);transition:transform .35s var(--ease-spring);}
+  [aria-checked="true"] .sw{background:#9be3c4;} [aria-checked="true"] .sw i{transform:translateX(20px);}
+  .nt-time{display:flex;justify-content:space-between;align-items:center;padding:0 14px 12px;font-size:calc(13px*var(--fs));color:var(--text-muted);}
+  .nt-time .sel{width:auto;min-width:110px;}
+  .nt-law{margin-top:10px;}
+  .od-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 14px;}
+  .od-row + .od-row{box-shadow:inset 0 .5px 0 rgba(226,220,255,.12);}
+  .od-row div{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .od-row b{font-size:calc(14.5px*var(--fs));color:#fff;font-weight:500;} .od-row small{font-size:calc(12px*var(--fs));color:var(--text-helper);line-height:1.5;}
+  .od-row > span{font-size:calc(14px*var(--fs));color:var(--text-muted);white-space:nowrap;}
+  .empty-box{padding:22px 16px;border-radius:18px;background:rgba(255,255,255,.05);box-shadow:var(--glass-edge);text-align:center;display:flex;flex-direction:column;gap:6px;}
+  .empty-box b{color:#fff;font-size:calc(15px*var(--fs));}
+  .faq details{padding:0 14px;} .faq details + details{box-shadow:inset 0 .5px 0 rgba(226,220,255,.12);}
+  .faq summary{padding:13px 0;font-size:calc(14.5px*var(--fs));color:#fff;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;}
+  .faq summary::-webkit-details-marker{display:none;} .faq summary::after{content:'+';color:var(--text-helper);}
+  .faq details[open] summary::after{content:'−';}
+  .faq details p{font-size:calc(13.5px*var(--fs));color:var(--text-muted);line-height:1.7;padding-bottom:14px;}
+  .benefits.wd li{display:list-item;margin-left:18px;list-style:disc;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
