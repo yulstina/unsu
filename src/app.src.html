@@ -142,6 +142,8 @@
   .switch[aria-checked="true"] .trk{background:var(--violet);}
   .switch[aria-checked="true"] .trk::after{transform:translateX(18px);background:#fff;}
 
+  .sel{width:100%;appearance:none;-webkit-appearance:none;background:rgba(199,211,234,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%239da7ba' stroke-width='2'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center;border:1px solid var(--border-hairline);color:#fff;border-radius:12px;padding:0 34px 0 14px;min-height:48px;font:inherit;font-size:calc(15px*var(--fs));}
+  .sel:disabled{opacity:.35;}.sel option{color:#111;background:#fff;}
   .dd-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .dd-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:6px;background:rgba(199,211,234,.06);border:1px solid var(--border-hairline);color:#fff;
     font-size:calc(16px*var(--fs));padding:13px 14px;border-radius:10px;cursor:pointer;font-variant-numeric:tabular-nums;text-align:left;transition:border-color .2s,background .2s;}
@@ -617,6 +619,18 @@
   .gen svg{width:200px;height:200px;}
   .gen b{font-family:var(--font-display);font-size:calc(20px*var(--fs));color:#fff;font-weight:500;}
   .gen p{font-size:calc(13px*var(--fs));color:var(--text-muted);}
+  .gen-fig{position:relative;width:200px;height:200px;}
+  .gen-ring{position:absolute;inset:-14px;border-radius:50%;border:2px solid transparent;border-top-color:#8fb0ff;border-right-color:#a58bff;animation:genSpin 1.4s linear infinite;}
+  @keyframes genSpin{to{transform:rotate(360deg);}}
+  .gen-bars{display:grid;gap:8px;width:min(280px,70vw);}
+  .gb{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;font-family:var(--font-hanja);color:#dfe6ff;font-size:calc(14px*var(--fs));}
+  .gb i{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;display:block;}
+  .gb u{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#5b8cff,#9b7bff);transition:width .7s cubic-bezier(.2,.8,.2,1);}
+  .gen-prog{width:min(280px,70vw);height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;}
+  .gen-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5b8cff,#b79bff);}
+  .gen.flash{animation:genFlash .65s ease-in both;}
+  @keyframes genFlash{0%{background:rgba(5,6,15,.92);}40%{background:rgba(190,200,255,.95);}100%{background:rgba(190,200,255,0);opacity:0;}}
+  .sel-lg{min-height:56px;font-size:calc(17px*var(--fs));}
   .gen .hj{font-family:var(--font-hanja);font-size:calc(30px*var(--fs));letter-spacing:.3em;color:var(--icon-accent);}
 
   /* ---------- 로또 1등 번호 ---------- */
@@ -781,7 +795,7 @@
 <canvas id="atmosphere" aria-hidden="true"></canvas>
 
 <header class="topbar">
-  <div class="brand">
+  <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="운수 홈으로" style="cursor:pointer">
     <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="none" stroke="#d1e4fa" stroke-width="1.4" opacity=".5"/><circle cx="20" cy="9" r="2.2" fill="#d8ecf8"/><circle cx="30" cy="26" r="1.6" fill="#98c0ef"/><circle cx="10" cy="26" r="1.6" fill="#98c0ef"/><path d="M20 9 L30 26 L10 26 Z" fill="none" stroke="#98c0ef" stroke-width=".8" opacity=".6"/></svg>
     운수<small>運數</small>
   </div>
@@ -855,13 +869,11 @@
         <span class="lbl">출생시간 <span class="helper">24시간 기준</span></span>
         <div class="time-row">
           <div class="dd-group">
-            <button type="button" class="dd-trigger" id="ddHour" aria-haspopup="listbox" aria-expanded="false" aria-controls="hourPanel"><span class="dd-val" id="ddHourVal">시 선택</span><span class="dd-caret" aria-hidden="true"></span></button>
-            <button type="button" class="dd-trigger" id="ddMin" aria-haspopup="listbox" aria-expanded="false" aria-controls="minPanel"><span class="dd-val" id="ddMinVal">분 선택</span><span class="dd-caret" aria-hidden="true"></span></button>
+            <select class="sel" id="ddHour" aria-label="출생 시"></select>
+            <select class="sel" id="ddMin" aria-label="출생 분"></select>
           </div>
           <button type="button" class="switch" id="fUnknown" role="switch" aria-checked="false"><span class="trk"></span>모름</button>
         </div>
-        <div class="dd-panel" id="hourPanel" role="listbox" aria-label="출생 시" hidden></div>
-        <div class="dd-panel min" id="minPanel" role="listbox" aria-label="출생 분" hidden></div>
         <div class="field-hint" id="timeHint">시간을 모르면 시주를 뺀 6글자로 풀이해요</div>
       </div>
 
