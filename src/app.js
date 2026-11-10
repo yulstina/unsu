@@ -1151,16 +1151,53 @@
   }
 
   /* =========================================================
+     행운 추첨기 (번호 탭) — 사주로 계산한 번호가 추첨기에서 뽑히는 연출
+     ========================================================= */
+  var machine = null;
+  function machineCardHTML(canDraw){
+    return '<div class="card machine-card"><div class="sec-head"><h2 class="sec-title">행운 추첨기</h2><span class="sec-meta">내 사주로 뽑기</span></div>' +
+      (canDraw ? '<div class="mc-seg" role="group" aria-label="번호 종류"><button type="button" data-mk="today" aria-pressed="true">오늘 번호</button><button type="button" data-mk="life" aria-pressed="false">평생 번호</button></div>' : '') +
+      '<canvas id="mcCanvas" class="mc-canvas" role="img" aria-label="로또 추첨기 일러스트. 버튼을 누르면 내 사주로 계산한 번호 6개가 하나씩 나와요."></canvas>' +
+      '<div class="balls mc-result" id="mcResult" aria-live="polite" hidden></div>' +
+      '<button class="btn-primary btn-block" id="btnMcDraw">' + (canDraw ? '추첨 시작' : '내 사주 등록하고 뽑기') + '</button>' +
+      '<p class="helper" style="text-align:center">번호는 사주로 계산해요. 추첨 연출은 재미 요소이고 당첨을 보장하지 않아요.</p></div>';
+  }
+  function mountMachine(sets){
+    if (machine){ machine.destroy(); machine = null; }
+    var cv = $('mcCanvas'); if (!cv || !window.LottoMachine) return;
+    machine = LottoMachine.mount(cv, { reduceMotion:reduceMotion });
+    var kind = 'today', box = $('mcResult'), btn = $('btnMcDraw');
+    document.querySelectorAll('[data-mk]').forEach(function(b){
+      b.onclick = function(){
+        if (machine.isBusy()) return; kind = b.dataset.mk;
+        document.querySelectorAll('[data-mk]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+        machine.reset(); box.hidden = true; btn.textContent = '추첨 시작';
+      };
+    });
+    btn.onclick = function(){
+      if (!sets){ startOnboarding('new'); return; }
+      if (machine.isBusy()) return;
+      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '추첨 중…'; box.hidden = true;
+      machine.draw(nums, null, function(){
+        box.innerHTML = nums.slice().sort(function(a, b){ return a - b; }).map(function(n){ return '<div class="ball lt ' + ltColor(n) + '">' + n + '</div>'; }).join('');
+        box.hidden = false; btn.disabled = false; btn.textContent = '다시 뽑기';
+        toast((kind === 'today' ? '오늘의' : '평생') + ' 행운 번호가 나왔어요');
+      });
+    };
+  }
+
+  /* =========================================================
      번호 탭 상단: 내 번호
      ========================================================= */
   var extraLines = [];
   function renderNumToday(){
     var me = getMe(), box = $('numToday');
     if (!me){
-      box.innerHTML = '<div class="hero-copy" style="padding-inline:2px"><div class="eyebrow">LOTTO 6/45</div><h1 class="hero-title">내 사주로 뽑는<br>행운 번호</h1></div>' +
+      box.innerHTML = '<div class="hero-copy" style="padding-inline:2px"><div class="eyebrow">LOTTO 6/45</div><h1 class="hero-title">내 사주로 뽑는<br>행운 번호</h1></div>' + machineCardHTML(false) +
         '<div class="card gate"><div class="balls">' + [3,8,17,26,33,41].map(function(n){ return '<div class="ball" style="opacity:.35">?</div>'; }).join('') + '</div><p class="helper">내 사주를 등록하면 평생 번호와 매일 바뀌는 오늘의 행운 번호가 생겨요.</p><button class="btn-primary btn-block" id="btnNumOnb">내 사주 등록하고 번호 받기</button></div>' + lottoCardHTML(null) +
         '<div class="sec-head" style="padding-inline:2px;margin-top:6px"><h2 class="sec-title">직접 골라 채우기</h2><span class="sec-meta">MY PICK</span></div>';
       $('btnNumOnb').onclick = function(){ startOnboarding('new'); };
+      mountMachine(null);
       return;
     }
     var r = compute(me); if (r.error){ box.innerHTML = ''; return; }
@@ -1169,6 +1206,7 @@
     var luck = todayLuck(me, r), yong = luck.nums, lEl = luck.el;
     var extra = store('unsu_extra'); if (!extra || extra.d !== todayStr()) extra = { d:todayStr(), lines:[] };
     var h = '<div class="hero-copy" style="padding-inline:2px"><div class="eyebrow">LOTTO 6/45</div><h1 class="hero-title">' + esc(me.name) + '님의<br>행운 번호</h1></div>';
+    h += machineCardHTML(true);
     h += '<div class="card"><div class="num-set"><div class="lab">평생 행운 번호 <small>사주 원국 · 고정</small></div><div class="balls">' + life.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>' +
       '<div class="num-set"><div class="lab">오늘의 행운 번호 <small>행운 숫자 ' + EL_TEXT[lEl].num.join('·') + '</small></div><div class="balls">' + yong.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + EL_CLASS[lEl] : '') + '">' + o.n + '</div>'; }).join('') + '</div></div>' +
       extra.lines.map(function(l, i){ return '<div class="num-set"><div class="lab">보너스 한 줄 ' + (i+1) + ' <small>광고 보상</small></div><div class="balls">' + l.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>'; }).join('') +
@@ -1177,6 +1215,7 @@
     h += lottoCardHTML(life);
     h += '<div class="sec-head" style="padding-inline:2px;margin-top:6px"><h2 class="sec-title">직접 골라 채우기</h2><span class="sec-meta">MY PICK</span></div>';
     box.innerHTML = h;
+    mountMachine({ today:yong.map(function(o){ return o.n; }), life:life });
     $('btnExtra').onclick = function(){
       playAd(function(){
         var line = drawSixFromSeed(iso + '|' + tKey + '|' + todayStr() + '|extra' + extra.lines.length);
