@@ -32,7 +32,7 @@ var LottoMachine = (function(){
 
     var state = 'idle';      /* idle | spin | done */
     var spin = 0;            /* 0~1 회전 세기 */
-    var shake = 0, flash = 0, glow = 0;
+    var shake = 0, flash = 0, glow = 0, flx = 0, fly = 0;
     var queue = [], out = [], sparks = [], rack = [], tStart = 0, cbBall = null, cbDone = null, drawT = 0, nextAt = 0, total = 0;
     var raf = 0, last = 0, dead = false;
 
@@ -88,7 +88,7 @@ var LottoMachine = (function(){
       ctx.save(); ctx.translate(sx, sy);
 
       /* 바닥 그림자 */
-      var sh = ctx.createRadialGradient(160, 300, 10, 160, 300, 150); sh.addColorStop(0, 'rgba(102,58,243,.28)'); sh.addColorStop(1, 'rgba(102,58,243,0)');
+      var sh = ctx.createRadialGradient(160, 300, 10, 160, 300, 150); sh.addColorStop(0, 'rgba(138,124,240,.28)'); sh.addColorStop(1, 'rgba(138,124,240,0)');
       ctx.fillStyle = sh; ctx.fillRect(0, 200, W, 150);
 
       /* 몸통 */
@@ -97,7 +97,7 @@ var LottoMachine = (function(){
       rr(76, 208, 168, 8, 4); ctx.fillStyle = 'rgba(234,197,111,.35)'; ctx.fill();
       /* 이름판 */
       rr(112, 224, 96, 24, 12); ctx.fillStyle = 'rgba(10,8,32,.65)'; ctx.fill(); ctx.strokeStyle = 'rgba(234,197,111,.6)'; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = '#f3dca0'; ctx.font = '600 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('운수 추첨기', 160, 237);
+      ctx.fillStyle = '#f3dca0'; ctx.font = '600 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Woon 추첨기', 160, 237);
       /* 배출구 */
       rr(138, 258, 44, 30, 10); ctx.fillStyle = '#0a0820'; ctx.fill(); ctx.strokeStyle = 'rgba(234,197,111,.5)'; ctx.stroke();
       /* 표시등 */
@@ -124,15 +124,15 @@ var LottoMachine = (function(){
 
       /* 공 받침대(랙) */
       rr(8, 308, 304, 62, 31); ctx.fillStyle = 'rgba(10,8,32,.78)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(214,230,255,.28)'; ctx.stroke();
-      for (var s = 0; s < 6; s++){ var rp = rackPos(s); ctx.beginPath(); ctx.arc(rp.x, rp.y, 22.5, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(214,230,255,.2)'; ctx.stroke(); }
-      for (var r2 = 0; r2 < rack.length; r2++){ var rb = rack[r2], pp = rackPos(r2); if (!rb) continue; ballSprite(pp.x, pp.y, 21, rb.n, rb.c, true, 0); }
+      for (var s = 0; s < 6; s++){ var rp = rackPos(s); ctx.beginPath(); ctx.arc(rp.x, rp.y, 24, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(214,230,255,.2)'; ctx.stroke(); }
+      for (var r2 = 0; r2 < rack.length; r2++){ var rb = rack[r2], pp = rackPos(r2); if (!rb) continue; ballSprite(pp.x, pp.y, 23, rb.n, rb.c, true, 0); }
 
       /* 나오는 공 */
       for (var o = 0; o < out.length; o++){ var ob = out[o]; ballSprite(ob.x, ob.y, ob.r, ob.n, ob.c, true, ob.rot); }
       /* 반짝임 */
       for (var p = 0; p < sparks.length; p++){ var sp = sparks[p]; ctx.globalAlpha = Math.max(0, sp.life); ctx.fillStyle = sp.col; ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.s, 0, 7); ctx.fill(); }
       ctx.globalAlpha = 1;
-      if (flash > 0){ ctx.fillStyle = 'rgba(255,240,200,' + (flash * .35) + ')'; ctx.fillRect(0, 0, W, H); }
+      if (flash > 0){ var fg = ctx.createRadialGradient(flx, fly, 2, flx, fly, 46); fg.addColorStop(0, 'rgba(255,240,200,' + (flash * .55) + ')'); fg.addColorStop(1, 'rgba(255,240,200,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(flx, fly, 46, 0, 7); ctx.fill(); }
       ctx.restore();
     }
 
@@ -166,9 +166,9 @@ var LottoMachine = (function(){
         else if (b.t < T1 + T2){ var u2 = (b.t - T1) / T2; b.x = 160 + (b.slot % 2 ? 6 : -6) * u2; b.y = 272 + 26 * easeIn(u2); b.r = 12 + 3 * u2; }
         else if (b.t < T1 + T2 + T3){
           var u3 = easeOut((b.t - T1 - T2) / T3), fx = 160 + (b.slot % 2 ? 6 : -6);
-          b.x = fx + (pos.x - fx) * u3; b.y = 298 + (pos.y - 298) * u3 - Math.sin(u3 * Math.PI) * 6; b.r = 15 + 6 * u3; b.rot = u3 * (pos.x - fx) / 15;
+          b.x = fx + (pos.x - fx) * u3; b.y = 298 + (pos.y - 298) * u3 - Math.sin(u3 * Math.PI) * 6; b.r = 15 + 8 * u3; b.rot = u3 * (pos.x - fx) / 15;
         } else {
-          rack[b.slot] = { n:b.n, c:b.c }; out.splice(i, 1); burst(pos.x, pos.y, 14); flash = .6;
+          rack[b.slot] = { n:b.n, c:b.c }; out.splice(i, 1); burst(pos.x, pos.y, 14); flash = .6; flx = pos.x; fly = pos.y;
         }
       }
       flash = Math.max(0, flash - dt * 3);

@@ -3,7 +3,7 @@ var TINT = { fire:'#ffb3a1', earth:'#ffd98a', air:'#d9c2ff', water:'#9ff0e4', wo
 function figSVG(key, el, cls){
   var f = FIG[key]; if (!f) return '';
   var u = 'f' + (++FIG_UID);
-  var tint = TINT[el] || '#b6d9fc';
+  var tint = TINT[el] || '#cfc6fb';
   var s = '<svg class="' + (cls || 'fig') + '" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
   s += '<defs>'
     + '<radialGradient id="' + u + 'g"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".25" stop-color="#cfe6ff" stop-opacity=".45"/><stop offset="1" stop-color="#8fb8ff" stop-opacity="0"/></radialGradient>'
