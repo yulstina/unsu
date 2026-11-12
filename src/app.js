@@ -3,7 +3,11 @@
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function $(id){ return document.getElementById(id); }
   function pad2(n){ return (n < 10 ? '0' : '') + n; }
-  function todayStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+  /* 공유 링크로 연 결과는 '공유한 날짜' 기준으로 그린다 — 렌더하는 동안만 VIEW_DATE를 잠깐 바꾼다 */
+  var VIEW_DATE = null;
+  function nowD(){ return VIEW_DATE ? new Date(VIEW_DATE.getTime()) : new Date(); }
+  function withDate(dt, fn){ var prev = VIEW_DATE; VIEW_DATE = dt; try { return fn(); } finally { VIEW_DATE = prev; } }
+  function todayStr(){ var d = nowD(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
@@ -183,8 +187,8 @@
   /* =========================================================
      탭 네비게이션
      ========================================================= */
-  var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream') };
-  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'gunghap', fill:'num', dream:'dream' };
+  var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream'), shared:$('v-shared') };
+  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'gunghap', fill:'num', dream:'dream', shared:'' };
   var currentTab = 'today', currentView = 'today', lastSajuView = null;
   function show(view, tab){
     Object.keys(VIEWS).forEach(function(k){ VIEWS[k].hidden = k !== view; });
@@ -352,7 +356,7 @@
     return { entry:entry, result:r };
   }
   function compute(e){
-    return MS.calc({ y:e.y, m:e.m, d:e.d, cal:e.cal, leap:e.leap, hour:e.hour, minute:e.minute, unknownTime:e.unknown, gender:e.gender, lonCorr:e.corr !== false, lon:127 });
+    return MS.calc({ y:e.y, m:e.m, d:e.d, cal:e.cal, leap:e.leap, hour:e.hour, minute:e.minute, unknownTime:e.unknown, gender:e.gender, lonCorr:e.corr !== false, lon:127, now:VIEW_DATE || undefined });
   }
 
   /* =========================================================
@@ -377,7 +381,7 @@
   $('sajuForm').addEventListener('submit', function(e){
     e.preventDefault();
     var r = readForm(); if (!r) return;
-    openResult(r.entry, r.result);
+    showGen(r.result, function(){ openResult(r.entry, r.result); }, { name:r.entry.name });
   });
   $('btnSaveForm').onclick = function(){ var r = readForm(); if (r) saveEntry(r.entry); };
 
@@ -448,7 +452,7 @@
   function openResult(entry, r, asTab){
     setTimeout(function(){ bond('saju'); }, 900);
     if (currentView !== 'result') prevView = currentView;
-    cur = { entry:entry, r:r, asTab:!!asTab };
+    cur = { entry:entry, r:r, asTab:!!asTab, date:todayStr() };
     $('resultSeg').hidden = !asTab; $('resultHead').hidden = !!asTab;
     var P = r.pillars, order = ['hour','day','month','year'];
     var dStem = P.day.stem, dEl = r.dEl, ig = ILGAN[dStem];
@@ -591,7 +595,7 @@
       openShare({ sheetTitle:'사주 풀이 공유', title:entry.name + '님의 사주 · ' + P.day.name + '(' + P.day.hanja + ')일주', desc:ig0.t + ' — ' + ig0.img,
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
         text:'[운픽] ' + entry.name + '님의 사주\n' + P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주\n일간 ' + ig0.t + ' — ' + ig0.img,
-        cta:'생년월일만 넣으면 내 여덟 글자도 풀어 줘요 →', link:linkFor('') });
+        cta:'생년월일만 넣으면 내 여덟 글자도 풀어 줘요 →', link:resultLink('s', cur.date, [entry]), shareEntries:[entry] });
     };
   }
 
@@ -711,7 +715,8 @@
 
   function openZodiac(z, iso){
     setTimeout(function(){ bond('zodiac'); }, 900);
-    var doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    var zNow = nowD(), zDate = todayStr();
+    var doy = Math.floor((zNow - new Date(zNow.getFullYear(), 0, 0)) / 86400000);
     var seed = iso ? iso + '|unknown|' + todayStr() : z.name + '|' + todayStr();
     var nums = drawSixFromSeed(seed);
     var h = '<div class="flow-header"><button class="icon-back" id="btnZBack" aria-label="뒤로">‹</button><span class="ttl">별자리 운세 · ' + todayStr() + '</span></div>';
@@ -742,7 +747,7 @@
       openShare({ sheetTitle:'별자리 운세 공유', title:'오늘의 ' + z.name + ' (' + z.en + ')', desc:'오늘의 행운 번호 ' + nums.join(' · '),
         fig:figSVG(z.name, z.el, 'mini'),
         text:'[운픽] 오늘의 ' + z.name + '(' + z.en + ') 운세\n행운 번호 ' + nums.join(' · '),
-        cta:'내 별자리 운세도 보기 →', link:linkFor('zodiac') });
+        cta:'내 별자리 운세도 보기 →', link:resultLink('z', zDate, [], z.name + '~' + (iso || '')) });
     };
   }
 
@@ -792,7 +797,7 @@
   function entryTKey(r){ return r.time ? pad2(r.time.h) + pad2(r.time.mi) : 'unknown'; }
   /* 하루 한 가지 '행운 기운' → 행운의 팁 숫자 · 오늘의 행운 번호 · 결과 화면이 모두 같은 값을 쓴다 */
   function todayLuck(entry, r){
-    var f = DAILY.today(entry, r, new Date());
+    var f = DAILY.today(entry, r, nowD());
     var nums = drawYongNumbers(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|luck', f.luckyEl);
     return { f:f, el:f.luckyEl, nums:nums };
   }
@@ -1267,7 +1272,8 @@
     store('unsu_dmdraft', '');
     $('dmInput').hidden = true; $('dmResult').hidden = false; window.scrollTo(0, 0);
     $('dmResult').innerHTML = '<div class="flow-header"><span class="ttl">꿈풀이</span></div><div class="card dm-loading">' + petSVG('calm', getPet().lv, 'mini') +
-      '<b>우니가 꿈을 읽고 있어요</b><p class="helper">꿈속 상징을 찾아 숫자를 맞추는 중이에요. 잠시만 기다려 주세요.</p><div class="dm-dots"><i></i><i></i><i></i></div></div>';
+      '<b>우니가 꿈을 읽고 있어요</b><p class="helper">꿈속 상징을 찾아 숫자를 맞추는 중이에요. 잠시만 기다려 주세요.</p><div class="dm-dots"><i></i><i></i><i></i></div></div>' +
+      adSlotHTML('꿈 분석 중', 'loading');
     var local = DREAM.analyze(text), done = false;
     function finish(res){
       if (done) return; done = true;
@@ -1518,8 +1524,33 @@
     refreshPetCard(); if (currentView === 'today') renderToday();
   }
   /* 네이티브 광고 자리 (애드핏/애드센스 심사 후 실제 광고로 교체). 원칙: 한 화면에 1개, 결과를 다 본 뒤, 결제 화면에는 넣지 않음 */
-  function adSlotHTML(where){
-    return '<div class="ad-slot" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>네이티브 광고 영역</b><small>' + where + ' · 콘텐츠 카드와 같은 모양으로 1개만</small></div></div>';
+  /* =========================================================
+     광고 (Google AdSense)
+     - 승인 후 ADS.client(ca-pub-…)와 광고 단위 ID(slots)만 채우면 실제 광고로 바뀐다
+     - 비어 있거나 Claude 미리보기 안이면 지금처럼 자리 표시만 보여 준다
+     - 새로 그려진 <ins class="adsbygoogle">는 아래 MutationObserver가 자동으로 채운다
+     ========================================================= */
+  var ADS = { client:'', slots:{ feed:'', loading:'' } };
+  function adsOn(kind){ return !!(ADS.client && ADS.slots[kind] && isHosted() && !NS); }
+  (function adsBoot(){
+    if (!ADS.client || !isHosted()) return;
+    var sc = document.createElement('script'); sc.async = true; sc.crossOrigin = 'anonymous';
+    sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ADS.client);
+    document.head.appendChild(sc);
+    var fill = function(){
+      document.querySelectorAll('ins.adsbygoogle:not([data-pushed])').forEach(function(ins){
+        if (!ins.offsetParent && !ins.closest('.gen')) return;
+        ins.setAttribute('data-pushed', '1');
+        try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e){}
+      });
+    };
+    new MutationObserver(function(){ requestAnimationFrame(fill); }).observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden'] });
+  })();
+  function adSlotHTML(where, kind){
+    kind = kind || 'feed';
+    if (adsOn(kind)) return '<div class="ad-slot ad-live ad-' + kind + '"><span class="ad-badge">AD</span><ins class="adsbygoogle" style="display:block" data-ad-client="' + ADS.client + '" data-ad-slot="' + ADS.slots[kind] + '"' +
+      (kind === 'loading' ? ' data-ad-format="rectangle"' : ' data-ad-format="auto" data-full-width-responsive="true"') + '></ins></div>';
+    return '<div class="ad-slot ad-' + kind + '" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>' + (kind === 'loading' ? '분석 중 광고 영역' : '네이티브 광고 영역') + '</b><small>' + where + ' · ' + (kind === 'loading' ? '애드센스 승인 후 실제 광고로 바뀌어요' : '콘텐츠 카드와 같은 모양으로 1개만') + '</small></div></div>';
   }
   function renderToday(){
     var body = $('todayBody'), me = getMe();
@@ -1581,7 +1612,7 @@
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         fig:figSVG(r.animal, f.auraEl, 'mini'),
         text:'[운픽] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j + '\n오늘의 행운 번호 ' + nums.map(function(o){ return o.n; }).join(' · '),
-        cta:'너의 오늘 운세도 확인해 봐 →', link:linkFor('') });
+        cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me] });
     };
     $('btnTips').onclick = function(){
       openSheet('<h3 id="sheetTitle">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 오늘의 행운 팁이에요</h3><div class="tip-list ' + elc + '">' +
@@ -1751,7 +1782,7 @@
       openShare({ sheetTitle:'행운 번호 공유', title:me.name + '님의 오늘 행운 번호', desc:yong.map(function(o){ return o.n; }).join(' · ') + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·'),
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
         text:'[운픽] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n보너스 ' + (i+1) + ' ' + l.join(' · '); }).join(''),
-        cta:'내 사주로 뽑는 행운 번호 받기 →', link:linkFor('num') });
+        cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me] });
     };
   }
 
@@ -1912,8 +1943,7 @@
       openShare({ sheetTitle:'궁합 결과 공유', title:A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점', desc:m.grade + ' · ' + m.summary,
         fig:figSVG(ra.animal, ANIMAL_EL[ra.animal], 'mini'),
         text:'[운픽] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
-        cta:me ? '나랑도 궁합 볼래? 생년월일만 넣으면 바로 나와 →' : '너희 궁합도 확인해 봐 →',
-        inviteEntry:me || null, link:linkFor('gunghap') });
+        cta:'우리 궁합 결과 보러 가기 →', link:resultLink('g', todayStr(), [A, B]), shareEntries:[A, B] });
     };
     if ($('btnGhInvite')) $('btnGhInvite').onclick = openInvite;
     if (!open){
@@ -2249,21 +2279,26 @@
     var list = getList(); list.unshift(e); store('unsu_list', list); setMe(e.id);
     welcomeCoins(); updateSegCount(); ob = null;
     if (saveOnly){ toast(e.name + '님 정보를 저장했어요'); go('today'); return; }
-    showGen(r, function(){ if (!(INVITE && acceptInviteForMe())) go('today'); });
+    showGen(r, function(){ if (!(INVITE && acceptInviteForMe())) go('today'); }, { name:e.name });
   }
-  function showGen(r, cb){
+  function showGen(r, cb, o){
+    o = o || {};
     var P = r.pillars, g = ['hour','day','month','year'].map(function(k){ return P[k] ? P[k].hanja : '　　'; }).join(' ');
     var steps = ['절기·음력 맞추는 중', '여덟 글자 세우는 중', '오행의 균형 헤아리는 중', '용신 찾는 중'];
     var mx = Math.max.apply(null, r.cnt.concat([1])), bars = '';
     for (var e = 0; e < 5; e++) bars += '<div class="gb ' + EL_CLASS[e] + '"><span>' + MS.EL_H[e] + '</span><i><u data-w="' + Math.max(8, Math.round(r.cnt[e] / mx * 100)) + '"></u></i></div>';
-    var el = document.createElement('div'); el.className = 'gen'; el.setAttribute('role', 'status');
-    el.innerHTML = '<div class="gen-fig">' + figSVG(r.animal, MS.EL_KEY[P.day.sEl]) + '<span class="gen-ring"></span></div><div class="hj">' + g + '</div>' +
+    var withAd = o.ad !== false;
+    var el = document.createElement('div'); el.className = 'gen' + (withAd ? ' has-ad' : ''); el.setAttribute('role', 'status');
+    /* 분석 화면도 콘텐츠(여덟 글자·오행 막대)를 함께 보여 준다 — 광고만 있는 화면은 애드센스 정책 위반 소지가 있어서 */
+    el.innerHTML = '<div class="gen-main"><div class="gen-fig">' + figSVG(r.animal, MS.EL_KEY[P.day.sEl]) + '<span class="gen-ring"></span></div>' +
+      (o.name ? '<p class="gen-who">' + esc(o.name) + '님의 사주를 분석하고 있어요</p>' : '') + '<div class="hj">' + g + '</div>' +
       '<b id="genStep">' + steps[0] + '</b><div class="gen-bars">' + bars + '</div>' +
-      '<div class="gen-prog"><i id="genProg"></i></div><p id="genPct">0%</p>';
+      '<div class="gen-prog"><i id="genProg"></i></div><p id="genPct">0%</p></div>' +
+      (withAd ? '<div class="gen-ad">' + adSlotHTML('사주 분석 중', 'loading') + '</div>' : '');
     document.body.appendChild(el);
     var s = el.querySelector('svg'); s.classList.add('fig'); if (!reduceMotion) s.classList.add('draw');
-    if (reduceMotion){ el.querySelectorAll('u').forEach(function(u){ u.style.width = u.dataset.w + '%'; }); setTimeout(function(){ el.remove(); cb(); }, 500); return; }
-    var T = 3200, t0 = Date.now();
+    if (reduceMotion){ el.querySelectorAll('u').forEach(function(u){ u.style.width = u.dataset.w + '%'; }); setTimeout(function(){ el.remove(); cb(); }, withAd ? 2400 : 500); return; }
+    var T = withAd ? 3800 : 3200, t0 = Date.now();
     setTimeout(function(){ el.querySelectorAll('u').forEach(function(u, i){ setTimeout(function(){ u.style.width = u.dataset.w + '%'; }, i * 380); }); }, 900);
     (function tick(){
       var k = Math.min(1, (Date.now() - t0) / T);
@@ -2578,6 +2613,40 @@
     return compute(e).error ? null : e;
   }
   function inviteLink(e, withTime){ var c = encodeInvite(e, withTime); return isHosted() ? shareBase() + '?i=' + c : APP_URL + '#i.' + c; }
+  /* ---- 결과 공유 링크 (?r=…) ----
+     입력값(이름·성별·양/음력·생년월일·시간·보정)과 공유한 날짜를 링크에 그대로 담는다.
+     계산은 전부 seed 기반이라 같은 입력 + 같은 날짜면 어느 폰에서 열어도 숫자 하나까지 같다.
+     형식: r1|타입|YYYYMMDD|추가값|사람1(7칸)|사람2(7칸)  타입 s 사주 · d 오늘 운세 · n 행운 번호 · g 궁합 · z 별자리 */
+  var EF = 7;
+  function encEntry(e){
+    return [String(e.name || '').replace(/\|/g, ' ').slice(0, 12), e.gender === 'M' ? 'M' : 'F', e.cal === 'lunar' ? 'l' : 's', e.leap ? '1' : '0',
+      '' + e.y + pad2(e.m) + pad2(e.d), e.unknown ? '' : pad2(e.hour) + pad2(e.minute), e.corr === false ? '0' : '1'].join('|');
+  }
+  function decEntry(p){
+    if (!p || p.length < EF || !/^\d{8}$/.test(p[4])) return null;
+    var t = /^\d{4}$/.test(p[5]) ? p[5] : '';
+    var e = { name:(p[0] || '친구').slice(0, 12), gender:p[1] === 'M' ? 'M' : 'F', cal:p[2] === 'l' ? 'lunar' : 'solar', leap:p[3] === '1',
+      y:+p[4].slice(0, 4), m:+p[4].slice(4, 6), d:+p[4].slice(6, 8), unknown:!t, hour:t ? +t.slice(0, 2) : null, minute:t ? +t.slice(2, 4) : null, corr:p[6] !== '0' };
+    if (t && (e.hour > 23 || e.minute > 59)) return null;
+    return compute(e).error ? null : e;
+  }
+  function encodeShare(type, date, entries, extra){
+    return b64u(['r1', type, String(date).replace(/-/g, ''), String(extra || '').replace(/\|/g, '')].concat(entries.map(encEntry)).join('|'));
+  }
+  function decodeShare(code){
+    var p = unb64u(code).split('|');
+    if (p[0] !== 'r1' || 'sdngz'.indexOf(p[1]) < 0 || p[1].length !== 1 || !/^\d{8}$/.test(p[2])) return null;
+    var y = +p[2].slice(0, 4), m = +p[2].slice(4, 6), d = +p[2].slice(6, 8), dt = new Date(y, m - 1, d, 12, 0, 0);
+    if (dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    var need = p[1] === 'g' ? 2 : p[1] === 'z' ? 0 : 1, ents = [];
+    for (var i = 0; i < need; i++){ var e = decEntry(p.slice(4 + i * EF, 4 + (i + 1) * EF)); if (!e) return null; ents.push(e); }
+    if (p[1] === 'z' && !zByName(p[3].split('~')[0])) return null;
+    return { type:p[1], date:dt, dateStr:y + '-' + pad2(m) + '-' + pad2(d), extra:p[3], entries:ents };
+  }
+  function resultLink(type, date, entries, extra){
+    var c = encodeShare(type, date, entries, extra);
+    return isHosted() ? shareBase() + '?r=' + c : APP_URL + '#r.' + c;
+  }
   function shortUrl(u){ u = u.replace(/^https?:\/\//, ''); return u.length > 42 ? u.slice(0, 30) + '…' + u.slice(-8) : u; }
 
 
@@ -2593,6 +2662,10 @@
     if (o.inviteEntry){
       h += '<button type="button" class="unk-btn" id="shTime" aria-pressed="' + !o.withTime + '"' + (o.inviteEntry.unknown ? ' hidden' : '') + '><span>태어난 시간은 빼고 보내기</span><span class="ck">' + (!o.withTime ? OK_SVG : '') + '</span></button>' +
         '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>이 링크에는 궁합 계산을 위해 ' + esc(o.inviteEntry.name) + '님의 이름·생년월일' + (o.withTime && !o.inviteEntry.unknown ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
+    }
+    if (!o.inviteEntry && o.shareEntries && o.shareEntries.length){
+      h += '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>받는 사람도 똑같은 결과를 보도록 이 링크에 ' + o.shareEntries.map(function(e){ return esc(e.name); }).join('·') + '님의 이름·생년월일' +
+        (o.shareEntries.some(function(e){ return !e.unknown; }) ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
     }
     h += '<div class="share-actions">' +
       '<button class="btn-primary" id="shNative">' + SH_IC.send + '카톡·메시지로 보내기</button>' +
@@ -2661,9 +2734,107 @@
       '<div class="wel-cta"><button class="btn-primary btn-block" id="btnInvStart">내 생년월일 입력하기</button><button class="text-btn" id="btnInvSkip">초대는 나중에 볼게요</button></div></div>';
   }
 
+  /* ---- 공유 링크로 들어온 경우: 보낸 사람이 본 결과를 그 날짜 기준으로 그대로 ---- */
+  var SHARED = null;
+  function sharedBarHTML(S, who){
+    var dt = S.date;
+    return '<div class="demo-bar shared-bar"><span>' + (who ? '<b>' + esc(who) + '</b>님이 공유한 결과' : '친구가 공유한 결과') + ' · ' + (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일 기준</span><button type="button" data-shared-mine>내 것도 보기</button></div>';
+  }
+  function sharedCtaHTML(label, sub){
+    return '<div class="card shared-cta"><p class="helper">' + sub + '</p><button class="btn-primary btn-block" data-shared-mine>' + label + '</button></div>';
+  }
+  function leaveShared(target){
+    SHARED = null;
+    try { history.replaceState(null, '', location.pathname); } catch(e){}
+    if (target === 'gunghap'){ go('gunghap'); return; }
+    if (!getMe()){ startOnboarding('new'); return; }
+    go(target || 'today');
+  }
+  function bindSharedCta(root, target){
+    root.querySelectorAll('[data-shared-mine]').forEach(function(b){ b.onclick = function(){ leaveShared(target); }; });
+  }
+  function openShared(S){
+    var A = S.entries[0], B = S.entries[1];
+    if (S.type === 's'){
+      var r = withDate(S.date, function(){ return compute(A); });
+      withDate(S.date, function(){ openResult(A, r); });
+      $('resultBody').insertAdjacentHTML('afterbegin', sharedBarHTML(S, A.name));
+      bindSharedCta($('resultBody'), 'saju');
+      return;
+    }
+    if (S.type === 'z'){
+      var zp = S.extra.split('~'), z = zByName(zp[0]);
+      withDate(S.date, function(){ openZodiac(z, /^\d{4}-\d{2}-\d{2}$/.test(zp[1] || '') ? zp[1] : ''); });
+      $('zHome').hidden = true; $('zResult').hidden = false; show('zodiac');
+      var zh = $('zResult').querySelector('.flow-header');
+      if (zh) zh.insertAdjacentHTML('afterend', sharedBarHTML(S, '')); else $('zResult').insertAdjacentHTML('afterbegin', sharedBarHTML(S, ''));
+      bindSharedCta($('zResult'), 'today');
+      return;
+    }
+    var box = $('sharedBody'), h = '', dt = S.date, md = (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일';
+    withDate(S.date, function(){
+      var ra = compute(A);
+      if (S.type === 'd' || S.type === 'n'){
+        var luck = todayLuck(A, ra), f = luck.f, P = f.pillars, elc = EL_CLASS[f.luckyEl], nums = luck.nums;
+        var life = drawSixFromSeed(entryISO(A, ra) + '|' + entryTKey(ra) + '|life');
+        h += sharedBarHTML(S, A.name);
+        if (S.type === 'd'){
+          $('sharedTtl').textContent = A.name + '님의 ' + md + ' 운세';
+          h += '<div class="today-head"><div class="today-date">' + md + ' ' + WD[dt.getDay()] + '요일, ' + esc(A.name) + '님은</div><h1 class="today-title">' + f.head + '</h1>' +
+            '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div></div>' +
+            '<div class="today-fig" id="sharedFig">' + figSVG(ra.animal, f.auraEl) + '</div>' +
+            '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div><p class="body-text">' + esc(A.name) + '님, ' + f.body + '</p></div>';
+        } else {
+          $('sharedTtl').textContent = A.name + '님의 행운 번호';
+          h += '<div class="card"><div class="num-set"><div class="lab">평생 행운 번호 <small>사주 원국 · 고정</small></div><div class="balls">' + life.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div></div>';
+        }
+        h += '<div class="card ' + elc + '"><div class="sec-head"><h2 class="sec-title">' + md + ' 행운 번호</h2><span class="sec-meta">행운 숫자 ' + f.tip.nums.join('·') + '</span></div>' +
+          '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
+          '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div>';
+        h += sharedCtaHTML(S.type === 'd' ? '내 오늘 운세 보기' : '내 사주로 행운 번호 받기', '생년월일만 넣으면 30초 만에 나만의 운세와 번호가 나와요. 가입은 필요 없어요.');
+      } else if (S.type === 'g'){
+        var rb = compute(B), m = DAILY.match(A, ra, B, rb);
+        $('sharedTtl').textContent = A.name + ' × ' + B.name + ' 궁합';
+        h += sharedBarHTML(S, A.name) +
+          '<div class="poster"><div class="poster-frame"><div class="poster-corner l">宮合<br>MATCH</div><div class="poster-corner r">' + ra.pillars.day.hanja + ' × ' + rb.pillars.day.hanja + '</div>' +
+          '<div class="gh-figs">' + figSVG(ra.animal, MS.EL_KEY[ra.pillars.day.sEl]) + '<span class="link"></span>' + figSVG(rb.animal, MS.EL_KEY[rb.pillars.day.sEl]) + '</div>' +
+          '<div class="gh-score"><div class="num">' + m.score + '<small>점</small></div><div class="gr">' + m.grade + '</div><p class="poster-sub" style="max-width:20em">' + esc(A.name) + '님과 ' + esc(B.name) + '님은 ' + m.summary + '</p></div></div></div>' +
+          '<div class="card"><div class="sec-head"><h2 class="sec-title">궁합 요약</h2></div><div class="gh-badges">' +
+          '<div class="gh-badge"><span class="chip">일간</span><p>' + m.stemTxt.t.replace(/A/g, esc(A.name)).replace(/B/g, esc(B.name)) + '</p></div>' +
+          '<div class="gh-badge"><span class="chip">일지</span><p>' + m.dTxt + '</p></div></div></div>';
+        h += sharedCtaHTML('나도 궁합 보기', '두 사람 생년월일만 넣으면 궁합 점수와 풀이가 바로 나와요.');
+      }
+    });
+    h += adSlotHTML('공유받은 결과를 본 뒤');
+    box.innerHTML = h;
+    if ($('sharedFig')) drawOn($('sharedFig'));
+    bindSharedCta(box, S.type === 'g' ? 'gunghap' : S.type === 'n' ? 'num' : 'today');
+    show('shared', '');
+  }
+  $('btnSharedBack').onclick = function(){ leaveShared('today'); };
+
   refreshLotto();
 
+  (function readShared(){
+    var code = null;
+    try { code = new URLSearchParams(location.search).get('r'); } catch(e){}
+    var hs = (location.hash || '').replace('#', '');
+    if (!code && hs.indexOf('r.') === 0) code = hs.slice(2);
+    if (!code) return;
+    var S = null; try { S = decodeShare(code); } catch(err){}
+    if (!S){ try { history.replaceState(null, '', location.pathname); } catch(err){} toast('링크가 잘렸거나 올바르지 않아요'); return; }
+    SHARED = S;
+    var intro = $('intro'); if (!intro.hidden) intro.hidden = true;
+    store('unsu_intro', 1);
+    if (NS) exitDemo(true);
+    if (S.type === 's'){
+      var r = withDate(S.date, function(){ return compute(S.entries[0]); });
+      showGen(r, function(){ openShared(S); }, { name:S.entries[0].name });
+    } else openShared(S);
+  })();
+
   (function readInvite(){
+    if (SHARED) return;
     var code = null;
     try { code = new URLSearchParams(location.search).get('i'); } catch(e){}
     var hs = (location.hash || '').replace('#', '');
@@ -2683,6 +2854,6 @@
   })();
 
   /* deep link: #list / #saju / #zodiac / #gunghap / #num (초대 토큰 #i.… 은 위에서 처리) */
-  var hash = INVITE ? '' : (location.hash || '').replace('#', '');
+  var hash = (INVITE || SHARED) ? '' : (location.hash || '').replace('#', '');
   if (hash === 'list'){ renderList(); show('list'); } else if (hash === 'saju') show('input'); else if (hash === 'zodiac') show('zodiac'); else if (hash === 'gunghap') go('gunghap'); else if (hash === 'num') go('num');
 })();

@@ -103,7 +103,7 @@ var MS = (function(){
 
   /* ---- main ---- */
   function calc(input){
-    /* input: {y,m,d, cal:'solar'|'lunar', leap, hour, minute, unknownTime, gender:'M'|'F', lonCorr:true, lon:127} */
+    /* input: {y,m,d, cal:'solar'|'lunar', leap, hour, minute, unknownTime, gender:'M'|'F', lonCorr:true, lon:127, now?:Date|ms} */
     var sy = input.y, sm = input.m, sd = input.d;
     if (input.cal === 'lunar'){
       var s = lunarToSolar(input.y, input.m, input.d, input.leap);
@@ -223,7 +223,7 @@ var MS = (function(){
     }
 
     /* 올해 세운 · 이번 달 월운 */
-    var now = new Date();
+    var now = input.now ? new Date(input.now) : new Date();   /* 공유 링크: 공유한 날짜 기준으로 세운·월운을 맞춘다 */
     var Jn = jd(now.getUTCFullYear(), now.getUTCMonth()+1, now.getUTCDate(), now.getUTCHours() + now.getUTCMinutes()/60);
     var ln = sunLon(Jn), ny = jdToKST(Jn).y;
     var nyS = Jn < findLon(315, jd(ny,2,4,0)) ? ny - 1 : ny;
