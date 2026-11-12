@@ -632,6 +632,22 @@
   .gen.flash{animation:genFlash .65s ease-in both;}
   @keyframes genFlash{0%{background:rgba(5,6,15,.92);}40%{background:rgba(190,200,255,.95);}100%{background:rgba(190,200,255,0);opacity:0;}}
   .sel-lg{min-height:56px;font-size:calc(17px*var(--fs));}
+  /* 분석 중 화면 + 광고: 위는 콘텐츠, 아래는 광고 1개 (작은 화면에선 그림을 줄여 한 화면 안에) */
+  .gen-main{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .gen-who{font-size:calc(13.5px*var(--fs));color:#d9d2f5;margin-bottom:-6px;}
+  .gen.has-ad{justify-content:flex-start;overflow-y:auto;padding:max(28px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));gap:18px;}
+  .gen.has-ad .gen-main{margin-top:auto;gap:12px;}
+  .gen.has-ad .gen-fig,.gen.has-ad .gen svg{width:140px;height:140px;}
+  .gen.has-ad .hj{font-size:calc(24px*var(--fs));letter-spacing:.22em;white-space:nowrap;}
+  .gen.has-ad .gen-fig svg{width:140px;height:140px;}
+  .gen-ad{width:min(340px,100%);margin-bottom:auto;text-align:left;}
+  .gen-ad .ad-slot{background:rgba(48,42,84,.42);}
+  .ad-slot.ad-live{display:block;padding:22px 8px 8px;min-height:120px;}
+  .ad-slot.ad-loading.ad-live{min-height:260px;}
+  .dm-loading + .ad-slot{margin-top:12px;}
+  .shared-bar span{min-width:0;}
+  .shared-cta{display:grid;gap:12px;text-align:center;}
+  @media (max-height:640px){ .gen.has-ad .gen-fig,.gen.has-ad .gen-fig svg{width:96px;height:96px;} .gen.has-ad .gen-bars{display:none;} }
   .gen .hj{font-family:var(--font-hanja);font-size:calc(30px*var(--fs));letter-spacing:.3em;color:var(--icon-accent);}
 
   /* ---------- 로또 1등 번호 ---------- */
@@ -1268,6 +1284,15 @@
       <button class="btn-ghost" id="btnSaveResult" style="padding:8px 14px;font-size:calc(12.5px*var(--fs))">저장</button>
     </div>
     <div id="resultBody" class="view"></div>
+  </section>
+
+  <!-- ================= 공유 링크로 받은 결과 ================= -->
+  <section class="view" id="v-shared" hidden>
+    <div class="flow-header">
+      <button class="icon-back" id="btnSharedBack" aria-label="운픽 홈으로">‹</button>
+      <span class="ttl" id="sharedTtl">공유받은 결과</span>
+    </div>
+    <div id="sharedBody" class="view"></div>
   </section>
 
   <!-- ================= 목록 ================= -->
