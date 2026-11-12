@@ -1576,6 +1576,7 @@
     h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
+    h += catChipsHTML(f);
     h += petCardHTML();
     h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
@@ -1625,6 +1626,108 @@
     $('btnTodayZ').onclick = $('btnQZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
     $('btnQNum').onclick = function(){ openDream(); };
     $('btnQNY').onclick = function(){ openNYSheet(me, r); };
+    body.querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ openCat(me, r, b.dataset.cat); }; });
+  }
+
+
+  /* =========================================================
+     분야별 운세 (금전·연애결혼·취업직장·맞는 직업)
+     - 오늘 점수(DAILY.today)는 그대로 쓰고, 원국의 십성 분포 + 올해 세운으로 '타고난 결'과 '올해 흐름'을 붙인다
+     - 전부 입력값·날짜 기반이라 공유 링크(?r= 타입 c)로 열어도 같은 내용
+     ========================================================= */
+  var TEN_GRP = { '비견':'비겁','겁재':'비겁','식신':'식상','상관':'식상','편재':'재성','정재':'재성','편관':'관성','정관':'관성','편인':'인성','정인':'인성' };
+  var CATS = {
+    money:{ name:'금전운', sk:'w', ic:'coin' },
+    love:{ name:'연애·결혼운', sk:'l', ic:'heart' },
+    career:{ name:'취업·직장운', sk:'j', ic:'bag' },
+    job:{ name:'나에게 맞는 직업', chip:'직업 찾기', sk:'', ic:'compass' }
+  };
+  var CAT_ORDER = ['money', 'love', 'career', 'job'];
+  var CAT_IC = {
+    coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><rect x="9.6" y="9.6" width="4.8" height="4.8"/></svg>',
+    heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>',
+    bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M3.5 12.5h17"/></svg>',
+    compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>'
+  };
+  var CAT_NATAL = {
+    money:['원국에 재성(재물의 별)이 드러나 있지 않아요. 돈을 쫓기보다 실력과 사람으로 먼저 인정받고, 그게 수입으로 바뀌는 구조예요. 월급처럼 안정된 흐름이 잘 맞아요.',
+      '원국에 재성이 알맞게 자리 잡고 있어요. 들어오는 길과 쓰는 길의 균형이 좋은 편이라, 계획을 세워 모으면 꾸준히 불어나요.',
+      '원국에 재성이 많아 돈의 흐름에 밝고 기회를 잘 알아봐요. 벌이는 일이 많아질수록 새는 곳도 생기니, 통장을 나눠 지키는 습관이 재물운을 완성해요.'],
+    love:['원국에 배우자의 별이 뚜렷하지 않아 인연을 서두르지 않는 편이에요. 오래 알고 지낸 사람과 자연스럽게 깊어지는 경우가 많아요.',
+      '배우자의 별이 알맞게 있어 인연 운이 안정적이에요. 마음을 표현하는 타이밍만 잘 잡으면 관계가 순하게 이어져요.',
+      '배우자의 별이 많아 인기가 많고 인연이 자주 찾아와요. 선택지가 많을수록 내 기준을 먼저 세워 두는 게 좋은 인연을 고르는 길이에요.'],
+    career:['원국에 관성(직장의 별)이 약해 조직의 틀보다 내 방식대로 일할 때 힘이 나요. 프리랜서·전문직·작은 팀처럼 재량이 큰 자리가 잘 맞아요.',
+      '관성이 알맞게 있어 조직 안에서 인정받는 힘이 있어요. 맡은 일을 끝까지 해내는 모습이 평가로 이어져요.',
+      '관성이 강해 책임감과 규칙을 중시해요. 체계가 분명한 곳에서 빠르게 자리를 잡지만, 스스로를 몰아붙이지 않게 쉬는 시간도 일정에 넣어 두세요.']
+  };
+  var CAT_YEAR = {
+    '비겁':{ money:'경쟁과 지출이 함께 늘어나는 해예요. 동업이나 보증은 한 번 더 따져 보세요.', love:'내 주장이 강해지는 해라 상대 이야기를 한 번 더 들어 주면 관계가 단단해져요.', career:'독립·창업 욕구가 커지는 해예요. 바로 뛰쳐나가기보다 준비 기간을 두면 성공 확률이 높아져요.' },
+    '식상':{ money:'재능이 수입으로 이어지는 해예요. 부업이나 작업물 판매를 시작하기 좋아요.', love:'표현력이 좋아지는 해라 새로운 인연을 만나기 쉬워요. 먼저 말을 거는 쪽이 유리해요.', career:'아이디어가 인정받는 해예요. 기획·콘텐츠·영업처럼 보여 주는 일에서 특히 빛나요.' },
+    '재성':{ money:'돈이 크게 움직이는 해예요. 수입이 느는 만큼 지출 계획을 먼저 세워 두세요.', love:'마음과 현실 조건이 함께 맞는 인연이 들어오는 해예요.', career:'성과가 숫자로 보이는 해예요. 연봉 협상이나 이직 조건을 따져 보기 좋아요.' },
+    '관성':{ money:'책임이 커지면서 고정 수입이 안정되는 해예요. 무리한 투자보다 쌓는 쪽이 이득이에요.', love:'관계가 공식적으로 진전되는 해예요. 결혼이나 미래 약속 이야기가 오가기 좋아요.', career:'승진·합격·발령처럼 자리가 바뀌는 해예요. 취업운이 가장 강하게 들어오는 흐름이에요.' },
+    '인성':{ money:'돈보다 배움에 투자할수록 남는 해예요. 자격증이나 교육비는 아끼지 마세요.', love:'편안하게 기대고 싶은 사람이 나타나는 해예요. 조급함만 내려놓으면 인연이 가까워져요.', career:'시험·자격증·학업에 유리한 해예요. 준비해 온 것이 문서로 결과가 나와요.' }
+  };
+  var CAT_JOB = {
+    '비겁':{ t:'스스로 판을 짜는 일', jobs:['창업가', '프리랜서', '트레이너·코치', '영업 리더'] },
+    '식상':{ t:'만들고 표현하는 일', jobs:['디자이너', '콘텐츠 크리에이터', '마케터', '요리사', '강사'] },
+    '재성':{ t:'돈과 사람을 움직이는 일', jobs:['사업가', '재무·회계', '커머스 MD', '부동산'] },
+    '관성':{ t:'체계 안에서 책임지는 일', jobs:['공무원', '관리직', '법·행정', '군·경찰'] },
+    '인성':{ t:'배우고 전하는 일', jobs:['연구원', '교사·교수', '상담사', '의료·약학', '작가'] }
+  };
+  var EL_FIELD = ['교육·출판·환경', '미디어·IT·뷰티', '부동산·중개·컨설팅', '금융·기계·법조', '무역·유통·연구'];
+  function natalGroups(r){
+    var P = r.pillars, dS = P.day.stem, c = { '비겁':0, '식상':0, '재성':0, '관성':0, '인성':0 };
+    ['year', 'month', 'day', 'hour'].forEach(function(k){
+      var p = P[k]; if (!p) return;
+      if (k !== 'day') c[TEN_GRP[MS.tenGod(dS, p.stem)]]++;
+      c[TEN_GRP[MS.tenGod(dS, MS.BR_MAIN[p.br])]]++;
+    });
+    return c;
+  }
+  function lvOf(n){ return n === 0 ? 0 : n <= 2 ? 1 : 2; }
+  function catHTML(entry, r, cat){
+    var C = CATS[cat], g = natalGroups(r), f = todayLuck(entry, r).f, nm = esc(entry.name);
+    var yG = TEN_GRP[r.seun.tenStem], d = nowD(), md = (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+    var nums = drawSixFromSeed(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|cat-' + cat);
+    var h = '<div class="cat-head"><span class="cat-ic">' + CAT_IC[C.ic] + '</span><div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
+      (C.sk ? '<span class="cat-score">' + f.scores[C.sk] + '<small>점</small></span>' : '') + '</div>';
+    if (C.sk){
+      var star = cat === 'money' ? '재성' : cat === 'career' ? '관성' : (entry.gender === 'M' ? '재성' : '관성');
+      h += '<div class="cat-bar"><i style="width:' + f.scores[C.sk] + '%"></i></div><p class="cat-today">“' + f.lines[C.sk] + '”</p>' +
+        '<div class="sub-block"><h4>타고난 ' + C.name.replace('운', '') + ' 그릇 <small>' + star + ' ' + g[star] + '개</small></h4><p class="body-text">' + CAT_NATAL[cat][lvOf(g[star])] +
+        (cat === 'money' && g['식상'] ? ' 식상(재능)이 재성을 받쳐 주어 손재주·기획·말솜씨가 곧 수입원이 돼요.' : '') +
+        (cat === 'career' && g['인성'] ? ' 인성(배움)도 있어 시험·자격증 운이 따라요.' : '') + '</p></div>' +
+        '<div class="sub-block"><h4>' + r.seun.year + '년 흐름 <small>' + r.seun.tenStem + '의 해</small></h4><p class="body-text">' + CAT_YEAR[yG][cat] + '</p></div>';
+    } else {
+      var order = Object.keys(g).sort(function(a, b){ return g[b] - g[a] || Object.keys(g).indexOf(a) - Object.keys(g).indexOf(b); });
+      var J1 = CAT_JOB[order[0]], J2 = CAT_JOB[order[1]];
+      h += '<p class="cat-today">' + nm + '님은 <b>' + J1.t + '</b>에서 가장 힘이 나요.</p>' +
+        '<div class="sub-block"><h4>잘 맞는 직업 <small>' + order[0] + ' ' + g[order[0]] + '개</small></h4><div class="cat-jobs">' + J1.jobs.map(function(j){ return '<span>' + j + '</span>'; }).join('') + '</div></div>' +
+        '<div class="sub-block"><h4>함께 살리면 좋은 재능 <small>' + order[1] + '</small></h4><p class="body-text">' + J2.t + '도 잘 맞아요. ' + J2.jobs.slice(0, 3).join(', ') + ' 같은 일과 겹치는 자리라면 더 오래, 즐겁게 일할 수 있어요.</p></div>' +
+        '<div class="sub-block"><h4>일간 ' + ILGAN[r.pillars.day.stem].t + '에게 맞는 분야</h4><p class="body-text">' + EL_FIELD[r.dEl] + ' 분야와 인연이 깊어요. ' + r.seun.year + '년 흐름도 함께 보면, ' + CAT_YEAR[yG].career + '</p></div>';
+    }
+    h += '<div class="num-set cat-nums"><div class="lab">이 운을 담은 행운 번호 <small>' + md + '</small></div><div class="balls">' + nums.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>' +
+      '<p class="disclaimer">사주 원국과 일진으로 계산한 재미용 풀이예요. 실제 당첨이나 결과를 보장하지 않습니다.</p>';
+    return h;
+  }
+  function catChipsHTML(f){
+    return '<div class="card cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div><div class="cat-chips">' +
+      CAT_ORDER.map(function(k){ var C = CATS[k]; return '<button type="button" data-cat="' + k + '"><span class="ic">' + CAT_IC[C.ic] + '</span><span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '</b>' : '<b class="go">›</b>') + '</button>'; }).join('') +
+      '</div></div>';
+  }
+  function openCat(entry, r, cat){
+    var date = todayStr();
+    openSheet('<div class="cat-sheet">' + catHTML(entry, r, cat) + '</div>' +
+      '<div class="row" style="margin-top:14px"><button class="btn-soft grow" id="btnCatShare">' + SH_IC.send + '공유하기</button><button class="btn-primary grow" id="btnCatNum">번호 더 뽑기</button></div>' +
+      adSlotHTML(CATS[cat].name + '을 본 뒤'));
+    $('btnCatNum').onclick = function(){ closeSheet(); go('num'); };
+    $('btnCatShare').onclick = function(){
+      var f = todayLuck(entry, r).f, C = CATS[cat];
+      openShare({ sheetTitle:C.name + ' 공유', title:entry.name + '님의 ' + C.name, desc:C.sk ? '오늘 ' + f.scores[C.sk] + '점 · ' + f.lines[C.sk] : '나에게 맞는 일 · ' + CAT_JOB[Object.keys(natalGroups(r)).sort(function(a, b){ var g = natalGroups(r); return g[b] - g[a]; })[0]].t,
+        fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
+        text:'[운픽] ' + entry.name + '님의 ' + C.name + (C.sk ? ' ' + f.scores[C.sk] + '점\n“' + f.lines[C.sk] + '”' : ''),
+        cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry] });
+    };
   }
 
   /* =========================================================
@@ -2616,7 +2719,7 @@
   /* ---- 결과 공유 링크 (?r=…) ----
      입력값(이름·성별·양/음력·생년월일·시간·보정)과 공유한 날짜를 링크에 그대로 담는다.
      계산은 전부 seed 기반이라 같은 입력 + 같은 날짜면 어느 폰에서 열어도 숫자 하나까지 같다.
-     형식: r1|타입|YYYYMMDD|추가값|사람1(7칸)|사람2(7칸)  타입 s 사주 · d 오늘 운세 · n 행운 번호 · g 궁합 · z 별자리 */
+     형식: r1|타입|YYYYMMDD|추가값|사람1(7칸)|사람2(7칸)  타입 s 사주 · d 오늘 운세 · n 행운 번호 · g 궁합 · z 별자리 · c 분야별 운세(추가값=분야) */
   var EF = 7;
   function encEntry(e){
     return [String(e.name || '').replace(/\|/g, ' ').slice(0, 12), e.gender === 'M' ? 'M' : 'F', e.cal === 'lunar' ? 'l' : 's', e.leap ? '1' : '0',
@@ -2635,12 +2738,13 @@
   }
   function decodeShare(code){
     var p = unb64u(code).split('|');
-    if (p[0] !== 'r1' || 'sdngz'.indexOf(p[1]) < 0 || p[1].length !== 1 || !/^\d{8}$/.test(p[2])) return null;
+    if (p[0] !== 'r1' || 'sdngzc'.indexOf(p[1]) < 0 || p[1].length !== 1 || !/^\d{8}$/.test(p[2])) return null;
     var y = +p[2].slice(0, 4), m = +p[2].slice(4, 6), d = +p[2].slice(6, 8), dt = new Date(y, m - 1, d, 12, 0, 0);
     if (dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
     var need = p[1] === 'g' ? 2 : p[1] === 'z' ? 0 : 1, ents = [];
     for (var i = 0; i < need; i++){ var e = decEntry(p.slice(4 + i * EF, 4 + (i + 1) * EF)); if (!e) return null; ents.push(e); }
     if (p[1] === 'z' && !zByName(p[3].split('~')[0])) return null;
+    if (p[1] === 'c' && !CATS[p[3]]) return null;
     return { type:p[1], date:dt, dateStr:y + '-' + pad2(m) + '-' + pad2(d), extra:p[3], entries:ents };
   }
   function resultLink(type, date, entries, extra){
@@ -2792,6 +2896,10 @@
           '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
           '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div>';
         h += sharedCtaHTML(S.type === 'd' ? '내 오늘 운세 보기' : '내 사주로 행운 번호 받기', '생년월일만 넣으면 30초 만에 나만의 운세와 번호가 나와요. 가입은 필요 없어요.');
+      } else if (S.type === 'c'){
+        $('sharedTtl').textContent = A.name + '님의 ' + CATS[S.extra].name;
+        h += sharedBarHTML(S, A.name) + '<div class="card cat-sheet">' + catHTML(A, ra, S.extra) + '</div>';
+        h += sharedCtaHTML('내 ' + CATS[S.extra].name + ' 보기', '생년월일만 넣으면 30초 만에 내 분야별 운세가 나와요. 가입은 필요 없어요.');
       } else if (S.type === 'g'){
         var rb = compute(B), m = DAILY.match(A, ra, B, rb);
         $('sharedTtl').textContent = A.name + ' × ' + B.name + ' 궁합';
