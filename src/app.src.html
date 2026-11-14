@@ -1382,33 +1382,72 @@
   @media (prefers-reduced-motion:reduce){ .num-reveal.nr-in>*,.tab.bump svg{animation:none;} .machine-card .mc-canvas{transition:none;} }
 
   /* ===== 005 2단계: 우니 꾹 · 오늘 할 일 · 금박 ===== */
-  /* 우니 꾹: 우니가 가운데, 다 누르면 공이 머리 위로 짠 + 별 파바박 (transform·opacity만) */
-  .peek-stage{position:relative;height:206px;display:flex;justify-content:center;align-items:flex-end;padding-bottom:4px;}
-  .peek-btn{position:relative;width:138px;height:138px;border:none;background:radial-gradient(circle,color-mix(in srgb,var(--elc,#b9a8ff) 24%,transparent),transparent 70%);border-radius:50%;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;padding:0;}
+  /* 우니 꾹 뽑기: 누르면 우니가 왼쪽으로 폴짝, 머리 위 별이 오른쪽으로 날아가 선물이 되고, 카드 전체에 폭죽 (transform·opacity만) */
+  .peek-card{position:relative;overflow:hidden;}
+  .peek-stage{position:relative;height:178px;}
+  .peek-btn{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;border:none;background:radial-gradient(circle,color-mix(in srgb,var(--elc,#b9a8ff) 24%,transparent),transparent 70%);border-radius:50%;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;padding:0;}
   .peek-btn:disabled{cursor:default;}
-  .peek-fig{position:absolute;inset:16px;display:grid;place-items:center;transform-origin:50% 92%;transition:transform .25s var(--ease-ios);}
+  .peek-card.open .peek-btn{transform:translateX(-62px);}
+  .peek-card.burst .peek-btn{animation:pkHop .8s var(--ease-spring) both;}
+  .peek-fig{position:absolute;inset:14px;display:grid;place-items:center;transform-origin:50% 92%;transition:transform .25s var(--ease-ios);}
   .peek-fig svg{width:100%;height:100%;}
   .peek-card:not(.open) .peek-fig{animation:pkWiggle 2.8s ease-in-out infinite;}
   .peek-card.hold .peek-fig{animation:none;transform:scale(1.1,.8);transition:transform .75s cubic-bezier(.3,.7,.4,1);}
-  .peek-card.burst .peek-fig{animation:pkJump .7s var(--ease-spring);}
+  .peek-card.open .pstar{opacity:0;}
   .peek-ring{position:absolute;inset:0;width:100%;height:100%;transform:scale(.55);opacity:0;}
   .peek-ring circle{fill:none;stroke:#f5d48a;stroke-width:4;stroke-dasharray:6 7;}
   .peek-card.hold .peek-ring{opacity:1;transform:scale(1) rotate(120deg);transition:transform .75s linear,opacity .15s;}
-  .peek-ball{position:absolute;left:50%;top:8px;width:62px;height:62px;margin-left:-31px;font-size:24px;z-index:2;opacity:0;transform:translateY(70px) scale(.2);}
-  .peek-card.open .peek-ball{opacity:1;transform:none;background:radial-gradient(circle at 35% 30%,#fff8e0,#f5d48a 55%,#d6a03e);color:#3a2600;font-weight:800;box-shadow:inset 0 -3px 6px rgba(120,70,0,.25),0 0 28px rgba(245,212,138,.6);}
-  .peek-card.burst .peek-ball{animation:pkBall .8s cubic-bezier(.2,1.4,.4,1) both;}
-  .peek-pop{position:absolute;left:50%;top:39px;width:0;height:0;z-index:1;pointer-events:none;}
+  /* 선물 토큰: 최종 위치는 가운데에서 오른쪽 68px */
+  .peek-tok{position:absolute;left:50%;top:50%;width:0;height:0;z-index:2;}
+  .peek-ball{position:absolute;left:34px;top:-36px;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle at 35% 30%,#fff8e0,#f5d48a 55%,#d6a03e);color:#5a3a00;box-shadow:inset 0 -3px 6px rgba(120,70,0,.25),0 0 30px rgba(245,212,138,.6);}
+  .peek-ball svg{width:28px;height:28px;}
+  .peek-ball small{position:absolute;top:100%;left:50%;margin-top:8px;transform:translateX(-50%);white-space:nowrap;font-size:12px;font-weight:700;color:#f7dfa0;background:rgba(10,8,32,.55);padding:3px 9px;border-radius:999px;}
+  .peek-ball.gt-color{background:radial-gradient(circle at 35% 30%,#fff,var(--gc) 45%,color-mix(in srgb,var(--gc) 75%,#000));box-shadow:0 0 0 3px rgba(255,255,255,.85),0 0 30px color-mix(in srgb,var(--gc) 70%,transparent);}
+  .peek-ball.gt-coin .gt-hole{width:18px;height:18px;border-radius:3px;background:#2a1c55;box-shadow:inset 0 0 0 2px #a8741f;}
+  .peek-card.burst .peek-ball{animation:pkFly .85s cubic-bezier(.25,1.3,.45,1) .12s both;}
+  /* 별 가루: 우니 머리 별 자리에서 선물 쪽(오른쪽 아래)으로 */
+  .peek-pop{position:absolute;left:calc(50% + 10px);top:calc(50% - 52px);width:0;height:0;z-index:1;pointer-events:none;}
   .pk-flash{position:absolute;left:-60px;top:-60px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,240,200,.9),rgba(245,212,138,.35) 40%,transparent 70%);opacity:0;transform:scale(.2);}
-  .pk-spark{position:absolute;left:-9px;top:-9px;width:18px;height:18px;opacity:0;background:#ffe39a;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);}
-  .pk-spark:nth-child(3n){background:#fff;width:12px;height:12px;left:-6px;top:-6px;} .pk-spark:nth-child(3n+1){background:#c9b9ff;}
-  .peek-card.burst .pk-flash{animation:pkFlash .7s ease-out .12s both;}
-  .peek-card.burst .pk-spark{animation:pkSpark .9s cubic-bezier(.15,.8,.3,1) .15s both;}
+  .pk-spark{position:absolute;left:-8px;top:-8px;width:16px;height:16px;opacity:0;background:#ffe39a;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);}
+  .pk-spark:nth-child(3n){background:#fff;} .pk-spark:nth-child(3n+1){background:#c9b9ff;}
+  .peek-card.burst .pk-flash{animation:pkFlash .6s ease-out .05s both;}
+  .peek-card.burst .pk-spark{animation:pkSpark .8s cubic-bezier(.15,.8,.3,1) calc(.1s + var(--w)) both;}
+  /* 카드 전체 폭죽 */
+  .pk-fws{position:absolute;inset:0;pointer-events:none;z-index:3;}
+  .pk-fw{position:absolute;width:0;height:0;}
+  .pk-fw i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:#ffe39a;opacity:0;box-shadow:0 0 6px currentColor;}
+  .pk-fw:nth-child(2n) i{background:#ff9fc0;color:#ff9fc0;} .pk-fw:nth-child(3n) i{background:#b9a8ff;color:#b9a8ff;} .pk-fw i:nth-child(2n){background:#fff;}
+  .peek-card.burst .pk-fw i{animation:pkFw .9s cubic-bezier(.1,.7,.3,1) var(--w) both;}
   @keyframes pkWiggle{0%,86%,100%{transform:none;}90%{transform:rotate(-6deg);}94%{transform:rotate(5deg);}97%{transform:rotate(-2deg);}}
-  @keyframes pkJump{0%{transform:scale(1.15,.75);}35%{transform:translateY(-16px) scale(.92,1.1);}65%{transform:translateY(0) scale(1.06,.94);}100%{transform:none;}}
-  @keyframes pkBall{0%{opacity:0;transform:translateY(70px) scale(.2);}55%{opacity:1;transform:translateY(-12px) scale(1.18);}100%{opacity:1;transform:none;}}
-  @keyframes pkFlash{0%{opacity:0;transform:scale(.2);}30%{opacity:1;}100%{opacity:0;transform:scale(1.6);}}
+  @keyframes pkHop{0%{transform:scale(1.12,.8);}40%{transform:translate(-32px,-28px) scale(.92,1.1);}72%{transform:translate(-62px,0) scale(1.1,.9);}86%{transform:translate(-62px,-6px);}100%{transform:translateX(-62px);}}
+  @keyframes pkFly{0%{opacity:0;transform:translate(-58px,-54px) scale(.2);}45%{opacity:1;transform:translate(-18px,-58px) scale(.9);}80%{transform:translate(0,4px) scale(1.12);}100%{opacity:1;transform:none;}}
+  @keyframes pkFlash{0%{opacity:0;transform:scale(.2);}30%{opacity:1;}100%{opacity:0;transform:scale(1.5);}}
   @keyframes pkSpark{0%{opacity:0;transform:rotate(var(--a)) translateX(0) scale(.3);}20%{opacity:1;}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(1) rotate(90deg);}}
-  @media (prefers-reduced-motion:reduce){ .peek-card .peek-fig,.peek-card .peek-ball,.peek-card .pk-spark,.peek-card .pk-flash{animation:none!important;transition:none!important;} }
+  @keyframes pkFw{0%{opacity:0;transform:rotate(var(--a)) translateX(0) scale(.4);}15%{opacity:1;}70%{opacity:1;}100%{opacity:0;transform:rotate(var(--a)) translateX(46px) translateY(10px) scale(.6);}}
+  @media (prefers-reduced-motion:reduce){ .peek-card .peek-btn,.peek-card .peek-fig,.peek-card .peek-ball,.peek-card .pk-spark,.peek-card .pk-flash,.peek-card .pk-fw i{animation:none!important;transition:none!important;} }
+
+  /* 더 깊이 보기: 유료 상품 배너 */
+  .deep{display:flex;flex-direction:column;gap:12px;}
+  .deep-head{display:flex;align-items:baseline;gap:10px;padding:0 2px;} .deep-head small{font-size:13px;color:var(--text-helper);}
+  .deep-bn{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;width:100%;min-height:128px;padding:18px 12px 18px 20px;border:none;border-radius:20px;text-align:left;cursor:pointer;color:#fff;
+    --t1:rgba(245,212,138,.45);--t2:#2a1f6e;
+    background:radial-gradient(90% 120% at 100% 100%,var(--t1),transparent 60%),linear-gradient(90deg,rgba(18,12,56,.9),rgba(18,12,56,.35)),url(/img/banner-night.webp) 70% 50%/cover no-repeat,var(--t2);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.08),0 16px 30px -14px rgba(0,0,0,.7);transition:transform .15s ease-out;}
+  .deep-bn:active{transform:scale(.98);}
+  .deep-bn.t-rose{--t1:rgba(255,143,177,.5);--t2:#3a1d5c;} .deep-bn.t-mint{--t1:rgba(110,220,200,.42);--t2:#173a52;}
+  .db-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+  .db-txt b{font-size:calc(17px*var(--fs));font-weight:700;color:#fff2c4;letter-spacing:-.02em;}
+  .deep-bn.t-rose .db-txt b{color:#ffd3e2;} .deep-bn.t-mint .db-txt b{color:#c9f5ea;}
+  .db-txt b em{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;margin-left:4px;border-radius:999px;color:#ff8f7a;box-shadow:inset 0 0 0 1.5px #ff8f7a;vertical-align:2px;}
+  .db-txt small{font-size:calc(13px*var(--fs));color:#e6e1f7;line-height:1.45;}
+  .db-cta{align-self:flex-start;margin-top:4px;padding:7px 13px;border-radius:999px;background:#fff;color:#1b1440;font-size:calc(13px*var(--fs));font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.25);}
+  .db-uni{position:relative;width:92px;height:92px;flex:none;}
+  .db-uni i{position:absolute;right:2px;bottom:6px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#fff3cf,#f2c76a);color:#6b4300;box-shadow:0 3px 8px rgba(0,0,0,.3);}
+  .db-uni i svg{width:16px;height:16px;}
+  .deep-set{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:15px 18px;border:none;border-radius:16px;cursor:pointer;text-align:left;
+    background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(232,226,255,.78));color:#2f2b57;font-size:calc(13.5px*var(--fs));box-shadow:inset 0 1px 0 #fff,0 12px 24px -14px rgba(0,0,0,.6);}
+  .deep-set b{color:#1b1440;margin-right:6px;} .ds-p{white-space:nowrap;font-weight:700;color:#4b3bc4;} .ds-p s{color:#7a74a0;font-weight:400;margin-right:4px;}
   .peek-msg b{color:#fff;}
   .todo-n{font-weight:700;color:#f5d48a;font-size:calc(14px*var(--fs));}
   .todo-list{list-style:none;margin:4px 0 8px;padding:0;display:flex;flex-direction:column;gap:8px;}
