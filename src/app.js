@@ -1692,18 +1692,18 @@
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += '<div class="quick-row q4"><button type="button" id="btnQNum" class="new">' + TIP_IC.star + '꿈 해몽</button><button type="button" id="btnQGh">' + FEAT_IC.gh + '궁합</button><button type="button" id="btnQZ">' + TIP_IC.star + '별자리</button><button type="button" id="btnQNY">' + TIP_IC.star + '신년운세</button></div>';
-    h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
+    h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
     h += catChipsHTML(f);
     h += todoCardHTML();
     h += petCardHTML();
-    h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
+    h += '<div class="card lt ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
       '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>행운의 팁<span class="chev">›</span></button></div>';
     var z = getZodiac(r.solar.m, r.solar.d);
     var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    h += '<div class="card"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:#fff;font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
+    h += '<div class="card lt"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:var(--text-headline);font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += nyCardHTML(me, r);
     h += adSlotHTML('오늘의 결론을 본 뒤');
@@ -1807,7 +1807,7 @@
   function catHTML(entry, r, cat){
     var C = CATS[cat], g = natalGroups(r), f = todayLuck(entry, r).f, nm = esc(entry.name);
     var yG = TEN_GRP[r.seun.tenStem], d = nowD(), md = (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
-    var h = '<div class="cat-head"><span class="cat-ic">' + CAT_IC[C.ic] + '</span><div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
+    var h = '<div class="cat-head">' + uniCatHTML(cat, C.sk ? tierOf(f.scores[C.sk]) : '', 'ch-uni') + '<div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
       (C.sk ? '<span class="cat-score"><b data-count="' + f.scores[C.sk] + '">' + f.scores[C.sk] + '</b><small>점</small><em class="tier-tag">' + TIER_LABEL[tierOf(f.scores[C.sk])] + '</em></span>' : '') + '</div>';
     if (C.sk){
       var star = cat === 'money' ? '재성' : cat === 'career' ? '관성' : (entry.gender === 'M' ? '재성' : '관성');
@@ -1827,9 +1827,20 @@
     h += '<p class="disclaimer">사주 원국과 일진으로 계산한 재미용 풀이예요. 실제 결과를 보장하지 않습니다.</p>';
     return h;
   }
+  /* 분야별 운세: 우니 일러스트 (점수 단계 → 우니 표정, 분야 → 옆에 떠 있는 작은 배지) */
+  var TIER_MOOD = { gold:'love', violet:'happy', mint:'calm', rose:'sleepy' };
+  function uniCatHTML(cat, tier, cls){
+    var C = CATS[cat];
+    return '<span class="uni-cat ' + (cls || '') + '" aria-hidden="true">' + petSVG(tier ? TIER_MOOD[tier] : 'calm', 1, '') + '<i class="uc-prop">' + CAT_IC[C.ic] + '</i></span>';
+  }
   function catChipsHTML(f){
-    return '<div class="card cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div><div class="cat-chips">' +
-      CAT_ORDER.map(function(k){ var C = CATS[k]; return '<button type="button" data-cat="' + k + '"' + (C.sk ? ' data-tier="' + tierOf(f.scores[C.sk]) + '"' : '') + '><span class="ic">' + CAT_IC[C.ic] + '</span><span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '</b>' : '<b class="go">›</b>') + '</button>'; }).join('') +
+    var best = CAT_ORDER.filter(function(k){ return CATS[k].sk; }).sort(function(a, b){ return f.scores[CATS[b].sk] - f.scores[CATS[a].sk]; })[0];
+    var bt = tierOf(f.scores[CATS[best].sk]);
+    var say = bt === 'gold' || bt === 'violet' ? '오늘은 <b>' + CATS[best].name + '</b>이 제일 좋아요. 먼저 볼까요?' : '오늘은 <b>' + CATS[best].name + '</b>부터 차근차근 살펴봐요.';
+    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div>' +
+      '<div class="cat-guide">' + uniCatHTML(best, bt, 'cg-uni') + '<p class="cg-say">' + say + '</p></div>' +
+      '<div class="cat-chips uni">' +
+      CAT_ORDER.map(function(k){ var C = CATS[k], t = C.sk ? tierOf(f.scores[C.sk]) : ''; return '<button type="button" data-cat="' + k + '"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(k, t) + '<span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '<small>점</small></b>' : '<b class="go">보기 ›</b>') + '</button>'; }).join('') +
       '</div></div>';
   }
   function openCat(entry, r, cat){
@@ -2061,18 +2072,22 @@
   }
   function todoCardHTML(){
     var n = TODOS.filter(function(t){ return todoDone(t[0]); }).length;
-    return '<div class="card todo-card" id="todoCard"><div class="sec-head"><h2 class="sec-title">오늘 하면 좋은 것</h2><span class="todo-n' + (n === 3 ? ' all' : '') + '">' + n + '/3</span></div>' +
+    return '<div class="card lt todo-card" id="todoCard"><div class="sec-head"><h2 class="sec-title">오늘 하면 좋은 것</h2><span class="todo-n' + (n === 3 ? ' all' : '') + '">' + n + '/3</span></div>' +
       '<ul class="todo-list">' + TODOS.map(function(t){ var d = todoDone(t[0]); return '<li class="' + (d ? 'done' : '') + '"><i aria-hidden="true">' + (d ? OK_SVG : '') + '</i><span>' + t[1] + '</span></li>'; }).join('') + '</ul>' +
       '<p class="helper">' + (n === 3 ? '오늘 몫을 다 했어요. 내일 또 만나요' : '세 개를 다 하면 엽전 ' + TODO_COINS + '닢을 드려요' + (isGuest() ? ' (로그인 필요)' : '')) + '</p></div>';
   }
   /* ---- 우니 꾹 누르기: 길게 누르면 오늘 번호 1개 공개 (005) ---- */
   function peekCardHTML(me, nums, elc){
     var opened = todoDone('peek'), first = nums.filter(function(o){ return o.y; })[0] || nums[0];
-    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">시그니처</span></div>' +
-      '<div class="peek-stage"><button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘 번호 한 개 보기"' + (opened ? ' disabled' : '') + '>' +
+    var sparks = ''; for (var k = 0; k < 10; k++) sparks += '<i class="pk-spark" style="--a:' + (k * 36 + (k % 2 ? 12 : 0)) + 'deg;--d:' + (k % 2 ? 66 : 94) + 'px"></i>';
+    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">하루 한 번</span></div>' +
+      '<div class="peek-stage">' +
+        '<div class="peek-pop" aria-hidden="true"><span class="pk-flash"></span>' + sparks + '</div>' +
+        '<div class="peek-ball ball' + (first.y ? ' yong' : '') + '" aria-live="polite">' + (opened ? first.n : '') + '</div>' +
+        '<button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘 번호 한 개 보기"' + (opened ? ' disabled' : '') + '>' +
         '<svg class="peek-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54"/></svg>' +
-        '<span class="peek-fig">' + petSVG('happy', 2, 'mini') + '</span></button>' +
-        '<div class="peek-ball ball' + (first.y ? ' yong' : '') + '" aria-live="polite">' + (opened ? first.n : '') + '</div></div>' +
+        '<span class="peek-fig">' + petSVG(opened ? 'love' : 'happy', 2, 'mini') + '</span></button>' +
+      '</div>' +
       '<p class="helper peek-msg">' + (opened ? '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.' : '우니를 <b>꾹</b> 누르고 있으면 오늘 번호 하나를 먼저 알려 줘요.') + '</p>' +
       '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">' + (opened ? '나머지 번호 뽑으러 가기' : '추첨기로 바로 가기') + '</button></div>';
   }
@@ -2080,14 +2095,17 @@
     var btn = $('peekBtn'); if (!btn || btn.disabled) return;
     var first = nums.filter(function(o){ return o.y; })[0] || nums[0], t = null, card = $('peekCard');
     function done(){
-      t = null; card.classList.remove('hold'); card.classList.add('open'); btn.disabled = true;
+      t = null; card.classList.remove('hold'); btn.disabled = true;
       card.querySelector('.peek-ball').textContent = first.n;
-      card.querySelector('.peek-msg').innerHTML = '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.';
+      card.querySelector('.peek-fig').innerHTML = petSVG('love', 2, 'mini');
+      card.classList.add('open');
+      if (!reduceMotion){ card.classList.add('burst'); setTimeout(function(){ card.classList.remove('burst'); }, 1400); }
+      card.querySelector('.peek-msg').innerHTML = '짠! 오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.';
       $('btnGoNum').textContent = '나머지 번호 뽑으러 가기';
-      if (navigator.vibrate) try { navigator.vibrate(20); } catch (e){}
+      if (navigator.vibrate) try { navigator.vibrate([12, 40, 24]); } catch (e){}
       markTodo('peek');
     }
-    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); t = setTimeout(done, 650); }
+    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); t = setTimeout(done, 750); }
     function cancel(){ if (t){ clearTimeout(t); t = null; card.classList.remove('hold'); } }
     btn.addEventListener('pointerdown', start); btn.addEventListener('keydown', start);
     ['pointerup','pointerleave','pointercancel','keyup'].forEach(function(ev){ btn.addEventListener(ev, cancel); });
@@ -2931,9 +2949,9 @@
     if (store('unsu_intro')) return;
     store('unsu_intro', 1);
     var el = $('intro'); el.hidden = false;
-    var done = function(){ if (el.hidden) return; el.classList.add('out'); setTimeout(function(){ el.hidden = true; }, 500); };
+    var done = function(){ if (el.hidden) return; el.classList.add('out'); setTimeout(function(){ el.hidden = true; }, 800); };
     el.onclick = done;
-    setTimeout(done, reduceMotion ? 600 : 2400);
+    setTimeout(done, reduceMotion ? 900 : 3400);  /* 로고가 다 그려진 뒤 한 박자 쉬고 넘어가도록 */
   })();
 
   /* =========================================================

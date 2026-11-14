@@ -12,7 +12,9 @@ const OUT = path.join(ROOT, 'public');
 const SITE = 'https://woonijoa.com';
 
 (async () => {
-  ['css', 'js', 'icons'].forEach(d => fs.mkdirSync(path.join(OUT, d), { recursive: true }));
+  ['css', 'js', 'icons', 'img'].forEach(d => fs.mkdirSync(path.join(OUT, d), { recursive: true }));
+  /* src/img/* → public/img/* (배너 등 정적 이미지) */
+  if (fs.existsSync(path.join(ROOT, 'src/img'))) for (const f of fs.readdirSync(path.join(ROOT, 'src/img'))) fs.copyFileSync(path.join(ROOT, 'src/img', f), path.join(OUT, 'img', f));
   const src = r('app.src.html');
   const styleStart = src.indexOf('<style>'), styleEnd = src.indexOf('</style>');
   const css = src.slice(styleStart + 7, styleEnd);
