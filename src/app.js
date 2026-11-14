@@ -1206,16 +1206,16 @@
   function deepHTML(me, r){
     var ny = newYear(r);
     var B = [
-      { id:'dpNY', tone:'gold', badge:'NEW', title:'2027 신년운세 자세히', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'5,500원', cta:'자세히 보기', mood:'love', ic:'star' },
-      { id:'dpGh', tone:'rose', badge:'', title:'궁합 상세 리포트', sub:'둘의 성향 차이와 잘 맞는 대화법까지', price:'990원', cta:'리포트 열기', mood:'happy', ic:'heart' },
-      { id:'dpEz', tone:'mint', badge:'', title:'쉬운 사주 풀이', sub:'어려운 한자 없이, 내 사주를 이야기처럼', price:'990원', cta:'풀이 보기', mood:'calm', ic:'scroll' }
+      { id:'dpNY', tone:'gold', badge:'NEW', title:'2027 신년운세 자세히', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'5,500원', cta:'자세히 보기', art:'ny' },
+      { id:'dpGh', tone:'rose', badge:'', title:'궁합 상세 리포트', sub:'둘의 성향 차이와 잘 맞는 대화법까지', price:'990원', cta:'리포트 열기', art:'gh' },
+      { id:'dpEz', tone:'mint', badge:'', title:'쉬운 사주 풀이', sub:'어려운 한자 없이, 내 사주를 이야기처럼', price:'990원', cta:'풀이 보기', art:'book' }
     ];
     var IC = { star:TIP_IC.star, heart:CAT_IC.heart, scroll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13"/></svg>' };
     return '<section class="deep" aria-label="더 깊이 보기"><div class="deep-head"><h2 class="sec-title">더 깊이 보기</h2><small>궁금한 운, 하나 더 깊게</small></div>' +
       B.map(function(b){
         return '<button type="button" class="deep-bn t-' + b.tone + '" id="' + b.id + '"><span class="db-txt"><b>' + b.title + (b.badge ? ' <em>' + b.badge + '</em>' : '') + '</b><small>' + b.sub + '</small>' +
           '<span class="db-cta">' + b.price + ' · ' + b.cta + ' →</span></span>' +
-          '<span class="db-uni" aria-hidden="true">' + petSVG(b.mood, 2, '') + '<i>' + IC[b.ic] + '</i></span></button>';
+          '<span class="db-uni" aria-hidden="true">' + tileArtSVG(b.art) + '</span></button>';
       }).join('') +
       '<button type="button" class="deep-set" id="dpSet"><span><b>3종 한 번에</b> 신년운세 · 궁합 상세 · 쉬운 풀이</span><span class="ds-p"><s>7,480원</s> 6,900원 ›</span></button></section>';
   }
@@ -1598,6 +1598,8 @@
     } else if (kind === 'zodiac'){
       h += '<g stroke="#fff" stroke-width="1.6" opacity=".9" fill="none"><path d="M12 30L34 14L56 24M98 18L122 30L128 56"/></g>' +
         '<g fill="#fff6c9"><circle cx="12" cy="30" r="3.4"/><circle cx="34" cy="14" r="2.6"/><circle cx="56" cy="24" r="3"/><circle cx="98" cy="18" r="2.6"/><circle cx="122" cy="30" r="3.4"/><circle cx="128" cy="56" r="2.6"/></g>' + pet('happy', 18, 8, 108);
+    } else if (kind === 'book'){
+      h += pet('calm', 0, 8, 100) + '<g transform="translate(70 60)"><path d="M2 8c12-4 22-3 32 3v40c-10-6-20-7-32-3z" fill="#fff6dc"/><path d="M66 8c-12-4-22-3-32 3v40c10-6 20-7 32-3z" fill="#ffe9b8"/><path d="M34 11v40" stroke="#c9a253" stroke-width="2"/><path d="M8 18h18M8 25h18M8 32h14M42 18h18M42 25h18M42 32h14" stroke="#c9a253" stroke-width="2" stroke-linecap="round" opacity=".7"/></g>';
     } else {
       h += '<g transform="translate(92 54)"><path d="M6 14c-6 10-6 34 18 34s24-24 18-34z" fill="#ff6f7d"/><path d="M8 14h32l-4-8H12z" fill="#e2485a"/><path d="M14 6c4-4 16-4 20 0" fill="none" stroke="#ffd36b" stroke-width="3" stroke-linecap="round"/><text x="24" y="38" font-size="15" font-weight="800" text-anchor="middle" fill="#ffe7a3" font-family="serif">福</text></g>' + pet('love', 4, 6, 108);
     }
@@ -3161,7 +3163,7 @@
   function currentLink(){ var o = shareState; return o.inviteEntry ? inviteLink(o.inviteEntry, o.withTime) : o.link; }
   function fullMsg(){ return shareState.text + '\n\n' + shareState.cta + '\n' + currentLink(); }
   /* ---- 공유 카드 이미지 (1080×1350): 결과만 깔끔하게 ---- */
-  var SAVE_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+  var DL_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
   function makeShareCard(o, cb){
     var W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var x = cv.getContext('2d'), c = o.card || { kicker:o.title, head:o.desc };
@@ -3237,7 +3239,7 @@
         (o.shareEntries.some(function(e){ return !e.unknown; }) ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
     }
     h += '<div class="share-actions">' +
-      '<div class="sh-3"><button class="btn-soft" id="shSave">' + SAVE_IC + '이미지 저장</button><button class="btn-soft" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-primary" id="shNative">' + SH_IC.send + '공유하기</button></div>' +
+      '<div class="sh-3"><button class="btn-soft" id="shSave">' + DL_IC + '이미지 저장</button><button class="btn-soft" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-primary" id="shNative">' + SH_IC.send + '공유하기</button></div>' +
       '<button class="text-btn" id="shMsg">메시지와 링크만 복사</button></div>' +
       '<details class="sh-qr" id="shQrBox"><summary>QR 코드로 열기 <span class="helper">PC에서 휴대폰으로 넘길 때</span></summary><div id="shQr"></div></details>';
     if (!isHosted()) h += '<p class="mock-note" style="margin-top:12px">지금은 Claude 공유 링크로 연결돼요. 직접 배포한 주소에서 열면 그 주소로 공유돼요.</p>';
