@@ -581,6 +581,7 @@
     h += '<p class="body-text"><strong>' + EL_TEXT[fewEl].name + ' ' + minC + '개</strong> — ' + EL_TEXT[fewEl].few + ' 추천 활동: ' + EL_TEXT[r.yong].act + '.</p>';
     h += '</div>';
 
+    var ezStart = h.length, ezOpen = owns('ez');
     h += zoneHTML('read', '풀이', '글자들이 말해 주는 것');
     /* --- 십성 --- */
     var gCount = { '비겁':0,'식상':0,'재성':0,'관성':0,'인성':0 };
@@ -636,6 +637,15 @@
     var life = drawSixFromSeed(iso + '|' + tKey + '|life');
     var luck = todayLuck(entry, r), yongNums = luck.nums, lEl = luck.el;
     cur.life = life; cur.yongNums = yongNums;
+    if (!ezOpen){
+      var EZ = product('ez');
+      h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') +
+        '<div class="card locked ez-lock"><div class="sec-head"><h2 class="sec-title">쉬운 사주 풀이</h2><span class="sec-meta">990원</span></div>' +
+        '<div class="ez-art">' + tileArtSVG('book') + '</div><p class="body-text" style="text-align:center;margin:0 0 10px">어려운 한자 없이, ' + esc(entry.name) + '님의 사주를 이야기처럼 풀어 드려요.</p>' +
+        '<ul class="lock-list">' + EZ.items.map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
+        '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
+        '<div class="lock-cta"><button class="btn-primary" id="btnEzBuy">990원으로 풀이 열기</button><p class="helper" style="text-align:center">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
+    }
     h += '<div class="card num-cta"><div class="num-cta-q">사주를 다 봤다면,<br><em>내 번호</em>도 궁금하지 않으세요?</div>' +
       '<p class="helper">평생 번호는 사주 원국으로 한 번 정해지고, 오늘의 행운 번호는 오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자(' + EL_TEXT[lEl].num.join('·') + ')로 끝나는 번호 3개를 담아 매일 바뀌어요.</p>' +
       '<button class="btn-primary btn-block sheen" id="btnDraw">내 사주로 행운 번호 뽑기</button>' +
@@ -651,7 +661,8 @@
     $('resultBody').innerHTML = h;
     show('result', asTab ? 'saju' : prevView === 'today' ? 'today' : prevView === 'gunghap' ? 'gunghap' : 'saju');
     drawOn($('posterFig'));
-    var du = $('duScroll').querySelector('.now');
+    if ($('btnEzBuy')) $('btnEzBuy').onclick = function(){ openPaySheet('ez', { onPaid:function(){ openResult(entry, r, asTab); } }); };
+    var du = $('duScroll') && $('duScroll').querySelector('.now');
     if (du) $('duScroll').scrollLeft = du.offsetLeft - 60;
     if (!reduceMotion && window.gsap) gsap.from('#resultBody .el-bar .fill', { scaleX:0, duration:.9, ease:'power2.out', stagger:.06, delay:.2 });
 
@@ -1035,7 +1046,7 @@
   ];
   var coinPick = 'p1000';
   function openCoinSheet(reason){
-    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 분야별 운세·꿈 해몽·상세 궁합을 여는 데 쓸 수 있어요.'); return; }
+    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 분야별 운세·꿈 해몽·번호 한 줄 더에 쓸 수 있어요.'); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
     var won = function(n){ return n.toLocaleString() + '원'; };
@@ -1052,7 +1063,7 @@
       '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
       '<div><span>분야별 운세</span><b>' + CAT_COST + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +
       '<div><span>꿈 해몽</span><b>' + DM.cost + '닢</b><small>꿈 하나 풀이</small></div>' +
-      '<div><span>상세 궁합</span><b>' + GH_COST + '닢</b><small>한 번 열면 계속</small></div></div>' +
+      '<div><span>번호 한 줄 더</span><b>' + EXTRA_COST + '닢</b><small>하루 3줄까지</small></div></div>' +
       '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
       '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
       '<div class="earn-row"><div><div class="t">7일 연속 보너스 +30</div><div class="s">' + (left === 7 ? '이번 주기 보너스를 받았어요' : '앞으로 ' + left + '일 더 출석하면 받아요') + '</div></div><button class="btn-ghost" id="csCal" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">캘린더</button></div>' +
@@ -1221,11 +1232,11 @@
   }
   function nyCardHTML(me, r){
     var ny = newYear(r);
-    return '<div class="ny-card"><div class="ny-eyebrow">2027 정미년 신년운세 · 무료</div>' +
+    return '<div class="ny-card"><div class="ny-eyebrow">2027 정미년 신년운세 · 총평 무료</div>' +
       '<h2 class="ny-title">' + esc(me.name) + '님의 2027년 키워드</h2>' +
       '<div class="ny-kw">' + ny.kw.map(function(k){ return '<span>#' + k + '</span>'; }).join('') + '</div>' +
       '<p class="body-text" style="margin:0">' + ny.line + '</p>' +
-      '<button class="btn-primary btn-block" id="btnNY">무료로 신년운세 보기</button></div>';
+      '<button class="btn-primary btn-block" id="btnNY">신년운세 총평 무료로 보기</button></div>';
   }
   /* 신년운세 구조 (2026-11-10 변경: 무료 콘텐츠)
      바로 무료: 1장 총운·키워드 + 총점·분야별 점수 + 1~3월 흐름
@@ -1281,7 +1292,7 @@
   }
   function openNYSheet(me, r){
     setTimeout(function(){ bond('ny'); }, 900);
-    var ny = newYear(r), sc = nyScores(me, r), open = !!store('unsu_ny_open');
+    var ny = newYear(r), sc = nyScores(me, r), open = owns('ny');
     var bars = '', FREE_M = 3;
     for (var i = 0; i < 12; i++){
       bars += (i < FREE_M || open)
@@ -1291,20 +1302,18 @@
     var fields = Object.keys(sc.f).map(function(k){ return '<div class="nf"><span>' + k + '</span><i><u style="width:' + sc.f[k] + '%"></u></i><b>' + sc.f[k] + '</b></div>'; }).join('');
     var chap = NY_CHAPTERS.map(function(c, i){ return '<li class="nc"><div class="nc-h"><span>' + (i + 2) + '장 · ' + c.t + '</span>' + LOCK_SVG + '</div><p class="ny-blur" aria-hidden="true">' + c.pv + '</p></li>'; }).join('');
     openSheet('<h3 id="sheetTitle">' + esc(me.name) + '님의 2027 신년운세</h3>' +
-      '<p class="helper" style="margin:-4px 0 12px">' + r.pillars.day.name + '(' + r.pillars.day.hanja + ')일주 기준 · 만세력으로 계산 · 전부 무료</p>' +
+      '<p class="helper" style="margin:-4px 0 12px">' + r.pillars.day.name + '(' + r.pillars.day.hanja + ')일주 기준 · 만세력으로 계산 · ' + (open ? '전체 열림' : '총평과 1~3월 무료') + '</p>' +
       '<div class="ny-score"><div class="big"><b>' + sc.total + '</b><span>점</span><small>2027년 흐름</small></div><div class="nfs">' + fields + '</div></div>' +
       '<div class="ny-open"><b style="color:#f3dca0">1장 · 2027년 한 해의 흐름</b><br>' +
       '2027년 정미년(丁未年)의 천간 丁은 ' + esc(me.name) + '님에게 <b>' + ny.sT + '</b>, 지지 未는 <b>' + ny.bT + '</b>의 기운이에요. ' +
       '12운성으로는 <b>' + ny.stage + '</b>의 자리에 서요. ' + ny.line + '</div>' +
-      '<h4 class="ny-h">월별 흐름 <small>' + (open ? '1~12월' : '1~3월 공개 · 4~12월은 광고 보고 열기') + '</small></h4><div class="ny-months">' + bars + '</div>' +
+      '<h4 class="ny-h">월별 흐름 <small>' + (open ? '1~12월' : '1~3월 무료 · 4~12월은 전체 보기에서') + '</small></h4><div class="ny-months">' + bars + '</div>' +
       (open ? nyFullHTML(me, r, sc) + adSlotHTML('신년운세를 다 본 뒤')
-        : '<h4 class="ny-h">광고 한 편이면 모두 열려요 <small>2~7장</small></h4><ul class="ny-chaps">' + chap + '</ul>' +
-          '<div class="ny-free"><b>신년운세는 무료예요</b><p class="helper">짧은 광고를 끝까지 보면 4~12월 흐름과 2~7장이 모두 열리고, 이 기기에서는 다시 광고 없이 볼 수 있어요.</p>' +
-          '<button class="btn-primary btn-block" id="btnNYAd">광고 보고 전체 무료로 보기</button></div>') +
+        : '<h4 class="ny-h">전체 보기에서 열려요 <small>2~7장</small></h4><ul class="ny-chaps">' + chap + '</ul>' +
+          '<div class="ny-free"><b>2027 신년운세 전체 · 5,500원</b><p class="helper">4~12월 흐름과 2~7장이 모두 열리고, 한 번 열면 언제든 다시 볼 수 있어요.</p>' +
+          '<button class="btn-primary btn-block" id="btnNYBuy">5,500원으로 전체 보기</button></div>') +
       '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button>');
-    if (!open) $('btnNYAd').onclick = function(){
-      playAd(function(){ store('unsu_ny_open', todayStr()); openNYSheet(me, r); toast('2027 신년운세 전체가 열렸어요'); });
-    };
+    if (!open) $('btnNYBuy').onclick = function(){ openPaySheet('ny', { onPaid:function(){ openNYSheet(me, r); } }); };
   }
 
   /* =========================================================
@@ -1802,7 +1811,7 @@
     $('dpNY').onclick = function(){ openNYSheet(me, r); };
     $('dpGh').onclick = function(){ go('gunghap'); };
     $('dpEz').onclick = function(){ go('saju'); };
-    $('dpSet').onclick = function(){ toast('3종 묶음 결제는 결제 연결 후 열려요'); };
+    $('dpSet').onclick = function(){ openPaySheet('set', { onPaid:function(){ go('today'); } }); };
     $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     bindPeek(me, nums);
     renderCoin();
@@ -2407,15 +2416,13 @@
       '<div class="gh-badge"><span class="chip">오행</span><p>' + comp + '</p></div></div>' +
       '<button class="btn-soft btn-block" id="btnGhShare">' + SH_IC.send + '궁합 결과 공유하기</button></div>';
     if (getMe()) h += '<div class="card"><button class="row-link" id="btnGhInvite" style="border-top:none;padding-top:0"><span class="ic" style="color:var(--icon-accent)">' + SH_IC.heart + '</span><span>다른 친구에게 궁합 신청하기<br><span class="helper">링크를 받은 친구가 생년월일만 넣으면 나와의 궁합이 열려요</span></span><span class="chev">›</span></button></div>';
-    var key = ghKey(A, B), open = getUnlocks().indexOf(key) > -1;
+    var key = ghKey(A, B), open = getUnlocks().indexOf(key) > -1 || liveOrders().some(function(o){ return (o.id === 'gh' || o.id === 'set') && o.ghKey === key; });
     if (!open){
-      var coins = getCoins();
       h += '<div class="card locked"><div class="sec-head"><h2 class="sec-title">상세 궁합 리포트</h2><span class="sec-meta">잠김</span></div>' +
         '<ul class="lock-list">' + ['두 사람의 기질 비교','관계에서 빛나는 점','부딪히기 쉬운 점과 대화 팁','올해 두 사람의 흐름','함께하면 좋은 활동'].map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
-        '<div class="lock-cta"><button class="btn-primary" id="btnGhCoin"' + (!isGuest() && coins < GH_COST ? ' disabled' : '') + '>' + (isGuest() ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : COIN_SVG + '엽전 ' + GH_COST + '닢으로 열기 <span style="opacity:.75;font-size:calc(12.5px*var(--fs))">(보유 ' + coins + ')</span>') + '</button>' +
-        '<button class="btn-soft" id="btnGhAd">광고 보고 바로 열기</button>' +
-        '<p class="helper" style="text-align:center">' + (isGuest() ? '로그인은 이 리포트를 열 때만 필요해요. 광고를 보고 바로 열 수도 있어요.' : coins < GH_COST ? '엽전이 ' + (GH_COST - coins) + '닢 부족해요. 매일 출석하면 10닢씩 모여요.' : '한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.') + '</p></div></div>';
+        '<div class="lock-cta"><button class="btn-primary" id="btnGhBuy">990원으로 상세 리포트 열기</button>' +
+        '<p class="helper" style="text-align:center">한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.</p></div></div>';
     } else {
       var ia = ILGAN[ra.pillars.day.stem], ib = ILGAN[rb.pillars.day.stem];
       var extraClash = m.dRel === 'chung' ? ' 일지가 충을 이뤄 생활 리듬이 엇갈리기 쉬우니 함께하는 시간과 혼자 쉬는 시간을 분명히 나눠 두세요.' : m.dRel === 'wonjin' ? ' 일지가 원진이라 작은 말에 서운해지기 쉬워요. 서운함은 그날 바로 가볍게 말하는 게 좋아요.' : '';
@@ -2444,8 +2451,7 @@
     };
     if ($('btnGhInvite')) $('btnGhInvite').onclick = openInvite;
     if (!open){
-      $('btnGhCoin').onclick = function(){ if (isGuest()){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 상세 궁합은 ' + GH_COST + '닢으로 열 수 있어요.'); return; } if (getCoins() < GH_COST) return; addCoins(-GH_COST, '상세 궁합 (' + A.name + '·' + B.name + ')'); unlock(); };
-      $('btnGhAd').onclick = function(){ playAd(unlock); };
+      $('btnGhBuy').onclick = function(){ openPaySheet('gh', { ghKey:key, who:esc(A.name) + ' × ' + esc(B.name), onPaid:renderGunghap }); };
     }
   }
   function bindGh(){
@@ -2979,6 +2985,54 @@
   }
   /* 구매 내역 */
   function getOrders(){ var o = store('unsu_orders'); return Array.isArray(o) ? o : []; }
+  /* =========================================================
+     유료 상품 (2026-11-15 소율: 맛보기만 무료, 상세는 원화 결제)
+     토스 연결 전까지 PAY_READY=false → '준비 중' 안내. 예시 모드는 결제 없이 열어 볼 수 있다.
+     ========================================================= */
+  var PAY_READY = false;
+  function product(id){
+    return ({
+      ny:{ id:'ny', name:'2027 신년운세 전체', amount:5500, art:'ny', items:['4~12월 월별 흐름','재물·직업·연애·건강 등 2~7장','2027년 행운 포인트'] },
+      gh:{ id:'gh', name:'궁합 상세 리포트', amount:990, art:'gh', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
+      ez:{ id:'ez', name:'쉬운 사주 풀이', amount:990, art:'book', items:['십성으로 보는 나의 성향','띠 이야기','대운 흐름과 올해의 운'] },
+      set:{ id:'set', name:'3종 한 번에', amount:6900, was:7480, art:'ny', items:['2027 신년운세 전체','궁합 상세 리포트 1쌍','쉬운 사주 풀이'] }
+    })[id];
+  }
+  function liveOrders(){ return getOrders().filter(function(o){ return o.status !== 'refund'; }); }
+  function owns(id){ return liveOrders().some(function(o){ return o.id === id || (o.id === 'set' && (id === 'ny' || id === 'ez')); }); }
+  function setGhCredit(){ return liveOrders().filter(function(o){ return o.id === 'set' && !o.ghKey; })[0] || null; }
+  function addOrder(id, extra){
+    var P = product(id), o = getOrders();
+    var rec = { id:id, name:P.name, amount:P.amount, at:Date.now(), status:'paid', opened:true };
+    Object.keys(extra || {}).forEach(function(k){ if (extra[k] != null) rec[k] = extra[k]; });
+    o.unshift(rec); store('unsu_orders', o);
+  }
+  /* 공통 결제 시트. opt.onPaid: 결제(또는 예시 모드 열기) 뒤 실행, opt.ghKey: 궁합 쌍 */
+  function openPaySheet(id, opt){
+    opt = opt || {};
+    var P = product(id), credit = id === 'gh' && setGhCredit();
+    openSheet('<div class="pay-sheet"><div class="pay-hero">' + tileArtSVG(P.art) + '</div>' +
+      '<h3 id="sheetTitle">' + P.name + '</h3>' + (opt.who ? '<p class="pay-who">' + opt.who + '</p>' : '') +
+      '<ul class="pay-list">' + P.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
+      '<div class="pay-price">' + (P.was ? '<s>' + P.was.toLocaleString() + '원</s>' : '') + '<b>' + P.amount.toLocaleString() + '원</b></div>' +
+      (credit ? '<button class="btn-primary btn-block" id="payCredit">3종 묶음으로 열기 · 추가 결제 없음</button>'
+        : '<button class="btn-primary btn-block" id="payGo">' + P.amount.toLocaleString() + '원 결제하기</button>') +
+      (id !== 'set' && !owns('set') ? '<button type="button" class="pay-up" id="paySet"><span><b>3종 한 번에</b> 신년운세 · 궁합 상세 · 쉬운 풀이</span><span><s>7,480원</s> 6,900원 ›</span></button>' : '') +
+      '<p class="helper pay-note">' + (isGuest() ? '결제는 로그인 후에 할 수 있어요. ' : '') + '열기 전 리포트는 7일 안에 전액 환불돼요.</p></div>');
+    var done = function(){ closeSheet(); setTimeout(function(){ if (opt.onPaid) opt.onPaid(); toast(P.name + ' 열렸어요'); }, 260); };
+    if (credit) $('payCredit').onclick = function(){
+      var o = getOrders();
+      for (var i = 0; i < o.length; i++){ if (o[i].id === 'set' && !o[i].ghKey && o[i].status !== 'refund'){ o[i].ghKey = opt.ghKey; break; } }
+      store('unsu_orders', o); done();
+    };
+    else $('payGo').onclick = function(){
+      if (isGuest()){ openLoginSheet('결제는 로그인 후에 할 수 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢도 드려요.'); return; }
+      if (NS){ addOrder(id, { ghKey:id === 'gh' ? opt.ghKey : null }); toast('예시 모드라 결제 없이 열었어요'); done(); return; }
+      if (!PAY_READY){ toast('결제는 곧 열려요. 토스 결제 연결을 마무리하고 있어요'); return; }
+      /* TODO(토스페이먼츠): 결제위젯 요청 → /api/pay/confirm 서버 승인 → addOrder → done */
+    };
+    if ($('paySet')) $('paySet').onclick = function(){ openPaySheet('set', { onPaid:opt.onPaid, ghKey:opt.ghKey }); };
+  }
   function openOrdersSheet(){
     var o = getOrders();
     openSheet('<h3 id="sheetTitle">구매 내역</h3>' +
@@ -2991,12 +3045,12 @@
   }
   /* 고객센터: 공지 · FAQ · 문의 */
   var NOTICES = [
-    { d:'2026-12-14', t:'우니조아 정식 오픈 · 2027 신년운세 무료 공개' },
+    { d:'2026-12-14', t:'우니조아 정식 오픈 · 2027 신년운세 총평 무료 공개' },
     { d:'2026-12-14', t:'개인정보처리방침·이용약관 시행 안내' }
   ];
   var FAQ = [
     ['태어난 시간을 몰라도 볼 수 있나요?', '네. 시간을 모르면 시주를 빼고 여섯 글자로 풀어요. 정확도는 조금 낮아질 수 있어요.'],
-    ['엽전은 무엇인가요?', '출석, 가입 선물, 광고 보상, 우니 선물로 무료로 모으는 포인트예요. 꿈풀이와 궁합 상세 리포트를 여는 데 쓰고, 현금으로 바꾸거나 환불할 수는 없어요.'],
+    ['엽전은 무엇인가요?', '출석, 가입 선물, 광고 보상, 우니 선물로 무료로 모으는 포인트예요. 분야별 운세, 꿈풀이, 번호 한 줄 더 뽑기에 쓰고, 현금으로 바꾸거나 환불할 수는 없어요.'],
     ['유료 리포트를 환불할 수 있나요?', '열기 전이라면 결제일로부터 7일 안에 전액 환불돼요. 연 뒤에는 디지털 콘텐츠 특성상 청약철회가 제한되고, 계산 오류가 있으면 열람과 관계없이 환불해요.'],
     ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 구매한 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],
     ['꿈풀이에 쓴 엽전을 돌려받을 수 있나요?', '꿈풀이는 누르는 순간 바로 풀이가 만들어지는 디지털 콘텐츠라 엽전을 돌려드리지 않아요. 다만 오류로 결과가 나오지 않았다면 고객센터로 알려 주세요. 확인 후 엽전을 다시 넣어 드려요.'],
