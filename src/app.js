@@ -192,6 +192,7 @@
   var currentTab = 'today', currentView = 'today', lastSajuView = null;
   function show(view, tab){
     Object.keys(VIEWS).forEach(function(k){ VIEWS[k].hidden = k !== view; });
+    var viewChanged = view !== shownView; shownView = view;
     currentView = view; currentTab = tab !== undefined ? tab : TAB_OF[view];
     document.body.classList.toggle('focus', view === 'onboard');
     if (typeof updateTopbar === 'function') updateTopbar();
@@ -201,8 +202,70 @@
     if (lens){ lens.style.opacity = ti < 0 ? '0' : '1'; if (ti >= 0) lens.style.setProperty('--ti', ti); }
     var segKey = view === 'result' ? 'mine' : view;
     document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });
+    document.body.dataset.view = view; document.body.dataset.tab = currentTab || 'none';
     window.scrollTo(0, 0);
+    if (viewChanged) enterFx(VIEWS[view]);
   }
+
+  /* =========================================================
+     모션 (ai/decisions/004) — transform·opacity 만, IntersectionObserver 로만
+     - enterFx: 화면이 바뀔 때 카드가 아래에서 차례로 올라온다. 같은 화면을 다시 그릴 때는 돌지 않는다
+     - countUp: [data-count] 숫자가 0에서 올라간다
+     ========================================================= */
+  var shownView = null, fxIO = null;
+  function fxDone(el){ el.classList.remove('rv', 'in'); el.style.removeProperty('--d'); }
+  function enterFx(root){
+    if (reduceMotion || !root || !('IntersectionObserver' in window)) return;
+    if (fxIO) fxIO.disconnect();
+    var els = [];
+    Array.prototype.forEach.call(root.children, function(c){
+      if (c.hidden) return;
+      if (c.classList.contains('view') && c.children.length) Array.prototype.forEach.call(c.children, function(k){ if (!k.hidden) els.push(k); });
+      else els.push(c);
+    });
+    els = els.filter(function(el){ return !el.classList.contains('no-fx') && getComputedStyle(el).position !== 'sticky'; });
+    if (!els.length) return;
+    fxIO = new IntersectionObserver(function(entries){
+      var i = 0;
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var el = en.target; fxIO.unobserve(el);
+        el.style.setProperty('--d', Math.min(i++, 6) * 60 + 'ms');
+        el.classList.add('in');
+        setTimeout(function(){ fxDone(el); }, 900);
+      });
+    }, { rootMargin:'0px 0px -6% 0px' });
+    els.forEach(function(el){ el.classList.add('rv'); fxIO.observe(el); });
+    countUp(root);
+  }
+  function countUp(root){
+    if (reduceMotion) return;
+    var els = root.querySelectorAll('[data-count]'); if (!els.length) return;
+    var t0 = null, dur = 900;
+    els.forEach(function(el){ el.textContent = '0'; });
+    requestAnimationFrame(function step(t){
+      if (t0 === null) t0 = t;
+      var k = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
+      els.forEach(function(el){ el.textContent = Math.round(+el.dataset.count * e); });
+      if (k < 1) requestAnimationFrame(step);
+    });
+  }
+  /* 오늘 점수 → 배경 기운 4단계 (ai/decisions/003 피드백 3) */
+  var MOODS = [[80, 'gold', '맑음'], [60, 'violet', '순풍'], [40, 'calm', '차분'], [0, 'care', '조심']];
+  function moodOf(f){
+    var avg = Math.round((f.scores.w + f.scores.l + f.scores.j) / 3);
+    for (var i = 0; i < MOODS.length; i++) if (avg >= MOODS[i][0]) return { key:MOODS[i][1], label:MOODS[i][2], avg:avg };
+  }
+  /* PC 소개 패널 (ai/decisions/001): 넓은 화면에서만 우니와 QR을 한 번 그린다 */
+  var pcMQ = window.matchMedia('(min-width:1100px)'), pcDone = false;
+  function initPcSide(){
+    if (pcDone || !pcMQ.matches) return; pcDone = true;
+    try { $('pcWoni').innerHTML = petSVG('happy', 2, 'fig'); } catch (e){}
+    if (!window.QRCode){ var qs = document.querySelector('.pc-side.r'); if (qs) qs.hidden = true; }
+    try { if (window.QRCode) new QRCode($('pcQr'), { text:location.origin + location.pathname, width:232, height:232, colorDark:'#05060f', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); } catch (e){}
+  }
+  if (pcMQ.addEventListener) pcMQ.addEventListener('change', initPcSide);
+  setTimeout(initPcSide, 0);
   function go(t){
     if (t === 'today'){ renderToday(); show('today'); }
     else if (t === 'saju'){
@@ -449,6 +512,7 @@
     return '<div class="pcol' + (isDay ? ' is-day' : '') + '">' + head + '<div class="ten">' + p.tenStem + '</div>' + tileHTML(p.stem, true, p) + tileHTML(p.br, false, p) + '<div class="ten">' + p.tenBr + '</div></div>';
   }
 
+  function zoneHTML(key, t, d){ return '<div class="zone" data-zone="' + key + '"><b>' + t + '</b><span>' + d + '</span></div>'; }
   function openResult(entry, r, asTab){
     setTimeout(function(){ bond('saju'); }, 900);
     if (currentView !== 'result') prevView = currentView;
@@ -477,6 +541,18 @@
       '</div></div>';
     h += '<button class="btn-primary btn-block" id="btnImgRes" style="margin:-4px 0 4px">정리된 결과 이미지로 저장·공유</button>';
 
+    h += zoneHTML('me', '나', '타고난 나의 모습');
+    /* --- 일간 --- */
+    h += '<div class="card me-card ' + EL_CLASS[dEl] + '"><div class="sec-head"><h2 class="sec-title">나를 나타내는 글자</h2><span class="sec-meta">일간 日干</span></div>' +
+      '<div class="ilgan-head ' + EL_CLASS[dEl] + '"><div class="ilgan-mark">' + P.day.sh + '</div><div><div class="ilgan-t">' + ig.t + '</div><div class="ilgan-img">' + ig.img + '</div></div></div>' +
+      '<div class="chip-row">' + ig.kw.map(function(k){ return '<span class="chip">' + k + '</span>'; }).join('') + '</div>' +
+      '<p class="body-text">' + ig.d + '</p><div class="divider"></div>' +
+      '<div class="sub-block"><h4>타고난 강점</h4><p class="body-text">' + ig.good + '</p></div>' +
+      '<div class="sub-block"><h4>조심하면 좋은 점</h4><p class="body-text">' + ig.care + '</p></div>' +
+      '<div class="sub-block"><h4>잘 맞는 분야</h4><p class="body-text">' + ig.fit + '</p></div>' +
+      '<div class="sub-block"><h4>일지 · ' + P.day.bk + '(' + P.day.bh + ') ' + P.day.tenBr + ' · ' + P.day.stage + '</h4><p class="body-text">배우자 자리에 ' + TEN_DESC[P.day.tenBr] + '의 기운이 앉아 있고, 일간은 이 자리에서 ‘' + P.day.stage + '’ 상태예요. ' + STAGE_DESC[P.day.stage] + '.</p></div>' +
+      '</div>';
+
     /* --- 원국 --- */
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">사주 원국</h2><span class="sec-meta">' + (P.hour ? '8字' : '6字') + '</span></div>';
     h += '<div class="pillars">' + order.map(function(k){ return colHTML(k, P[k], k === 'day'); }).join('');
@@ -501,17 +577,7 @@
     h += '<p class="body-text"><strong>' + EL_TEXT[fewEl].name + ' ' + minC + '개</strong> — ' + EL_TEXT[fewEl].few + ' 추천 활동: ' + EL_TEXT[r.yong].act + '.</p>';
     h += '</div>';
 
-    /* --- 일간 --- */
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">나를 나타내는 글자</h2><span class="sec-meta">DAY MASTER</span></div>' +
-      '<div class="ilgan-head ' + EL_CLASS[dEl] + '"><div class="ilgan-mark">' + P.day.sh + '</div><div><div class="ilgan-t">' + ig.t + '</div><div class="ilgan-img">' + ig.img + '</div></div></div>' +
-      '<div class="chip-row">' + ig.kw.map(function(k){ return '<span class="chip">' + k + '</span>'; }).join('') + '</div>' +
-      '<p class="body-text">' + ig.d + '</p><div class="divider"></div>' +
-      '<div class="sub-block"><h4>타고난 강점</h4><p class="body-text">' + ig.good + '</p></div>' +
-      '<div class="sub-block"><h4>조심하면 좋은 점</h4><p class="body-text">' + ig.care + '</p></div>' +
-      '<div class="sub-block"><h4>잘 맞는 분야</h4><p class="body-text">' + ig.fit + '</p></div>' +
-      '<div class="sub-block"><h4>일지 · ' + P.day.bk + '(' + P.day.bh + ') ' + P.day.tenBr + ' · ' + P.day.stage + '</h4><p class="body-text">배우자 자리에 ' + TEN_DESC[P.day.tenBr] + '의 기운이 앉아 있고, 일간은 이 자리에서 ‘' + P.day.stage + '’ 상태예요. ' + STAGE_DESC[P.day.stage] + '.</p></div>' +
-      '</div>';
-
+    h += zoneHTML('read', '풀이', '글자들이 말해 주는 것');
     /* --- 십성 --- */
     var gCount = { '비겁':0,'식상':0,'재성':0,'관성':0,'인성':0 };
     order.forEach(function(k){ var p = P[k]; if (!p) return; if (k !== 'day') gCount[TEN_TO_GROUP[p.tenStem]]++; gCount[TEN_TO_GROUP[p.tenBr]]++; });
@@ -535,6 +601,12 @@
     h += '<div class="ss"><span class="chip">공망</span><p>' + MS.BR_K[r.gong[0]] + MS.BR_K[r.gong[1]] + '(' + MS.BR_H[r.gong[0]] + MS.BR_H[r.gong[1]] + ') — 비어 있는 자리. ' + (gongAt.length ? gongAt.map(function(a){ return POS_LABEL[a]; }).join('·') + '에 걸려 있어 그 자리의 인연이 늦게 채워지는 편이에요.' : '원국에는 걸린 글자가 없어요.') + '</p></div>';
     h += '</div></div>';
 
+    /* --- 띠 --- */
+    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">' + r.color + ' ' + r.animal + '띠 이야기</h2><span class="sec-meta">' + P.year.hanja + '</span></div>' +
+      '<div class="chip-row">' + ANIMAL_TRAITS[r.animal].map(function(t){ return '<span class="chip">' + t + '</span>'; }).join('') + '</div>' +
+      '<p class="body-text">' + ANIMAL_BLURB[r.animal] + '</p></div>';
+
+    h += zoneHTML('flow', '흐름', '지금 지나는 시기');
     /* --- 대운 --- */
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">대운 흐름</h2><span class="sec-meta">대운수 ' + r.dNum + ' · ' + (r.forward ? '순행' : '역행') + '</span></div><div class="scroller" id="duScroll">';
     r.daeun.forEach(function(p){
@@ -554,20 +626,15 @@
       '<div class="luck-card"><div class="luck-g"><span class="' + EL_CLASS[M.sEl] + '">' + M.sh + '</span><span class="' + EL_CLASS[M.bEl] + '">' + M.bh + '</span></div><div class="luck-txt"><h4>이번 달 · ' + M.name + '월 · ' + M.tenStem + '</h4><p>' + TEN_DESC[M.tenStem] + '의 기운이 들어오는 달이에요. ' + SEUN_TEXT[M.tenStem].split('. ').slice(-1)[0] + '</p></div></div>' +
       '</div>';
 
-    /* --- 띠 --- */
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">' + r.color + ' ' + r.animal + '띠 이야기</h2><span class="sec-meta">' + P.year.hanja + '</span></div>' +
-      '<div class="chip-row">' + ANIMAL_TRAITS[r.animal].map(function(t){ return '<span class="chip">' + t + '</span>'; }).join('') + '</div>' +
-      '<p class="body-text">' + ANIMAL_BLURB[r.animal] + '</p></div>';
-
     /* --- 번호 --- */
     var iso = r.solar.y + '-' + pad2(r.solar.m) + '-' + pad2(r.solar.d);
     var tKey = r.time ? pad2(r.time.h) + pad2(r.time.mi) : 'unknown';
     var life = drawSixFromSeed(iso + '|' + tKey + '|life');
     var luck = todayLuck(entry, r), yongNums = luck.nums, lEl = luck.el;
     cur.life = life; cur.yongNums = yongNums;
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">행운의 번호</h2><span class="sec-meta">LOTTO 6/45</span></div>' +
+    h += '<div class="card num-cta"><div class="num-cta-q">사주를 다 봤다면,<br><em>내 번호</em>도 궁금하지 않으세요?</div>' +
       '<p class="helper">평생 번호는 사주 원국으로 한 번 정해지고, 오늘의 행운 번호는 오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자(' + EL_TEXT[lEl].num.join('·') + ')로 끝나는 번호 3개를 담아 매일 바뀌어요.</p>' +
-      '<button class="btn-primary btn-block" id="btnDraw">행운의 번호 뽑기</button>' +
+      '<button class="btn-primary btn-block sheen" id="btnDraw">내 사주로 행운 번호 뽑기</button>' +
       '<div id="numWrap" hidden class="view" style="gap:18px">' +
       '<div class="num-set"><div class="lab">평생 행운 번호 <small>고정</small></div><div class="balls" id="ballsLife">' + life.map(function(n){ return '<div class="ball pre">' + n + '</div>'; }).join('') + '</div></div>' +
       '<div class="num-set"><div class="lab">오늘의 행운 번호 <small>' + todayStr() + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·') + '</small></div><div class="balls" id="ballsYong">' + yongNums.map(function(o){ return '<div class="ball pre' + (o.y ? ' yong ' + EL_CLASS[lEl] : '') + '">' + o.n + '</div>'; }).join('') + '</div></div>' +
@@ -1047,7 +1114,7 @@
     var cats = [['w','재물운'],['l','연애운'],['j','직업운']];
     return '<div class="view" style="gap:16px">' + cats.map(function(c){
       var v = f.scores[c[0]];
-      return '<div class="score-row"><span class="cat">' + c[1] + '</span><span class="ln">' + f.lines[c[0]] + '</span><span class="sc">' + v + '<small>점</small></span><span class="score-bar"><i style="width:' + v + '%"></i></span></div>';
+      return '<div class="score-row"><span class="cat">' + c[1] + '</span><span class="ln">' + f.lines[c[0]] + '</span><span class="sc"><b data-count="' + v + '">' + v + '</b><small>점</small></span><span class="score-bar"><i style="--v:' + (v / 100) + '"></i></span></div>';
     }).join('') + '</div>';
   }
 
@@ -1565,12 +1632,13 @@
     var iso = entryISO(me, r), tKey = entryTKey(r);
     var luck = todayLuck(me, r), nums = luck.nums;
     var elc = EL_CLASS[f.luckyEl];
+    var mood = moodOf(f); document.body.dataset.mood = mood.key;
     var h = '';
     if (NS) h += demoBarHTML();
     h += attStripHTML(att.newly);
     h += '<div class="today-head"><div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일, 오늘은</div>' +
       '<h1 class="today-title">' + f.head + '</h1>' +
-      '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div></div>';
+      '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += '<div class="quick-row"><button type="button" id="btnQZ">' + TIP_IC.star + '별자리 운세</button><button type="button" id="btnQNum" class="new">' + TIP_IC.star + '꿈 해몽 번호</button><button type="button" id="btnQNY">' + TIP_IC.star + '2027 신년운세</button></div>';
     h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
@@ -1587,10 +1655,10 @@
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += nyCardHTML(me, r);
     h += adSlotHTML('오늘의 결론을 본 뒤');
-    h += '<div class="card ' + elc + '"><div class="sec-head"><h2 class="sec-title">오늘의 행운 번호</h2><span class="sec-meta">행운 숫자 ' + f.tip.nums.join('·') + '</span></div>' +
-      '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
-      '<p class="helper">빛나는 번호는 오늘의 행운 숫자 <b style="color:var(--elc)">' + f.tip.nums.join('·') + '</b>로 끝나요. 행운의 팁과 같은 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운에서 나온 숫자예요.</p>' +
-      '<button class="btn-soft btn-block" id="btnGoNum" style="margin-top:12px">추첨기로 내 번호 더 뽑기 ›</button></div>';
+    h += '<div class="card num-teaser ' + elc + '"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">운픽 시그니처</span></div>' +
+      '<div class="balls" aria-hidden="true">' + nums.map(function(o, i){ return '<div class="ball q' + (o.y ? ' yong ' + elc : '') + '" style="--i:' + i + '">?</div>'; }).join('') + '</div>' +
+      '<p class="helper">오늘 ' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운의 숫자가 담긴 여섯 개예요. 추첨기에서 직접 뽑아 보세요.</p>' +
+      '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">오늘의 내 번호 뽑으러 가기</button></div>';
     var stNow = streakOf(getAtt());
     if (!NS && !store('unsu_auth') && store('unsu_nudge') !== todayStr() && (stNow >= 3 || getCoins() >= 60 || getUnlocks().length))
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
@@ -1612,7 +1680,7 @@
       var md = (now.getMonth()+1) + '월 ' + now.getDate() + '일';
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         fig:figSVG(r.animal, f.auraEl, 'mini'),
-        text:'[운픽] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j + '\n오늘의 행운 번호 ' + nums.map(function(o){ return o.n; }).join(' · '),
+        text:'[운픽] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me] });
     };
     $('btnTips').onclick = function(){
@@ -1688,12 +1756,11 @@
   function catHTML(entry, r, cat){
     var C = CATS[cat], g = natalGroups(r), f = todayLuck(entry, r).f, nm = esc(entry.name);
     var yG = TEN_GRP[r.seun.tenStem], d = nowD(), md = (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
-    var nums = drawSixFromSeed(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|cat-' + cat);
     var h = '<div class="cat-head"><span class="cat-ic">' + CAT_IC[C.ic] + '</span><div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
-      (C.sk ? '<span class="cat-score">' + f.scores[C.sk] + '<small>점</small></span>' : '') + '</div>';
+      (C.sk ? '<span class="cat-score"><b data-count="' + f.scores[C.sk] + '">' + f.scores[C.sk] + '</b><small>점</small></span>' : '') + '</div>';
     if (C.sk){
       var star = cat === 'money' ? '재성' : cat === 'career' ? '관성' : (entry.gender === 'M' ? '재성' : '관성');
-      h += '<div class="cat-bar"><i style="width:' + f.scores[C.sk] + '%"></i></div><p class="cat-today">“' + f.lines[C.sk] + '”</p>' +
+      h += '<div class="cat-bar"><i style="--v:' + (f.scores[C.sk] / 100) + '"></i></div><p class="cat-today">“' + f.lines[C.sk] + '”</p>' +
         '<div class="sub-block"><h4>타고난 ' + C.name.replace('운', '') + ' 그릇 <small>' + star + ' ' + g[star] + '개</small></h4><p class="body-text">' + CAT_NATAL[cat][lvOf(g[star])] +
         (cat === 'money' && g['식상'] ? ' 식상(재능)이 재성을 받쳐 주어 손재주·기획·말솜씨가 곧 수입원이 돼요.' : '') +
         (cat === 'career' && g['인성'] ? ' 인성(배움)도 있어 시험·자격증 운이 따라요.' : '') + '</p></div>' +
@@ -1706,8 +1773,7 @@
         '<div class="sub-block"><h4>함께 살리면 좋은 재능 <small>' + order[1] + '</small></h4><p class="body-text">' + J2.t + '도 잘 맞아요. ' + J2.jobs.slice(0, 3).join(', ') + ' 같은 일과 겹치는 자리라면 더 오래, 즐겁게 일할 수 있어요.</p></div>' +
         '<div class="sub-block"><h4>일간 ' + ILGAN[r.pillars.day.stem].t + '에게 맞는 분야</h4><p class="body-text">' + EL_FIELD[r.dEl] + ' 분야와 인연이 깊어요. ' + r.seun.year + '년 흐름도 함께 보면, ' + CAT_YEAR[yG].career + '</p></div>';
     }
-    h += '<div class="num-set cat-nums"><div class="lab">이 운을 담은 행운 번호 <small>' + md + '</small></div><div class="balls">' + nums.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>' +
-      '<p class="disclaimer">사주 원국과 일진으로 계산한 재미용 풀이예요. 실제 당첨이나 결과를 보장하지 않습니다.</p>';
+    h += '<p class="disclaimer">사주 원국과 일진으로 계산한 재미용 풀이예요. 실제 결과를 보장하지 않습니다.</p>';
     return h;
   }
   function catChipsHTML(f){
@@ -1718,9 +1784,11 @@
   function openCat(entry, r, cat){
     var date = todayStr();
     openSheet('<div class="cat-sheet">' + catHTML(entry, r, cat) + '</div>' +
-      '<div class="row" style="margin-top:14px"><button class="btn-soft grow" id="btnCatShare">' + SH_IC.send + '공유하기</button><button class="btn-primary grow" id="btnCatNum">번호 더 뽑기</button></div>' +
+      '<div class="cat-next"><small>다른 분야도 볼까요?</small><div>' + CAT_ORDER.filter(function(k){ return k !== cat; }).map(function(k){ return '<button type="button" data-next="' + k + '">' + (CATS[k].chip || CATS[k].name) + '</button>'; }).join('') + '</div></div>' +
+      '<button class="btn-primary btn-block" id="btnCatShare" style="margin-top:14px">' + SH_IC.send + '이 결과 공유하기</button>' +
       adSlotHTML(CATS[cat].name + '을 본 뒤'));
-    $('btnCatNum').onclick = function(){ closeSheet(); go('num'); };
+    countUp($('sheetBody'));
+    $('sheetBody').querySelectorAll('[data-next]').forEach(function(b){ b.onclick = function(){ openCat(entry, r, b.dataset.next); }; });
     $('btnCatShare').onclick = function(){
       var f = todayLuck(entry, r).f, C = CATS[cat];
       openShare({ sheetTitle:C.name + ' 공유', title:entry.name + '님의 ' + C.name, desc:C.sk ? '오늘 ' + f.scores[C.sk] + '점 · ' + f.lines[C.sk] : '나에게 맞는 일 · ' + CAT_JOB[Object.keys(natalGroups(r)).sort(function(a, b){ var g = natalGroups(r); return g[b] - g[a]; })[0]].t,
@@ -2184,6 +2252,7 @@
     star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>'
   };
   function renderWelcome(){
+    delete document.body.dataset.mood;
     var now = new Date(), pd = PUBLIC_DAY.today(now), P = pd.pillars;
     var an = MS.BR_ANIMAL[P.year.br];
     var acc = store('unsu_account');
