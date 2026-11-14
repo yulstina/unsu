@@ -1378,6 +1378,34 @@
   .bx-row .balls.sm .ball{width:34px;height:34px;font-size:13px;}
   .bx-del{grid-area:del;border:none;background:transparent;color:#c3cae6;font-size:14px;padding:4px 6px;cursor:pointer;}
   @media (prefers-reduced-motion:reduce){ .num-reveal.nr-in>*,.tab.bump svg{animation:none;} .machine-card .mc-canvas{transition:none;} }
+
+  /* ===== 005 2단계: 우니 꾹 · 오늘 할 일 · 금박 ===== */
+  .peek-stage{display:flex;align-items:center;justify-content:center;gap:22px;padding:6px 0 4px;}
+  .peek-btn{position:relative;width:120px;height:120px;border:none;background:radial-gradient(circle,color-mix(in srgb,var(--elc,#b9a8ff) 22%,transparent),transparent 70%);border-radius:50%;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;padding:0;}
+  .peek-btn:disabled{cursor:default;}
+  .peek-fig{position:absolute;inset:18px;display:grid;place-items:center;transition:transform .2s var(--ease-ios);}
+  .peek-fig svg{width:100%;height:100%;}
+  .peek-card.hold .peek-fig{transform:scale(.88);}
+  .peek-ring{position:absolute;inset:0;width:100%;height:100%;}
+  .peek-ring{transform:scale(.55);opacity:0;}
+  .peek-ring circle{fill:none;stroke:#f5d48a;stroke-width:5;}
+  .peek-card.hold .peek-ring{opacity:1;transform:scale(1);transition:transform .65s linear,opacity .15s;}
+  .peek-ball{width:58px;height:58px;font-size:22px;opacity:.25;transform:scale(.7);transition:transform .45s var(--ease-spring),opacity .3s;}
+  .peek-card.open .peek-ball{opacity:1;transform:none;}
+  .peek-card:not(.open) .peek-ball::before{content:'?';}
+  .peek-msg b{color:#fff;}
+  .todo-n{font-weight:700;color:#f5d48a;font-size:calc(14px*var(--fs));}
+  .todo-list{list-style:none;margin:4px 0 8px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .todo-list li{display:flex;align-items:center;gap:10px;color:#e3e8fb;font-size:calc(14px*var(--fs));}
+  .todo-list li i{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3);display:grid;place-items:center;flex:none;}
+  .todo-list li.done i{background:#8fe3d0;box-shadow:none;color:#10132e;animation:todoPop .4s var(--ease-spring);}
+  .todo-list li.done i svg{width:14px;height:14px;}
+  .todo-list li.done span{color:#aab3d4;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3);}
+  @keyframes todoPop{50%{transform:scale(1.25);}}
+  .ball.foil{position:relative;overflow:hidden;border:none;cursor:pointer;font:inherit;color:inherit;}
+  .ball.foil i{position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#f9e4a8,#d9a944 45%,#f5d48a 60%,#b8862e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);transition:transform .35s var(--ease-ios),opacity .3s;}
+  .ball.foil.off i{transform:scale(0) rotate(40deg);opacity:0;}
+  @media (prefers-reduced-motion:reduce){ .peek-ring,.peek-fig,.peek-ball,.ball.foil i{transition:none!important;} .todo-list li.done i{animation:none;} }
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
