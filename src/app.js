@@ -12,7 +12,7 @@
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
   var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1, unsu_consent:1, unsu_notif:1 };
-  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders','unsu_ny_open','unsu_dreams','unsu_dmdraft','unsu_numbox','unsu_drawn'];
+  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders','unsu_ny_open','unsu_dreams','unsu_dmdraft','unsu_numbox','unsu_drawn','unsu_peek','unsu_shared','unsu_todo','unsu_lifeseen'];
   function nsk(k){ return GLOBAL_KEYS[k] ? k : NS + k; }
   function store(k, v){
     var key = nsk(k);
@@ -1696,6 +1696,7 @@
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
     h += catChipsHTML(f);
+    h += todoCardHTML();
     h += petCardHTML();
     h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
@@ -1706,10 +1707,7 @@
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += nyCardHTML(me, r);
     h += adSlotHTML('오늘의 결론을 본 뒤');
-    h += '<div class="card num-teaser ' + elc + '"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">운픽 시그니처</span></div>' +
-      '<div class="balls" aria-hidden="true">' + nums.map(function(o, i){ return '<div class="ball q' + (o.y ? ' yong ' + elc : '') + '" style="--i:' + i + '">?</div>'; }).join('') + '</div>' +
-      '<p class="helper">오늘 ' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운의 숫자가 담긴 여섯 개예요. 추첨기에서 직접 뽑아 보세요.</p>' +
-      '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">오늘의 내 번호 뽑으러 가기</button></div>';
+    h += peekCardHTML(me, nums, elc);
     var stNow = streakOf(getAtt());
     if (!NS && !store('unsu_auth') && store('unsu_nudge') !== todayStr() && (stNow >= 3 || getCoins() >= 60 || getUnlocks().length))
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
@@ -1717,6 +1715,7 @@
     body.innerHTML = h;
     $('btnNY').onclick = function(){ openNYSheet(me, r); };
     $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
+    bindPeek(me, nums);
     renderCoin();
     drawOn($('todayFig'));
     $('btnAtt').onclick = function(){ openAttSheet(me, r); };
@@ -1944,7 +1943,7 @@
       machine.draw(nums, null, function(){
         box.textContent = '뽑힌 번호 ' + nums.slice().sort(function(a, b){ return a - b; }).join(', ');
         btn.disabled = false; btn.textContent = '다시 뽑기';
-        store('unsu_drawn', todayStr()); revealNums();
+        markTodo('drawn'); revealNums();
         toast((kind === 'today' ? '오늘의' : '평생') + ' 행운 번호가 나왔어요');
         bond('num');
       });
@@ -2004,7 +2003,7 @@
     var drawn = store('unsu_drawn') === todayStr();
     h += '<div class="card num-wait" id="numWait"' + (drawn ? ' hidden' : '') + '><div class="balls">' + [0,1,2,3,4,5].map(function(i){ return '<div class="ball q" style="--i:' + i + '">?</div>'; }).join('') + '</div><p class="helper" style="text-align:center">추첨을 시작하면 ' + esc(me.name) + '님의 번호가 여기에 나타나요.</p></div>';
     h += '<div id="numReveal" class="num-reveal"' + (drawn ? '' : ' hidden') + '>';
-    h += '<div class="card"><div class="num-set"><div class="lab">평생 행운 번호 <small>사주 원국 · 고정</small></div><div class="balls">' + life.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>' +
+    h += '<div class="card"><div class="num-set"><div class="lab">평생 행운 번호 <small>' + (store('unsu_lifeseen') ? '사주 원국 · 고정' : '금박을 눌러 벗겨 보세요') + '</small></div><div class="balls" id="lifeBalls">' + life.map(function(n){ return store('unsu_lifeseen') ? '<div class="ball">' + n + '</div>' : '<button type="button" class="ball foil" aria-label="금박 벗기기">' + n + '<i aria-hidden="true"></i></button>'; }).join('') + '</div></div>' +
       '<div class="num-set"><div class="lab">오늘의 행운 번호 <small>행운 숫자 ' + EL_TEXT[lEl].num.join('·') + '</small></div><div class="balls">' + yong.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + EL_CLASS[lEl] : '') + '">' + o.n + '</div>'; }).join('') + '</div></div>' +
       extra.lines.map(function(l, i){ return '<div class="num-set"><div class="lab">추가 한 줄 ' + (i+1) + ' <small>엽전 ' + EXTRA_COST + '닢</small></div><div class="balls">' + l.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>'; }).join('') +
       '<button class="btn-primary btn-block sheen" id="btnNumSave">' + SAVE_IC + '보관함에 저장</button>' +
@@ -2023,6 +2022,12 @@
       extra.lines.push(line); store('unsu_extra', extra);
       renderNumToday(); toast('번호 한 줄을 더 뽑았어요');
     };
+    document.querySelectorAll('#lifeBalls .foil').forEach(function(b){
+      b.onclick = function(){
+        if (b.classList.contains('off')) return; b.classList.add('off'); b.setAttribute('aria-label', '평생 번호 ' + b.textContent);
+        if (!document.querySelector('#lifeBalls .foil:not(.off)')){ store('unsu_lifeseen', 1); toast('평생 행운 번호예요. 이 번호는 바뀌지 않아요'); }
+      };
+    });
     $('btnNumSave').onclick = function(){
       var sets = [{ k:'오늘의 번호', nums:yong.map(function(o){ return o.n; }) }].concat(extra.lines.map(function(l, i){ return { k:'추가 한 줄 ' + (i+1), nums:l }; }));
       var n = 0; sets.forEach(function(s){ if (saveToBox({ id:'b' + Date.now().toString(36) + n, t:Date.now(), d:todayStr(), who:me.name, kind:s.k, nums:s.nums.slice() })) n++; });
@@ -2041,6 +2046,53 @@
      ========================================================= */
   var SAVE_IC = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>';
   function bumpTab(t){ var b = document.querySelector('.tab[data-tab="' + t + '"]'); if (!b || reduceMotion) return; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
+  /* ---- 오늘 하면 좋은 것 0/3 (005) ---- */
+  var TODO_COINS = 30;
+  var TODOS = [['peek','우니 꾹 눌러 오늘 번호 보기'],['drawn','추첨기로 번호 6개 뽑기'],['shared','번호나 운세 공유하기']];
+  function todoDone(k){ return store('unsu_' + k) === todayStr(); }
+  function markTodo(k){
+    if (todoDone(k)) return; store('unsu_' + k, todayStr());
+    var n = TODOS.filter(function(t){ return todoDone(t[0]); }).length;
+    if (n === TODOS.length && store('unsu_todo') !== todayStr()){
+      store('unsu_todo', todayStr());
+      if (!isGuest()){ addCoins(TODO_COINS, '오늘 할 일 3/3'); setTimeout(function(){ toast('오늘 할 일 3개 완료! 엽전 +' + TODO_COINS); }, 400); }
+    }
+    if (currentView === 'today' && $('todoCard')) $('todoCard').outerHTML = todoCardHTML();
+  }
+  function todoCardHTML(){
+    var n = TODOS.filter(function(t){ return todoDone(t[0]); }).length;
+    return '<div class="card todo-card" id="todoCard"><div class="sec-head"><h2 class="sec-title">오늘 하면 좋은 것</h2><span class="todo-n' + (n === 3 ? ' all' : '') + '">' + n + '/3</span></div>' +
+      '<ul class="todo-list">' + TODOS.map(function(t){ var d = todoDone(t[0]); return '<li class="' + (d ? 'done' : '') + '"><i aria-hidden="true">' + (d ? OK_SVG : '') + '</i><span>' + t[1] + '</span></li>'; }).join('') + '</ul>' +
+      '<p class="helper">' + (n === 3 ? '오늘 몫을 다 했어요. 내일 또 만나요' : '세 개를 다 하면 엽전 ' + TODO_COINS + '닢을 드려요' + (isGuest() ? ' (로그인 필요)' : '')) + '</p></div>';
+  }
+  /* ---- 우니 꾹 누르기: 길게 누르면 오늘 번호 1개 공개 (005) ---- */
+  function peekCardHTML(me, nums, elc){
+    var opened = todoDone('peek'), first = nums.filter(function(o){ return o.y; })[0] || nums[0];
+    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">시그니처</span></div>' +
+      '<div class="peek-stage"><button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘 번호 한 개 보기"' + (opened ? ' disabled' : '') + '>' +
+        '<svg class="peek-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54"/></svg>' +
+        '<span class="peek-fig">' + petSVG('happy', 2, 'mini') + '</span></button>' +
+        '<div class="peek-ball ball' + (first.y ? ' yong' : '') + '" aria-live="polite">' + (opened ? first.n : '') + '</div></div>' +
+      '<p class="helper peek-msg">' + (opened ? '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.' : '우니를 <b>꾹</b> 누르고 있으면 오늘 번호 하나를 먼저 알려 줘요.') + '</p>' +
+      '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">' + (opened ? '나머지 번호 뽑으러 가기' : '추첨기로 바로 가기') + '</button></div>';
+  }
+  function bindPeek(me, nums){
+    var btn = $('peekBtn'); if (!btn || btn.disabled) return;
+    var first = nums.filter(function(o){ return o.y; })[0] || nums[0], t = null, card = $('peekCard');
+    function done(){
+      t = null; card.classList.remove('hold'); card.classList.add('open'); btn.disabled = true;
+      card.querySelector('.peek-ball').textContent = first.n;
+      card.querySelector('.peek-msg').innerHTML = '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.';
+      $('btnGoNum').textContent = '나머지 번호 뽑으러 가기';
+      if (navigator.vibrate) try { navigator.vibrate(20); } catch (e){}
+      markTodo('peek');
+    }
+    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); t = setTimeout(done, 650); }
+    function cancel(){ if (t){ clearTimeout(t); t = null; card.classList.remove('hold'); } }
+    btn.addEventListener('pointerdown', start); btn.addEventListener('keydown', start);
+    ['pointerup','pointerleave','pointercancel','keyup'].forEach(function(ev){ btn.addEventListener(ev, cancel); });
+    btn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  }
   function renderBox(){
     var me = getMe(), box = getBox(), dreams = getDreams(), h = NS ? demoBarHTML() : '';
     h += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
@@ -2948,6 +3000,7 @@
   function currentLink(){ var o = shareState; return o.inviteEntry ? inviteLink(o.inviteEntry, o.withTime) : o.link; }
   function fullMsg(){ return shareState.text + '\n\n' + shareState.cta + '\n' + currentLink(); }
   function openShare(o){ shareState = o; o.withTime = true; renderShareSheet(); }
+  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#shNative,#shLink,#shMsg')) markTodo('shared'); });
   function renderShareSheet(){
     var o = shareState, link = currentLink();
     var h = '<h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
