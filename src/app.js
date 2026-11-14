@@ -2900,7 +2900,9 @@
       if (gift){ store('unsu_gift', 1); addCoins(SIGNUP_COINS, '가입 환영 선물'); }
       writeAccount(); closeSheet(); updateSegCount(); updateTopbar();
       toast(gift ? PROV[provider] + ' 계정으로 로그인했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : restored ? '다시 오셨네요! 계정의 기록을 불러왔어요' : PROV[provider] + ' 계정으로 로그인했어요 · 기록이 동기화돼요');
-      if (currentView === 'my') renderMy(); else go('today');
+      if (currentView === 'my') renderMy();
+      else if (currentView === 'dream' && $('dmInput') && !$('dmInput').hidden){ renderDreamInput(); }  /* 꿈해몽 입력 중 로그인하면 작성하던 내용 그대로 유지 */
+      else go('today');
     }, 900);
   }
   function doLogout(){

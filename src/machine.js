@@ -74,8 +74,8 @@ var LottoMachine = (function(){
       ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = g; ctx.fill();
       if (label){
         ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0);
-        ctx.beginPath(); ctx.arc(0, 0, r * .56, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
-        ctx.fillStyle = '#2a2140'; ctx.font = '700 ' + Math.round(r * .78) + 'px "Space Grotesk","IBM Plex Sans KR",sans-serif';
+        ctx.beginPath(); ctx.arc(0, 0, r * .72, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
+        ctx.fillStyle = '#2a2140'; ctx.font = '700 ' + Math.round(r * 1.0) + 'px "Space Grotesk","IBM Plex Sans KR",sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), 0, 1); ctx.restore();
       }
       ctx.beginPath(); ctx.arc(x - r * .35, y - r * .4, r * .22, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
