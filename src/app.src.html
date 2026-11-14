@@ -24,7 +24,7 @@
     --violet-soft:rgba(138,124,240,.25);
     --icon-accent:#cfc6fb;
     /* 오행 데이터 컬러 (콘텐츠 전용, UI 액센트 아님) */
-    --el-wood:#8fdcaa; --el-fire:#ff9a8a; --el-earth:#eac56f; --el-metal:#e8edf7; --el-water:#9db4f2;
+    --el-wood:#8fdcaa; --el-fire:#ff9a8a; --el-earth:#dc9d6e; --el-metal:#f6cd5b; --el-water:#6c9dff;
     --r-card:16px; --r-badge:6px; --r-full:999px;
     --font-display:'Space Grotesk','IBM Plex Sans KR',sans-serif;
     --font-body:'Inter','IBM Plex Sans KR',system-ui,sans-serif;
@@ -243,6 +243,11 @@
   .ilgan-img{font-size:calc(12.5px*var(--fs));color:var(--text-muted);}
   .sub-block{display:flex;flex-direction:column;gap:5px;}
   .sub-block h4{margin:0;font-size:calc(12px*var(--fs));font-weight:500;color:var(--icon-accent);letter-spacing:.02em;}
+  .sub-block h4{display:flex;align-items:center;gap:8px;font-size:calc(15px*var(--fs));font-weight:700;color:#fff;letter-spacing:-.01em;line-height:1.35;}
+  .sub-block h4::before{content:'';flex:none;width:4px;height:1.05em;border-radius:3px;background:var(--elc,var(--icon-accent));box-shadow:0 0 10px var(--elc,var(--icon-accent));}
+  .sub-block h4 + .body-text,.sub-block h4 + p{padding-left:12px;}
+  .me-card .sub-block{margin-top:6px;}
+  .lt .sub-block h4{color:var(--lt-ink);} .lt .sub-block h4::before{box-shadow:none;}
 
   /* ---------- 십성 ---------- */
   .ten-rows{display:flex;flex-direction:column;gap:8px;}
@@ -1510,8 +1515,8 @@
   .lt .chip{background:#ebe7ff;color:#2b1f86;box-shadow:none;}
   .lt .score-bar{background:rgba(27,20,64,.09);}
   /* 오행 색: 밝은 면용으로 진하게 */
-  .card.lt.el-wood,.lt .el-wood{--elc:#1d7f4e;} .card.lt.el-fire,.lt .el-fire{--elc:#c93a25;} .card.lt.el-earth,.lt .el-earth{--elc:#8f6400;}
-  .card.lt.el-metal,.lt .el-metal{--elc:#4a5876;} .card.lt.el-water,.lt .el-water{--elc:#2a4fc2;}
+  .card.lt.el-wood,.lt .el-wood{--elc:#1d7f4e;} .card.lt.el-fire,.lt .el-fire{--elc:#c93a25;} .card.lt.el-earth,.lt .el-earth{--elc:#9a5528;}
+  .card.lt.el-metal,.lt .el-metal{--elc:#9c7000;} .card.lt.el-water,.lt .el-water{--elc:#1f50d8;}
   /* 점수 단계 색: 글자는 진하게, 막대는 선명하게 */
   .lt [data-tier]{--tc:#4b3bc4;--b1:#9a8cf5;--b2:#6c5ce0;}
   .lt [data-tier="gold"]{--tc:#8a5800;--b1:#f7c25a;--b2:#e8982f;}

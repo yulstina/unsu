@@ -671,7 +671,7 @@
   }
 
   /* ---- 결과 이미지 카드 (1080×1350, 공유·저장용) ---- */
-  var EL_HEX = ['#6fd88a','#ff8a73','#f0c35b','#e3e9f5','#6aa8ff'];
+  var EL_HEX = ['#6fd88a','#ff8a73','#dc9d6e','#f6cd5b','#6c9dff'];
   function resultCardCanvas(entry, r, done){
     var P = r.pillars, c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
     var g = c.getContext('2d'), F = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif', H = '"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif';
