@@ -1692,18 +1692,18 @@
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += '<div class="quick-row q4"><button type="button" id="btnQNum" class="new">' + TIP_IC.star + '꿈 해몽</button><button type="button" id="btnQGh">' + FEAT_IC.gh + '궁합</button><button type="button" id="btnQZ">' + TIP_IC.star + '별자리</button><button type="button" id="btnQNY">' + TIP_IC.star + '신년운세</button></div>';
-    h += '<div class="card score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
+    h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
     h += catChipsHTML(f);
     h += todoCardHTML();
     h += petCardHTML();
-    h += '<div class="card ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
+    h += '<div class="card lt ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
       '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>행운의 팁<span class="chev">›</span></button></div>';
     var z = getZodiac(r.solar.m, r.solar.d);
     var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    h += '<div class="card"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:#fff;font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
+    h += '<div class="card lt"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:var(--text-headline);font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += nyCardHTML(me, r);
     h += adSlotHTML('오늘의 결론을 본 뒤');
@@ -1828,7 +1828,7 @@
     return h;
   }
   function catChipsHTML(f){
-    return '<div class="card cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div><div class="cat-chips">' +
+    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div><div class="cat-chips">' +
       CAT_ORDER.map(function(k){ var C = CATS[k]; return '<button type="button" data-cat="' + k + '"' + (C.sk ? ' data-tier="' + tierOf(f.scores[C.sk]) + '"' : '') + '><span class="ic">' + CAT_IC[C.ic] + '</span><span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '</b>' : '<b class="go">›</b>') + '</button>'; }).join('') +
       '</div></div>';
   }
@@ -2061,7 +2061,7 @@
   }
   function todoCardHTML(){
     var n = TODOS.filter(function(t){ return todoDone(t[0]); }).length;
-    return '<div class="card todo-card" id="todoCard"><div class="sec-head"><h2 class="sec-title">오늘 하면 좋은 것</h2><span class="todo-n' + (n === 3 ? ' all' : '') + '">' + n + '/3</span></div>' +
+    return '<div class="card lt todo-card" id="todoCard"><div class="sec-head"><h2 class="sec-title">오늘 하면 좋은 것</h2><span class="todo-n' + (n === 3 ? ' all' : '') + '">' + n + '/3</span></div>' +
       '<ul class="todo-list">' + TODOS.map(function(t){ var d = todoDone(t[0]); return '<li class="' + (d ? 'done' : '') + '"><i aria-hidden="true">' + (d ? OK_SVG : '') + '</i><span>' + t[1] + '</span></li>'; }).join('') + '</ul>' +
       '<p class="helper">' + (n === 3 ? '오늘 몫을 다 했어요. 내일 또 만나요' : '세 개를 다 하면 엽전 ' + TODO_COINS + '닢을 드려요' + (isGuest() ? ' (로그인 필요)' : '')) + '</p></div>';
   }

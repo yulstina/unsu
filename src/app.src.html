@@ -1423,6 +1423,55 @@
 
   /* 우니 교감 알림이 상단 로고를 덮지 않도록 한 줄 아래로 */
   .pet-pop{top:calc(70px + env(safe-area-inset-top,0px));}
+
+  /* =========================================================
+     005 3단계 · 하이브리드 비주얼
+     히어로·번호 기계·배너 = 밤하늘 / 읽는 카드(.lt) = 밝은 면, 본문 대비 7:1 이상
+     .lt 안에서는 색 변수만 다시 정의하므로 기존 컴포넌트가 그대로 따라옵니다.
+     ========================================================= */
+  .card.lt{
+    --lt-ink:#1b1440; --lt-body:#2f2b57; --lt-muted:#524c78; --lt-acc:#4b3bc4;
+    --text-headline:var(--lt-ink); --text-body:var(--lt-body); --text-muted:var(--lt-muted); --text-helper:var(--lt-muted);
+    --border-hairline:rgba(27,20,64,.12); --border-hairline-strong:rgba(27,20,64,.22); --icon-accent:var(--lt-acc);
+    background:#f8f6ff;color:var(--lt-body);-webkit-backdrop-filter:none;backdrop-filter:none;
+    box-shadow:inset 0 1px 0 #fff,0 18px 34px -16px rgba(6,4,26,.7);
+  }
+  .card.lt::before,.card.lt::after{opacity:.0;}
+  .lt .sec-title,.lt .lucky-title,.lt .score-row .ln,.lt .row-link,.lt .cat-chips button,.lt .todo-list li{color:var(--lt-ink);}
+  .lt .sec-meta{color:var(--lt-muted);}
+  .lt .body-text{color:var(--lt-body);}
+  .lt .divider{background:linear-gradient(90deg,transparent,rgba(27,20,64,.2),transparent);}
+  .lt .btn-soft{background:#ebe7ff;color:#2b1f86;box-shadow:inset 0 0 0 1px rgba(75,59,196,.28);-webkit-backdrop-filter:none;backdrop-filter:none;}
+  .lt .btn-soft:hover{background:#e0daff;}
+  .lt .row-link .ic{background:#ebe7ff;color:var(--lt-acc);}
+  .lt .chip{background:#ebe7ff;color:#2b1f86;box-shadow:none;}
+  .lt .score-bar{background:rgba(27,20,64,.09);}
+  /* 오행 색: 밝은 면용으로 진하게 */
+  .card.lt.el-wood,.lt .el-wood{--elc:#1d7f4e;} .card.lt.el-fire,.lt .el-fire{--elc:#c93a25;} .card.lt.el-earth,.lt .el-earth{--elc:#8f6400;}
+  .card.lt.el-metal,.lt .el-metal{--elc:#4a5876;} .card.lt.el-water,.lt .el-water{--elc:#2a4fc2;}
+  /* 점수 단계 색: 글자는 진하게, 막대는 선명하게 */
+  .lt [data-tier]{--tc:#4b3bc4;--b1:#9a8cf5;--b2:#6c5ce0;}
+  .lt [data-tier="gold"]{--tc:#8a5800;--b1:#f7c25a;--b2:#e8982f;}
+  .lt [data-tier="mint"]{--tc:#0a7561;--b1:#6fd8c0;--b2:#33b49a;}
+  .lt [data-tier="rose"]{--tc:#b92a47;--b1:#ff93a5;--b2:#e4587b;}
+  .lt .score-row[data-tier] .score-bar i{background:linear-gradient(90deg,var(--b1),var(--b2));}
+  .lt .tier-tag{background:color-mix(in srgb,var(--tc) 12%,#fff);font-size:calc(11.5px*var(--fs));}
+  .lt .cat-chips button{background:#fff;border-color:rgba(27,20,64,.14);box-shadow:0 1px 0 rgba(27,20,64,.04);}
+  .lt .cat-chips button[data-tier]{border-color:color-mix(in srgb,var(--tc) 38%,#fff);background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 9%,#fff),#fff 75%);}
+  .lt .cat-chips button[data-tier] b,.lt .cat-chips button[data-tier] .ic svg{color:var(--tc);}
+  .lt .cat-chips .ic svg,.lt .cat-chips b{color:var(--lt-acc);}
+  .lt .cat-chips b.go{color:var(--lt-muted);}
+  .lt .mini-z svg{background:#1b1440;border-radius:20px;padding:4px;box-sizing:content-box;width:64px;height:64px;}
+  /* 배너 카드: 밤하늘 이미지 + 왼쪽 글자 영역 스크림 */
+  .ny-card{background:linear-gradient(90deg,rgba(18,12,56,.86) 0%,rgba(18,12,56,.62) 55%,rgba(18,12,56,.28) 100%),url(/img/banner-night.webp) 78% 50%/cover no-repeat,#1b1440;}
+  .ny-card .ny-eyebrow{color:#f7dfa0;}
+  .lt .todo-n{color:var(--lt-acc);}
+  .lt .todo-list li i{box-shadow:inset 0 0 0 1.5px rgba(27,20,64,.3);}
+  .lt .todo-list li.done i{background:#2fb89d;color:#fff;}
+  .lt .todo-list li.done span{color:#6b6690;text-decoration-color:rgba(27,20,64,.35);}
+  /* 작은 글씨 최소 12.5px, 어두운 면의 보조 글씨는 한 단계 더 밝게 */
+  :root{--text-helper:#c9c3e2;--text-muted:#d9d4ee;}
+  .sec-meta,.helper,.disclaimer{font-size:max(calc(12.5px*var(--fs)),12.5px);}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
