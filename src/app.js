@@ -671,7 +671,7 @@
   }
 
   /* ---- 결과 이미지 카드 (1080×1350, 공유·저장용) ---- */
-  var EL_HEX = ['#6fd88a','#ff8a73','#f0c35b','#e3e9f5','#6aa8ff'];
+  var EL_HEX = ['#6fd88a','#ff8a73','#dc9d6e','#f6cd5b','#6c9dff'];
   function resultCardCanvas(entry, r, done){
     var P = r.pillars, c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
     var g = c.getContext('2d'), F = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif', H = '"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif';
@@ -884,6 +884,7 @@
   var LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
+  var CAT_COST = 100;   /* 2026-11-15 소율: 분야별 운세 분야당 100닢 */
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
   function isGuest(){ return !NS && !store('unsu_auth'); }
@@ -1023,29 +1024,60 @@
   };
   $('adClaim').onclick = function(){ if (!adFinished) return; closeAd(); var f = adDone; adDone = null; if (f) f(); };
 
-  $('coinChip').onclick = openCoinSheet;
+  $('coinChip').onclick = function(){ openCoinSheet(); };
   $('fsBtn').onclick = openFsSheet;
-  function openCoinSheet(){
-    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 상세 궁합 같은 리포트를 여는 데 쓸 수 있어요.'); return; }
+  /* 엽전 충전소 — 패키지 가격은 제안값(결제 연동은 2차, 1월) */
+  var COIN_PACKS = [
+    { id:'p300', n:300, b:0, p:3300 },
+    { id:'p1000', n:1000, b:100, p:9900, hot:true },
+    { id:'p2000', n:2000, b:300, p:18900, tag:'+15%' },
+    { id:'p5000', n:5000, b:1000, p:44000, tag:'최대 혜택' }
+  ];
+  var coinPick = 'p1000';
+  function openCoinSheet(reason){
+    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 분야별 운세·꿈 해몽·상세 궁합을 여는 데 쓸 수 있어요.'); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
-    var h = '<h3 id="sheetTitle">내 엽전 ' + getCoins() + '닢</h3>' +
-      '<div class="eyebrow"><span class="line"></span>모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
+    var won = function(n){ return n.toLocaleString() + '원'; };
+    var h = '<div class="cs-head"><h3 id="sheetTitle">엽전 충전소</h3><div class="cs-bal">' + COIN_SVG + '<span>내 엽전</span><b>' + getCoins().toLocaleString() + '닢</b></div></div>' +
+      (typeof reason === 'string' ? '<p class="cs-reason">' + reason + '</p>' : '') +
+      '<div class="cs-packs" role="radiogroup" aria-label="엽전 패키지">' + COIN_PACKS.map(function(k){
+        return '<button type="button" role="radio" class="cs-pack' + (k.hot ? ' hot' : '') + (k.id === coinPick ? ' on' : '') + '" data-pack="' + k.id + '" aria-checked="' + (k.id === coinPick) + '">' +
+          (k.hot ? '<span class="cs-badge">인기 1위</span>' : k.tag ? '<span class="cs-badge sub">' + k.tag + '</span>' : '') +
+          '<span class="cs-coin">' + COIN_SVG + '</span><span class="cs-n"><b>' + k.n.toLocaleString() + '닢</b>' + (k.b ? '<small>+' + k.b.toLocaleString() + ' 보너스</small>' : '<small>기본</small>') + '</span>' +
+          '<span class="cs-p">' + won(k.p) + (k.hot ? '<small>가장 많이 골라요</small>' : '') + '</span></button>';
+      }).join('') + '</div>' +
+      '<button class="btn-primary btn-block" id="csBuy"></button>' +
+      '<p class="helper" style="text-align:center;margin:8px 0 18px">카드 결제는 1월에 열려요. 그동안은 아래 방법으로 무료로 모을 수 있어요.</p>' +
+      '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
+      '<div><span>분야별 운세</span><b>' + CAT_COST + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +
+      '<div><span>꿈 해몽</span><b>' + DM.cost + '닢</b><small>꿈 하나 풀이</small></div>' +
+      '<div><span>상세 궁합</span><b>' + GH_COST + '닢</b><small>한 번 열면 계속</small></div></div>' +
+      '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
       '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
       '<div class="earn-row"><div><div class="t">7일 연속 보너스 +30</div><div class="s">' + (left === 7 ? '이번 주기 보너스를 받았어요' : '앞으로 ' + left + '일 더 출석하면 받아요') + '</div></div><button class="btn-ghost" id="csCal" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">캘린더</button></div>' +
+      '<div class="earn-row"><div><div class="t">우니 꾹 뽑기 +' + GIFT_COIN + '</div><div class="s">매일 한 번, 가끔 엽전이 나와요</div></div><button class="btn-ghost" id="csPeek" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">하러 가기</button></div>' +
       '<div class="earn-row"><div><div class="t">광고 보고 +' + AD_REWARD + '</div><div class="s">하루 ' + AD_LIMIT + '번 · 오늘 ' + used + '/' + AD_LIMIT + '</div></div><button class="btn-soft" id="csAd" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))"' + (used >= AD_LIMIT ? ' disabled' : '') + '>' + (used >= AD_LIMIT ? '내일 다시' : '광고 보기') + '</button></div>' +
-      '</div><div class="eyebrow"><span class="line"></span>쓰기<span class="line right"></span></div>' +
-      '<button class="row-link" id="csGh" style="border-top:none;margin:4px 0 16px"><span class="ic" style="color:#f3dca0">' + COIN_SVG + '</span><span>상세 궁합 리포트 열기<br><span class="helper">' + GH_COST + '닢 · 한 번 열면 계속 볼 수 있어요</span></span><span class="chev">›</span></button>' +
-      '<div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
+      '</div><div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
       (log.length ? log.slice(0, 8).map(function(x){ var d = new Date(x.t); return '<div><span>' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + esc(x.why) + '</span><b class="' + (x.n < 0 ? 'minus' : '') + '">' + (x.n > 0 ? '+' : '') + x.n + '</b></div>'; }).join('') : '<div><span>아직 내역이 없어요</span></div>') +
-      '</div><button class="btn-primary btn-block" data-close>확인</button>';
+      '</div><button class="btn-ghost btn-block" data-close>닫기</button>';
     openSheet(h);
+    var setBuy = function(){ var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0]; $('csBuy').innerHTML = (k.n + k.b).toLocaleString() + '닢 · ' + won(k.p) + ' 결제하기'; };
+    setBuy();
+    $('sheetBody').querySelectorAll('[data-pack]').forEach(function(btn){
+      btn.onclick = function(){
+        coinPick = btn.dataset.pack;
+        $('sheetBody').querySelectorAll('[data-pack]').forEach(function(x){ var on = x === btn; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
+        setBuy();
+      };
+    });
+    $('csBuy').onclick = function(){ toast('엽전 구매는 1월에 열려요. 지금은 출석·꾹 뽑기로 모아 주세요'); };
     $('csAd').onclick = function(){
       if (adCount() >= AD_LIMIT) return;
       closeSheet();
       playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); toast('엽전 +' + AD_REWARD + '닢을 받았어요'); openCoinSheet(); });
     };
-    $('csGh').onclick = function(){ closeSheet(); go('gunghap'); };
+    $('csPeek').onclick = function(){ closeSheet(); go('today'); setTimeout(function(){ var pc = $('peekCard'); if (pc) pc.scrollIntoView({ block:'center', behavior: reduceMotion ? 'auto' : 'smooth' }); }, 350); };
     $('csCal').onclick = function(){ var me = getMe(); if (!me) return; openAttSheet(me, compute(me)); };
   }
 
@@ -1169,6 +1201,23 @@
     var g1 = NY_GROUP[Math.floor(TEN_ORDER.indexOf(sT) / 2)], g2 = NY_GROUP[Math.floor(TEN_ORDER.indexOf(bT) / 2)];
     var kw = g1 === g2 ? g1.kw.slice() : [g1.kw[0], g1.kw[1], g2.kw[0]];
     return { sT:sT, bT:bT, stage:MS.stage12(dS, 7), kw:kw, line:g1.line };
+  }
+  /* ---- 더 깊이 보기: 유료 상품 배너 (002 가격) ---- */
+  function deepHTML(me, r){
+    var ny = newYear(r);
+    var B = [
+      { id:'dpNY', tone:'gold', badge:'NEW', title:'2027 신년운세 자세히', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'5,500원', cta:'자세히 보기', mood:'love', ic:'star' },
+      { id:'dpGh', tone:'rose', badge:'', title:'궁합 상세 리포트', sub:'둘의 성향 차이와 잘 맞는 대화법까지', price:'990원', cta:'리포트 열기', mood:'happy', ic:'heart' },
+      { id:'dpEz', tone:'mint', badge:'', title:'쉬운 사주 풀이', sub:'어려운 한자 없이, 내 사주를 이야기처럼', price:'990원', cta:'풀이 보기', mood:'calm', ic:'scroll' }
+    ];
+    var IC = { star:TIP_IC.star, heart:CAT_IC.heart, scroll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13"/></svg>' };
+    return '<section class="deep" aria-label="더 깊이 보기"><div class="deep-head"><h2 class="sec-title">더 깊이 보기</h2><small>궁금한 운, 하나 더 깊게</small></div>' +
+      B.map(function(b){
+        return '<button type="button" class="deep-bn t-' + b.tone + '" id="' + b.id + '"><span class="db-txt"><b>' + b.title + (b.badge ? ' <em>' + b.badge + '</em>' : '') + '</b><small>' + b.sub + '</small>' +
+          '<span class="db-cta">' + b.price + ' · ' + b.cta + ' →</span></span>' +
+          '<span class="db-uni" aria-hidden="true">' + petSVG(b.mood, 2, '') + '<i>' + IC[b.ic] + '</i></span></button>';
+      }).join('') +
+      '<button type="button" class="deep-set" id="dpSet"><span><b>3종 한 번에</b> 신년운세 · 궁합 상세 · 쉬운 풀이</span><span class="ds-p"><s>7,480원</s> 6,900원 ›</span></button></section>';
   }
   function nyCardHTML(me, r){
     var ny = newYear(r);
@@ -1521,8 +1570,42 @@
   function petDone(p){ return p.day === todayStr() ? (p.done || {}) : {}; }
   function getCoupons(){ var c = store('unsu_coupons'); return Array.isArray(c) ? c.filter(function(x){ return x.t === 'dream1' && !x.used && x.exp > Date.now(); }) : []; }
   var petUid = 0;
-  function petSVG(mood, lv, cls){
+  /* 우니 + 조아(친구) 손잡은 일러스트. pose: 'hold' | 'hug' */
+  function duoSVG(pose, cls){
+    var hug = pose === 'hug';
+    var a = petSVG('love', 1, ''), b = petSVG(hug ? 'love' : 'happy', 1, '', 'joa');
+    var inner = function(svg){ return svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, ''); };
+    var dx = hug ? 82 : 96;
+    return '<svg class="duo-svg ' + (cls || '') + '" viewBox="0 0 ' + (120 + dx) + ' 124" aria-hidden="true">' +
+      '<g class="duo-a" transform="rotate(' + (hug ? 8 : 4) + ' 60 100)"><svg x="0" y="4" width="120" height="120" viewBox="0 0 120 120" overflow="visible">' + inner(a) + '</svg></g>' +
+      '<g class="duo-b" transform="translate(' + dx + ' 0) rotate(' + (hug ? -8 : -4) + ' 60 100)"><svg x="0" y="4" width="120" height="120" viewBox="0 0 120 120" overflow="visible">' + inner(b) + '</svg></g>' +
+      (hug
+        ? '<path d="M86 104q20 6 38-4" fill="none" stroke="#7d5cf5" stroke-width="7" stroke-linecap="round"/><path d="M118 106q-14 5-28-1" fill="none" stroke="#f0707f" stroke-width="7" stroke-linecap="round"/>'
+        : '<path d="M94 86q8 6 18 6" fill="none" stroke="#7d5cf5" stroke-width="7" stroke-linecap="round"/><path d="M122 86q-4 6-10 6" fill="none" stroke="#f0707f" stroke-width="7" stroke-linecap="round"/><circle cx="112" cy="92" r="5.5" fill="#ffd1dc"/>') +
+      '<path class="duo-h" d="M' + ((120 + dx) / 2) + ' 30c-5-8-17-4-13 5l13 11 13-11c4-9-8-13-13-5z" fill="#ff8fb1"/>' +
+      '</svg>';
+  }
+  /* 홈 2×2 메뉴 타일용 일러스트 */
+  function tileArtSVG(kind){
+    var inner = function(svg){ return svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, ''); };
+    var pet = function(m, x, y, s){ return '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" viewBox="0 0 120 120" overflow="visible">' + inner(petSVG(m, 1, '')) + '</svg>'; };
+    if (kind === 'gh') return duoSVG('hold', 'tile-art');
+    var h = '<svg class="tile-art" viewBox="0 0 140 120" aria-hidden="true">';
+    if (kind === 'dream'){
+      h += '<path d="M104 14a16 16 0 1 0 14 24a13 13 0 1 1-14-24z" fill="#ffe7a3"/>' +
+        '<path d="M14 98c-10 0-12-14-1-15c1-10 15-12 19-3c9-3 15 6 10 12c6 1 6 6 0 6z" fill="#fff" opacity=".9"/>' +
+        '<path d="M98 104c-8 0-9-11 0-12c1-8 12-9 15-2c7-2 12 5 8 10c5 1 5 4 0 4z" fill="#fff" opacity=".85"/>' + pet('sleepy', 20, 4, 108);
+    } else if (kind === 'zodiac'){
+      h += '<g stroke="#fff" stroke-width="1.6" opacity=".9" fill="none"><path d="M12 30L34 14L56 24M98 18L122 30L128 56"/></g>' +
+        '<g fill="#fff6c9"><circle cx="12" cy="30" r="3.4"/><circle cx="34" cy="14" r="2.6"/><circle cx="56" cy="24" r="3"/><circle cx="98" cy="18" r="2.6"/><circle cx="122" cy="30" r="3.4"/><circle cx="128" cy="56" r="2.6"/></g>' + pet('happy', 18, 8, 108);
+    } else {
+      h += '<g transform="translate(92 54)"><path d="M6 14c-6 10-6 34 18 34s24-24 18-34z" fill="#ff6f7d"/><path d="M8 14h32l-4-8H12z" fill="#e2485a"/><path d="M14 6c4-4 16-4 20 0" fill="none" stroke="#ffd36b" stroke-width="3" stroke-linecap="round"/><text x="24" y="38" font-size="15" font-weight="800" text-anchor="middle" fill="#ffe7a3" font-family="serif">福</text></g>' + pet('love', 4, 6, 108);
+    }
+    return h + '</svg>';
+  }
+  function petSVG(mood, lv, cls, pal){
     var u = mood + (++petUid);
+    var C = pal === 'joa' ? { hi:'#fff6ee', mid:'#ffc2a6', lo:'#ff7f8e', glow:'#ff9fa8', foot:'#e8566e', ant:'#ffc9b8' } : { hi:'#eef3ff', mid:'#b9a8ff', lo:'#6a45f0', glow:'#8f74ff', foot:'#5b3be8' };
     var eyes, mouth, extra = '', blush = mood === 'love' ? .7 : mood === 'happy' ? .45 : .28;
     if (mood === 'sleepy'){
       eyes = '<path d="M40 66q6 5 12 0M68 66q6 5 12 0" fill="none" stroke="#221a4a" stroke-width="3" stroke-linecap="round"/>';
@@ -1540,15 +1623,16 @@
     var acc = '';
     if (lv >= 4) acc += '<ellipse cx="60" cy="27" rx="22" ry="5" fill="none" stroke="#f3dca0" stroke-width="2" opacity=".75"/>';
     if (lv >= 5) acc += '<path d="M47 36l4-9 5 6 4-9 4 9 5-6 4 9z" fill="#f3dca0"/>';
-    var antGlow = lv >= 2 ? '<circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/>' : '';
+    var antGlow = lv >= 2 ? '<circle class="pstar" cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/>' : '';
     var cheekStar = lv >= 3 ? '<path d="M30 84l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4zM90 84l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4z" fill="#fff4cc"/>' : '';
     return '<svg class="pet-svg ' + (cls || '') + ' m-' + mood + '" viewBox="0 0 120 120" aria-hidden="true"><defs>' +
-      '<radialGradient id="pb' + u + '" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient>' +
-      '<radialGradient id="pg' + u + '" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="#8f74ff" stop-opacity=".55"/><stop offset="1" stop-color="#8f74ff" stop-opacity="0"/></radialGradient></defs>' +
+      '<radialGradient id="pb' + u + '" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="' + C.hi + '"/><stop offset=".45" stop-color="' + C.mid + '"/><stop offset="1" stop-color="' + C.lo + '"/></radialGradient>' +
+      '<radialGradient id="pg' + u + '" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="' + C.glow + '" stop-opacity=".55"/><stop offset="1" stop-color="' + C.glow + '" stop-opacity="0"/></radialGradient></defs>' +
       '<circle cx="60" cy="66" r="56" fill="url(#pg' + u + ')"/>' + acc +
-      '<g class="pbody"><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/>' + antGlow +
-      '<path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/>' +
-      '<ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/>' +
+      '<g class="pbody">' + (pal === 'joa' ? '<path d="M52 38c-2-7 3-12 9-13M68 38c2-7-3-12-9-13" fill="none" stroke="' + C.ant + '" stroke-width="2.6" stroke-linecap="round"/><path class="pstar" d="M60 26c-4-6-13-3-10 4l10 8 10-8c3-7-6-10-10-4z" fill="#ff6f91"/>' :
+      '<path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/>' + antGlow +
+      '<path class="pstar" d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/>') +
+      '<ellipse cx="45" cy="101" rx="9" ry="5" fill="' + C.foot + '"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="' + C.foot + '"/>' +
       '<path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#pb' + u + ')"/>' +
       '<ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/>' +
       '<ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity="' + blush + '"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity="' + blush + '"/>' +
@@ -1691,7 +1775,7 @@
       '<h1 class="today-title">' + f.head + '</h1>' +
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
-    h += '<div class="quick-row q4"><button type="button" id="btnQNum" class="new">' + TIP_IC.star + '꿈 해몽</button><button type="button" id="btnQGh">' + FEAT_IC.gh + '궁합</button><button type="button" id="btnQZ">' + TIP_IC.star + '별자리</button><button type="button" id="btnQNY">' + TIP_IC.star + '신년운세</button></div>';
+    h += '<div class="qgrid">' + [['btnQNum','dream','꿈 해몽','간밤 꿈, 우니가 풀어줘요','NEW'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','새해 흐름 미리 보기','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + '</div>';
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -1705,7 +1789,7 @@
     var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
     h += '<div class="card lt"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:var(--text-headline);font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
-    h += nyCardHTML(me, r);
+    h += deepHTML(me, r);
     h += adSlotHTML('오늘의 결론을 본 뒤');
     h += peekCardHTML(me, nums, elc);
     var stNow = streakOf(getAtt());
@@ -1713,7 +1797,10 @@
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
     h += '<p class="disclaimer">오늘의 운세는 일진과 사주의 관계로 계산한 재미용 콘텐츠예요.</p>' + bizFootHTML();
     body.innerHTML = h;
-    $('btnNY').onclick = function(){ openNYSheet(me, r); };
+    $('dpNY').onclick = function(){ openNYSheet(me, r); };
+    $('dpGh').onclick = function(){ go('gunghap'); };
+    $('dpEz').onclick = function(){ go('saju'); };
+    $('dpSet').onclick = function(){ toast('3종 묶음 결제는 결제 연결 후 열려요'); };
     $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     bindPeek(me, nums);
     renderCoin();
@@ -1731,7 +1818,8 @@
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         fig:figSVG(r.animal, f.auraEl, 'mini'),
         text:'[우니조아] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
-        cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me] });
+        cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me],
+        card:{ kicker:me.name + '님의 ' + md + ' 운세', head:f.head, rows:[['재물운', f.scores.w], ['연애운', f.scores.l], ['직업운', f.scores.j]] } });
     };
     $('btnTips').onclick = function(){
       openSheet('<h3 id="sheetTitle">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 오늘의 행운 팁이에요</h3><div class="tip-list ' + elc + '">' +
@@ -1837,13 +1925,35 @@
     var best = CAT_ORDER.filter(function(k){ return CATS[k].sk; }).sort(function(a, b){ return f.scores[CATS[b].sk] - f.scores[CATS[a].sk]; })[0];
     var bt = tierOf(f.scores[CATS[best].sk]);
     var say = bt === 'gold' || bt === 'violet' ? '오늘은 <b>' + CATS[best].name + '</b>이 제일 좋아요. 먼저 볼까요?' : '오늘은 <b>' + CATS[best].name + '</b>부터 차근차근 살펴봐요.';
-    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div>' +
+    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">분야당 ' + CAT_COST + '닢</span></div>' +
       '<div class="cat-guide">' + uniCatHTML(best, bt, 'cg-uni') + '<p class="cg-say">' + say + '</p></div>' +
       '<div class="cat-chips uni">' +
       CAT_ORDER.map(function(k){ var C = CATS[k], t = C.sk ? tierOf(f.scores[C.sk]) : ''; return '<button type="button" data-cat="' + k + '"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(k, t) + '<span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '<small>점</small></b>' : '<b class="go">보기 ›</b>') + '</button>'; }).join('') +
       '</div></div>';
   }
+  /* 분야별 운세: 분야당 CAT_COST닢, 연 분야는 그날 하루 다시 볼 수 있다 */
+  function catPaid(cat){ var c = store('unsu_catpaid'); return !!(c && c.d === todayStr() && c.c && c.c[cat]); }
+  function setCatPaid(cat){ var c = store('unsu_catpaid'); if (!c || c.d !== todayStr()) c = { d:todayStr(), c:{} }; c.c[cat] = 1; store('unsu_catpaid', c); }
+  function openCatLock(entry, r, cat){
+    var C = CATS[cat], f = todayLuck(entry, r).f, t = C.sk ? tierOf(f.scores[C.sk]) : '';
+    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < CAT_COST;
+    openSheet('<div class="cat-lock"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(cat, t, 'cl-uni') +
+      '<div class="cl-k">' + esc(entry.name) + '님의 오늘</div><h3 id="sheetTitle">' + C.name + '</h3>' +
+      (C.sk ? '<div class="cl-score"><b>' + f.scores[C.sk] + '</b>점</div><p class="cl-line">“' + f.lines[C.sk] + '”</p>' : '<p class="cl-line">타고난 사주로 보는 나에게 맞는 일</p>') +
+      '<div class="cl-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' +
+      '<ul class="cl-list"><li>오늘 이 분야의 자세한 흐름</li><li>좋은 시간과 조심할 점</li><li>우니가 고른 오늘의 한 가지 행동</li></ul>' +
+      '<button class="btn-primary btn-block" id="clBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : COIN_SVG + '엽전 ' + CAT_COST + '닢으로 열기') + '</button>' +
+      '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 바로 받은 엽전으로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (CAT_COST - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 열면 오늘 하루 계속 볼 수 있어요') + '</p></div>');
+    $('clBuy').onclick = function(){
+      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 분야별 운세는 분야당 ' + CAT_COST + '닢이에요.'); return; }
+      if (short){ openCoinSheet('분야별 운세를 열려면 엽전이 ' + (CAT_COST - coins) + '닢 더 필요해요.'); return; }
+      if (NS) toast('예시 모드라 엽전 없이 열었어요');
+      else addCoins(-CAT_COST, C.name + ' 열기');
+      setCatPaid(cat); openCat(entry, r, cat);
+    };
+  }
   function openCat(entry, r, cat){
+    if (!catPaid(cat)){ openCatLock(entry, r, cat); return; }
     var date = todayStr();
     var cf = todayLuck(entry, r).f, csk = CATS[cat].sk;
     openSheet('<div class="cat-sheet"' + (csk ? ' data-tier="' + tierOf(cf.scores[csk]) + '"' : '') + '>' + catHTML(entry, r, cat) + '</div>' +
@@ -1857,7 +1967,8 @@
       openShare({ sheetTitle:C.name + ' 공유', title:entry.name + '님의 ' + C.name, desc:C.sk ? '오늘 ' + f.scores[C.sk] + '점 · ' + f.lines[C.sk] : '나에게 맞는 일 · ' + CAT_JOB[Object.keys(natalGroups(r)).sort(function(a, b){ var g = natalGroups(r); return g[b] - g[a]; })[0]].t,
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
         text:'[우니조아] ' + entry.name + '님의 ' + C.name + (C.sk ? ' ' + f.scores[C.sk] + '점\n“' + f.lines[C.sk] + '”' : ''),
-        cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry] });
+        cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry],
+        card:C.sk ? { kicker:entry.name + '님의 오늘 ' + C.name, head:'“' + f.lines[C.sk] + '”', rows:[[C.name, f.scores[C.sk]]] } : null });
     };
   }
 
@@ -2048,7 +2159,8 @@
       openShare({ sheetTitle:'행운 번호 공유', title:me.name + '님의 오늘 행운 번호', desc:yong.map(function(o){ return o.n; }).join(' · ') + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·'),
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
         text:'[우니조아] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n추가 ' + (i+1) + ' ' + l.join(' · '); }).join('') + '\n오늘도 우니조아 🍀',
-        cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me] });
+        cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me],
+        card:{ kicker:me.name + '님의 오늘 행운 번호', head:'우니가 전하는 오늘의 번호', nums:yong.map(function(o){ return o.n; }) } });
     };
   }
 
@@ -2059,7 +2171,7 @@
   function bumpTab(t){ var b = document.querySelector('.tab[data-tab="' + t + '"]'); if (!b || reduceMotion) return; b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
   /* ---- 오늘 하면 좋은 것 0/3 (005) ---- */
   var TODO_COINS = 30;
-  var TODOS = [['peek','우니 꾹 눌러 오늘 번호 보기'],['drawn','추첨기로 번호 6개 뽑기'],['shared','번호나 운세 공유하기']];
+  var TODOS = [['peek','우니 꾹 눌러 오늘 선물 받기'],['drawn','추첨기로 번호 6개 뽑기'],['shared','번호나 운세 공유하기']];
   function todoDone(k){ return store('unsu_' + k) === todayStr(); }
   function markTodo(k){
     if (todoDone(k)) return; store('unsu_' + k, todayStr());
@@ -2077,31 +2189,59 @@
       '<p class="helper">' + (n === 3 ? '오늘 몫을 다 했어요. 내일 또 만나요' : '세 개를 다 하면 엽전 ' + TODO_COINS + '닢을 드려요' + (isGuest() ? ' (로그인 필요)' : '')) + '</p></div>';
   }
   /* ---- 우니 꾹 누르기: 길게 누르면 오늘 번호 1개 공개 (005) ---- */
+  /* ---- 우니 꾹 뽑기: 하루 한 번, 꾹 누르면 오늘의 선물 하나 (색·아이템·시간·한마디, 가끔 엽전) ---- */
+  var GIFT_COLORS = [['연보라','#b9a8ff'],['살구','#ffb38a'],['민트','#8fe3d0'],['하늘','#9fc8ff'],['레몬','#ffe27a'],['로즈','#ff9aa5'],['크림','#fff1cf']];
+  var GIFT_ITEMS = ['손수건','머그컵','작은 노트','핸드크림','동전 지갑','책갈피','텀블러','향초'];
+  var GIFT_TIMES = ['아침 7~9시','오전 10~12시','점심 12~2시','오후 3~5시','저녁 6~8시','밤 9~11시'];
+  var GIFT_WORDS = ['오늘은 먼저 웃는 사람이 이겨요.','미뤄 둔 연락 하나가 좋은 소식을 데려와요.','작은 정리가 큰 여유를 만들어요.','좋아하는 노래 한 곡이 하루를 바꿔요.','오늘 들은 칭찬은 오래 기억해 두세요.','천천히 가도 방향만 맞으면 괜찮아요.'];
+  var GIFT_COIN = 20;
+  var GIFT_IC = {
+    item:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 9h18M12 9v11M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/></svg>',
+    time:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+    word:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 6h14v9H10l-4 3v-3H5z"/></svg>'
+  };
+  function todayGift(me){
+    var rnd = mulberry32(seedHash((me.name || '') + '|' + (me.y || '') + (me.m || '') + (me.d || '') + '|' + todayStr() + '|gift'));
+    var roll = rnd(), pick = function(a){ return a[Math.floor(rnd() * a.length)]; };
+    if (roll < .16 && !isGuest()) return { t:'coin', label:'엽전 +' + GIFT_COIN, msg:'엽전 <b>' + GIFT_COIN + '닢</b>이 나왔어요! 바로 넣어 드렸어요.' };
+    var kinds = ['color','item','time','word'], k = kinds[Math.floor(rnd() * 4)];
+    if (k === 'color'){ var c = pick(GIFT_COLORS); return { t:'color', c:c[1], label:'행운 색', msg:'오늘의 행운 색은 <b>' + c[0] + '</b>이에요. 옷이나 소품에 한 가지만 더해 보세요.' }; }
+    if (k === 'item'){ var it = pick(GIFT_ITEMS); return { t:'item', label:'행운 아이템', msg:'오늘의 행운 아이템은 <b>' + it + '</b>예요. 곁에 두면 마음이 든든해져요.' }; }
+    if (k === 'time'){ var tm = pick(GIFT_TIMES); return { t:'time', label:'행운 시간', msg:'오늘은 <b>' + tm + '</b>가 좋아요. 중요한 연락은 이때 해 보세요.' }; }
+    return { t:'word', label:'우니의 한마디', msg:'“' + pick(GIFT_WORDS) + '”' };
+  }
+  function giftTokenHTML(g){
+    var inner = g.t === 'color' ? '' : g.t === 'coin' ? '<i class="gt-hole"></i>' : GIFT_IC[g.t];
+    return '<div class="peek-ball gt-' + g.t + '"' + (g.t === 'color' ? ' style="--gc:' + g.c + '"' : '') + '>' + inner + '<small>' + g.label + '</small></div>';
+  }
   function peekCardHTML(me, nums, elc){
-    var opened = todoDone('peek'), first = nums.filter(function(o){ return o.y; })[0] || nums[0];
-    var sparks = ''; for (var k = 0; k < 10; k++) sparks += '<i class="pk-spark" style="--a:' + (k * 36 + (k % 2 ? 12 : 0)) + 'deg;--d:' + (k % 2 ? 66 : 94) + 'px"></i>';
-    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">하루 한 번</span></div>' +
+    var opened = todoDone('peek'), g = todayGift(me);
+    var sparks = ''; for (var k = 0; k < 10; k++) sparks += '<i class="pk-spark" style="--a:' + (8 + k * 9) + 'deg;--d:' + (60 + (k % 3) * 26) + 'px;--w:' + (k * .03).toFixed(2) + 's"></i>';
+    var fw = '', spots = [[16,24],[84,20],[26,74],[78,66],[52,30],[60,82]];
+    spots.forEach(function(p, si){ fw += '<span class="pk-fw" style="left:' + p[0] + '%;top:' + p[1] + '%;--w:' + (.22 + si * .14).toFixed(2) + 's">'; for (var q = 0; q < 8; q++) fw += '<i style="--a:' + (q * 45 + si * 11) + 'deg"></i>'; fw += '</span>'; });
+    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="pk-fws" aria-hidden="true">' + fw + '</div>' +
+      '<div class="sec-head"><h2 class="sec-title">우니 꾹 뽑기</h2><span class="sec-meta">하루 한 번</span></div>' +
       '<div class="peek-stage">' +
         '<div class="peek-pop" aria-hidden="true"><span class="pk-flash"></span>' + sparks + '</div>' +
-        '<div class="peek-ball ball' + (first.y ? ' yong' : '') + '" aria-live="polite">' + (opened ? first.n : '') + '</div>' +
-        '<button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘 번호 한 개 보기"' + (opened ? ' disabled' : '') + '>' +
+        '<div class="peek-tok" aria-live="polite">' + (opened ? giftTokenHTML(g) : '') + '</div>' +
+        '<button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘의 선물 받기"' + (opened ? ' disabled' : '') + '>' +
         '<svg class="peek-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54"/></svg>' +
         '<span class="peek-fig">' + petSVG(opened ? 'love' : 'happy', 2, 'mini') + '</span></button>' +
       '</div>' +
-      '<p class="helper peek-msg">' + (opened ? '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.' : '우니를 <b>꾹</b> 누르고 있으면 오늘 번호 하나를 먼저 알려 줘요.') + '</p>' +
-      '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">' + (opened ? '나머지 번호 뽑으러 가기' : '추첨기로 바로 가기') + '</button></div>';
+      '<p class="helper peek-msg">' + (opened ? g.msg : '우니를 <b>꾹</b> 누르고 있으면 오늘의 선물을 하나 꺼내 줘요. 가끔 엽전도 나와요!') + '</p>' +
+      '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">행운 번호 뽑으러 가기</button></div>';
   }
   function bindPeek(me, nums){
     var btn = $('peekBtn'); if (!btn || btn.disabled) return;
-    var first = nums.filter(function(o){ return o.y; })[0] || nums[0], t = null, card = $('peekCard');
+    var g = todayGift(me), t = null, card = $('peekCard');
     function done(){
       t = null; card.classList.remove('hold'); btn.disabled = true;
-      card.querySelector('.peek-ball').textContent = first.n;
+      card.querySelector('.peek-tok').innerHTML = giftTokenHTML(g);
       card.querySelector('.peek-fig').innerHTML = petSVG('love', 2, 'mini');
       card.classList.add('open');
-      if (!reduceMotion){ card.classList.add('burst'); setTimeout(function(){ card.classList.remove('burst'); }, 1400); }
-      card.querySelector('.peek-msg').innerHTML = '짠! 오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.';
-      $('btnGoNum').textContent = '나머지 번호 뽑으러 가기';
+      if (!reduceMotion){ card.classList.add('burst'); setTimeout(function(){ card.classList.remove('burst'); }, 2000); }
+      card.querySelector('.peek-msg').innerHTML = '짠! ' + g.msg;
+      if (g.t === 'coin') addCoins(GIFT_COIN, '우니 꾹 뽑기');
       if (navigator.vibrate) try { navigator.vibrate([12, 40, 24]); } catch (e){}
       markTodo('peek');
     }
@@ -2239,7 +2379,7 @@
     gh.b = B ? B.id : null;
     if (!gh.edit){ if (!A) gh.edit = 'a'; else if (!B) gh.edit = 'b'; }
     if (gh.edit && !gh.f) gh.f = freshGhForm(gh.edit);
-    var h = '<div class="card gh-box"><div class="gh-pair">' + slotHTML(A, 'a', getMe() ? '첫 번째 사람' : '나') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b', '상대') + '</div>';
+    var h = '<div class="card gh-box">' + (!(A && B) || gh.edit ? '<div class="gh-duo">' + duoSVG('hug') + '<p>우니와 조아처럼, 두 사람은 얼마나 잘 맞을까요?</p></div>' : '') + '<div class="gh-pair">' + slotHTML(A, 'a', getMe() ? '첫 번째 사람' : '나') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b', '상대') + '</div>';
     if (gh.edit) h += ghEditorHTML(gh.edit);
     if (gh.edit === 'b' && getMe() && !NS) h += '<button class="ge-invite" id="btnGhInv2">' + SH_IC.link + '<span>상대 생년월일을 모른다면<br><b>궁합 신청 링크 보내기</b></span><span class="chev">›</span></button>';
     else if (!getMe()) h += '<button class="text-btn" id="btnGhDemo" style="align-self:center">예시 두 사람으로 먼저 보기</button>';
@@ -2297,7 +2437,8 @@
       openShare({ sheetTitle:'궁합 결과 공유', title:A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점', desc:m.grade + ' · ' + m.summary,
         fig:figSVG(ra.animal, ANIMAL_EL[ra.animal], 'mini'),
         text:'[우니조아] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
-        cta:'우리 궁합 결과 보러 가기 →', link:resultLink('g', todayStr(), [A, B]), shareEntries:[A, B] });
+        cta:'우리 궁합 결과 보러 가기 →', link:resultLink('g', todayStr(), [A, B]), shareEntries:[A, B],
+        card:{ kicker:A.name + ' × ' + B.name + ' 궁합', head:'“' + m.summary + '”', rows:[['궁합 점수', m.score]], tag:m.grade } });
     };
     if ($('btnGhInvite')) $('btnGhInvite').onclick = openInvite;
     if (!open){
@@ -3019,13 +3160,74 @@
   var shareState = null;
   function currentLink(){ var o = shareState; return o.inviteEntry ? inviteLink(o.inviteEntry, o.withTime) : o.link; }
   function fullMsg(){ return shareState.text + '\n\n' + shareState.cta + '\n' + currentLink(); }
+  /* ---- 공유 카드 이미지 (1080×1350): 결과만 깔끔하게 ---- */
+  var SAVE_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+  function makeShareCard(o, cb){
+    var W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var x = cv.getContext('2d'), c = o.card || { kicker:o.title, head:o.desc };
+    var FONT = '"IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif';
+    function rr(X, Y, w, h, r){ x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+    function wrap(t, maxW, maxL){ var out = [], line = ''; t.split(' ').forEach(function(wd){ var tt = line ? line + ' ' + wd : wd; if (x.measureText(tt).width <= maxW || !line){ line = tt; } else { out.push(line); line = wd; } while (x.measureText(line).width > maxW && line.length > 1){ var k = line.length; while (k > 1 && x.measureText(line.slice(0, k)).width > maxW) k--; out.push(line.slice(0, k)); line = line.slice(k); } }); if (line) out.push(line);
+      if (out.length > maxL){ out = out.slice(0, maxL); out[maxL - 1] = out[maxL - 1].slice(0, -1) + '…'; } return out; }
+    function draw(uni){
+      var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#120d36'); g.addColorStop(.55, '#2b2170'); g.addColorStop(1, '#4b3b9c');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      var rg = x.createRadialGradient(540, 360, 20, 540, 360, 520); rg.addColorStop(0, 'rgba(185,168,255,.35)'); rg.addColorStop(1, 'rgba(185,168,255,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);
+      var rnd = mulberry32(seedHash(c.kicker || 'w'));
+      for (var i = 0; i < 90; i++){ x.globalAlpha = .25 + rnd() * .6; x.fillStyle = '#fff'; x.beginPath(); x.arc(rnd() * W, rnd() * H, rnd() * 2.6 + .6, 0, 7); x.fill(); }
+      x.globalAlpha = 1;
+      x.textBaseline = 'middle';
+      x.font = '700 48px "Space Grotesk",' + FONT; x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText('Wooni', 80, 100);
+      var ww = x.measureText('Wooni').width; x.fillStyle = '#b3a8ff'; x.fillText('Joa', 80 + ww, 100);
+      var d = new Date(); x.font = '500 32px ' + FONT; x.fillStyle = '#cfc7f2'; x.textAlign = 'right'; x.fillText(d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate(), W - 80, 100);
+      /* 유리 패널 */
+      rr(70, 330, W - 140, 840, 56); x.fillStyle = 'rgba(255,255,255,.10)'; x.fill(); x.lineWidth = 2; x.strokeStyle = 'rgba(255,255,255,.28)'; x.stroke();
+      if (uni) x.drawImage(uni, W / 2 - 150, 150, 300, 300);
+      x.textAlign = 'center';
+      x.font = '600 40px ' + FONT; x.fillStyle = '#d9d1ff'; x.fillText(c.kicker || '', W / 2, 500);
+      x.font = '700 66px ' + FONT; x.fillStyle = '#fff';
+      var lines = wrap(c.head || '', W - 260, 3), y = 600;
+      lines.forEach(function(l){ x.fillText(l, W / 2, y); y += 86; });
+      y += 30;
+      if (c.tag){ x.font = '700 36px ' + FONT; var tw = x.measureText(c.tag).width + 60; rr(W / 2 - tw / 2, y - 32, tw, 64, 32); x.fillStyle = '#f5d48a'; x.fill(); x.fillStyle = '#2a1c00'; x.fillText(c.tag, W / 2, y); y += 90; }
+      if (c.nums){
+        var n = c.nums.length, R = 62, gap = 22, tot = n * R * 2 + (n - 1) * gap, sx = W / 2 - tot / 2 + R;
+        c.nums.forEach(function(v, i){ var cx = sx + i * (R * 2 + gap), cy = y + 60;
+          var bg = x.createRadialGradient(cx - 20, cy - 24, 6, cx, cy, R); bg.addColorStop(0, '#fff8e0'); bg.addColorStop(.6, '#f5d48a'); bg.addColorStop(1, '#d6a03e');
+          x.fillStyle = bg; x.beginPath(); x.arc(cx, cy, R, 0, 7); x.fill(); x.fillStyle = '#3a2600'; x.font = '800 52px "Space Grotesk",' + FONT; x.fillText(String(v), cx, cy + 2); });
+        y += 170;
+      }
+      if (c.rows){
+        c.rows.forEach(function(rw){
+          x.textAlign = 'left'; x.font = '600 38px ' + FONT; x.fillStyle = '#e6e1f7'; x.fillText(rw[0], 160, y);
+          x.textAlign = 'right'; x.font = '800 52px "Space Grotesk",' + FONT; x.fillStyle = rw[1] >= 80 ? '#f5d48a' : rw[1] >= 60 ? '#c9b9ff' : rw[1] >= 40 ? '#8fe3d0' : '#ff9aa5'; x.fillText(rw[1] + '점', W - 160, y);
+          rr(160, y + 38, W - 320, 12, 6); x.fillStyle = 'rgba(255,255,255,.14)'; x.fill();
+          rr(160, y + 38, (W - 320) * Math.max(.04, rw[1] / 100), 12, 6); x.fillStyle = rw[1] >= 80 ? '#f5d48a' : '#b9a8ff'; x.fill();
+          y += 120;
+        });
+      }
+      x.textAlign = 'center'; x.font = '500 30px ' + FONT; x.fillStyle = 'rgba(230,225,247,.75)'; x.fillText('재미로 보는 운세예요', W / 2, 1136);
+      /* 하단 */
+      x.textAlign = 'left'; x.font = '700 40px ' + FONT; x.fillStyle = '#fff'; x.fillText('내 사주로 뽑는 여섯 개의 행운 번호', 80, 1236);
+      x.font = '500 30px ' + FONT; x.fillStyle = '#cfc7f2'; x.fillText('생년월일만 넣으면 바로 · 우니조아', 80, 1290);
+      x.font = '700 32px ' + FONT; var pw = x.measureText('woonijoa.com').width + 56; rr(W - 80 - pw, 1230, pw, 64, 32); x.fillStyle = '#fff'; x.fill();
+      x.fillStyle = '#1b1440'; x.textAlign = 'center'; x.fillText('woonijoa.com', W - 80 - pw / 2, 1263);
+      cv.toBlob(function(b){ if (b) cb(b, URL.createObjectURL(b)); }, 'image/png');
+    }
+    var go = function(){
+      var img = new Image(), svg = petSVG('love', 2, '').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" ');
+      img.onload = function(){ draw(img); }; img.onerror = function(){ draw(null); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    };
+    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 66px "IBM Plex Sans KR"'), document.fonts.load('700 48px "Space Grotesk"')]).then(go, go); else go();
+  }
   function openShare(o){ shareState = o; o.withTime = true; renderShareSheet(); }
   document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#shNative,#shLink,#shMsg')) markTodo('shared'); });
   function renderShareSheet(){
     var o = shareState, link = currentLink();
     var h = '<h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
-      '<div class="share-card">' + (o.fig ? '<span class="sc-fig">' + o.fig + '</span>' : '') +
-      '<div class="sc-txt"><span class="sc-brand">우니조아 WooniJoa</span><b>' + esc(o.title) + '</b><p>' + esc(o.desc) + '</p><span class="sc-url">' + SH_IC.link + esc(shortUrl(link)) + '</span></div></div>';
+      '<div class="sh-cardimg"><img id="shImg" alt="공유할 결과 카드 미리보기"></div>' +
+      '<a class="sc-url sh-link" href="' + esc(link) + '" target="_blank" rel="noopener">' + SH_IC.link + esc(shortUrl(link)) + '</a>';
     if (o.inviteEntry){
       h += '<button type="button" class="unk-btn" id="shTime" aria-pressed="' + !o.withTime + '"' + (o.inviteEntry.unknown ? ' hidden' : '') + '><span>태어난 시간은 빼고 보내기</span><span class="ck">' + (!o.withTime ? OK_SVG : '') + '</span></button>' +
         '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>이 링크에는 궁합 계산을 위해 ' + esc(o.inviteEntry.name) + '님의 이름·생년월일' + (o.withTime && !o.inviteEntry.unknown ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
@@ -3035,13 +3237,27 @@
         (o.shareEntries.some(function(e){ return !e.unknown; }) ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
     }
     h += '<div class="share-actions">' +
-      '<button class="btn-primary" id="shNative">' + SH_IC.send + '카톡·메시지로 보내기</button>' +
-      '<div class="row"><button class="btn-soft grow" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-ghost grow" id="shMsg">메시지와 함께 복사</button></div></div>' +
+      '<div class="sh-3"><button class="btn-soft" id="shSave">' + SAVE_IC + '이미지 저장</button><button class="btn-soft" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-primary" id="shNative">' + SH_IC.send + '공유하기</button></div>' +
+      '<button class="text-btn" id="shMsg">메시지와 링크만 복사</button></div>' +
       '<details class="sh-qr" id="shQrBox"><summary>QR 코드로 열기 <span class="helper">PC에서 휴대폰으로 넘길 때</span></summary><div id="shQr"></div></details>';
     if (!isHosted()) h += '<p class="mock-note" style="margin-top:12px">지금은 Claude 공유 링크로 연결돼요. 직접 배포한 주소에서 열면 그 주소로 공유돼요.</p>';
     openSheet(h);
+    var cardBlob = null;
+    makeShareCard(o, function(blob, url){ cardBlob = blob; if ($('shImg')) $('shImg').src = url; });
+    $('shSave').onclick = function(){
+      if (!cardBlob){ toast('카드를 만드는 중이에요. 잠시 후 다시 눌러 주세요'); return; }
+      var a = document.createElement('a'); a.href = URL.createObjectURL(cardBlob); a.download = 'woonijoa-' + todayStr() + '.png';
+      document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요'); markTodo('shared');
+    };
     $('shNative').onclick = function(){
-      var data = { title:o.title, text:o.text + '\n\n' + o.cta, url:currentLink() };
+      var link = currentLink(), data = { title:o.title, text:o.text + '\n\n' + o.cta + '\n' + link, url:link };
+      if (cardBlob && navigator.canShare){
+        var file = new File([cardBlob], 'woonijoa.png', { type:'image/png' }), fd = { files:[file], title:o.title, text:o.title + '\n' + o.cta + '\n' + link };
+        if (navigator.canShare(fd)){
+          navigator.share(fd).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){ if (err && err.name !== 'AbortError') copyText(fullMsg(), '메시지와 링크를 복사했어요. 카톡에 붙여넣어 주세요'); });
+          return;
+        }
+      }
       if (navigator.share){
         navigator.share(data).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){
           if (err && err.name === 'AbortError') return;
