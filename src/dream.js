@@ -185,14 +185,16 @@ var DREAM = (function(){
     return { w:keys[0], keys:keys, cat:p[1], nums:p[2].split(',').map(Number), m:p[3] };
   });
   var HANGUL = /[가-힣]/;
-  var JOSA = '이가을를은는에의도와과랑한만께며로으들';
+  /* 한 글자 키 뒤에 붙어도 되는 조사. 조사 뒤에 또 한글이 이어지면(차+은+우 = 차은우) 다른 낱말로 본다 */
+  var JOSAS = ['에서','에게','한테','으로','이랑','처럼','까지','부터','보다','이','가','을','를','은','는','에','의','도','와','과','랑','만','로','께','며','들','야','아'];
   /* 한 글자 키(용·소·말·개·해·달·별·눈·비·불·산·땅·금·문·집·차·배·칼·총·방·발·손·꽃·책·술·피·똥·돈·섬·게·양·벌·닭·쥐·뱀 등)는 앞뒤 경계가 맞을 때만 */
   function okAt(text, i, key){
     if (key.length > 1) return true;
-    var prev = text.charAt(i - 1), next = text.charAt(i + 1);
+    var prev = text.charAt(i - 1);
     if (prev && HANGUL.test(prev)) return false;
-    if (next && HANGUL.test(next) && JOSA.indexOf(next) < 0) return false;
-    return true;
+    var rest = text.slice(i + 1);
+    if (!rest || !HANGUL.test(rest.charAt(0))) return true;
+    return JOSAS.some(function(j){ return rest.indexOf(j) === 0 && !HANGUL.test(rest.charAt(j.length)); });
   }
   function find(text){
     var hits = [], taken = [];
@@ -228,9 +230,30 @@ var DREAM = (function(){
     { re:/(기뻤|기쁘|행복|웃었|웃으|설레|좋았|신났)/, line:'꿈속 기분이 밝았던 만큼 현실에서도 기대해 볼 만한 흐름이에요.' },
     { re:/(무서|두려|겁|소름|놀랐|불안|울었|슬펐|답답)/, line:'꿈속 감정이 무거웠다면 요즘 쌓인 긴장이 풀려 나오는 중이에요. 꿈에서 털어 낸 만큼 마음이 가벼워져요.' }
   ];
-  function analyze(text){
+  /* 대화형 입력의 맥락: theme(주제) · who(누가 나왔는지) · name(사람 이름). 이름 글자는 상징으로 읽지 않는다 */
+  var WHO = { celeb:'연예인', family:'가족', lover:'애인', ex:'전 애인', friend:'친구', stranger:'낯선 사람', ancestor:'조상' };
+  var THEME_CAT = { person:'l', money:'m', event:'w', place:'c', nature:'c', animal:'g' };
+  function cleanCtx(ctx){
+    ctx = ctx || {};
+    var name = String(ctx.name || '').replace(/[^가-힣a-zA-Z0-9 ]/g, '').trim().slice(0, 12);
+    return { theme:THEME_CAT[ctx.theme] || ctx.theme === 'etc' ? String(ctx.theme) : '', who:WHO[ctx.who] ? ctx.who : '', name:name.length >= 2 ? name : '' };
+  }
+  function maskName(text, name){
+    if (!name) return text;
+    var out = text, i = 0, blank = new Array(name.length + 1).join('\u25a1');
+    while ((i = out.indexOf(name, i)) >= 0){ out = out.slice(0, i) + blank + out.slice(i + name.length); i += name.length; }
+    return out;
+  }
+  function analyze(text, ctx){
     text = String(text || '').replace(/\s+/g, ' ').trim();
-    var hits = find(text), count = {};
+    ctx = cleanCtx(ctx);
+    var hits = find(maskName(text, ctx.name)), count = {};
+    if (ctx.who){
+      var key = WHO[ctx.who], d = DICT.filter(function(x){ return x.keys.indexOf(key) >= 0; })[0];
+      if (d && !hits.some(function(h){ return h.w === d.w; }))
+        hits.unshift({ w:d.w, cat:d.cat, nums:d.nums, m:d.m, at:-1, len:0, key:ctx.name && text.indexOf(ctx.name) >= 0 ? ctx.name : key });
+    }
+    if (!hits.length && THEME_CAT[ctx.theme]) count[THEME_CAT[ctx.theme]] = 0.5;
     hits.forEach(function(h){ count[h.cat] = (count[h.cat] || 0) + (h.cat === 'w' ? 0.8 : 1); });
     var ORDER = 'mgtlcw';
     var cat = Object.keys(count).sort(function(a, b){ return count[b] - count[a] || ORDER.indexOf(a) - ORDER.indexOf(b); })[0] || 'x';
@@ -242,9 +265,9 @@ var DREAM = (function(){
     return {
       cat:cat, catName:C.name, title:C.title, summary:lines.join(' '),
       symbols:hits.map(function(h){ return { word:h.key, label:h.w, meaning:h.m, nums:h.nums, cat:h.cat }; }),
-      related:related, picks:picksFrom(related, hash(text)), source:'local'
+      related:related, picks:picksFrom(related, hash(text + '|' + ctx.who + '|' + ctx.name)), source:'local'
     };
   }
-  return { analyze:analyze, find:find, CAT:CAT, DICT:DICT, size:DICT.length };
+  return { analyze:analyze, find:find, cleanCtx:cleanCtx, maskName:maskName, WHO:WHO, CAT:CAT, DICT:DICT, size:DICT.length };
 })();
 if (typeof module !== 'undefined') module.exports = DREAM;
