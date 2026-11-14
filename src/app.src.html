@@ -681,6 +681,12 @@
   .sc-url svg{flex:none;width:12px;height:12px;}
   .share-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
   .share-actions .btn-soft,.share-actions .btn-ghost{padding:12px 10px;font-size:calc(13.5px*var(--fs));}
+  .sh-cardimg{display:flex;justify-content:center;margin:2px 0 8px;}
+  .sh-cardimg img{width:min(250px,64vw);aspect-ratio:4/5;border-radius:18px;box-shadow:0 16px 36px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08);background:#1b1440;object-fit:cover;}
+  .sh-link{justify-content:center;text-decoration:underline;text-underline-offset:3px;margin:0 auto 4px;max-width:100%;}
+  .sh-3{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:8px;}
+  .sh-3 button{display:flex;align-items:center;justify-content:center;gap:5px;padding:12px 6px;font-size:calc(13px*var(--fs));white-space:nowrap;}
+  .sh-3 svg{width:16px;height:16px;flex:none;}
   .sh-qr{margin-top:14px;border-top:1px solid var(--border-hairline);padding-top:12px;}
   .sh-qr summary{cursor:pointer;font-size:calc(13px*var(--fs));color:var(--text-body);list-style:none;display:flex;gap:8px;align-items:baseline;}
   .sh-qr summary::-webkit-details-marker{display:none;}

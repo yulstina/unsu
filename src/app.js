@@ -1751,7 +1751,8 @@
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         fig:figSVG(r.animal, f.auraEl, 'mini'),
         text:'[우니조아] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
-        cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me] });
+        cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me],
+        card:{ kicker:me.name + '님의 ' + md + ' 운세', head:f.head, rows:[['재물운', f.scores.w], ['연애운', f.scores.l], ['직업운', f.scores.j]] } });
     };
     $('btnTips').onclick = function(){
       openSheet('<h3 id="sheetTitle">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 오늘의 행운 팁이에요</h3><div class="tip-list ' + elc + '">' +
@@ -1877,7 +1878,8 @@
       openShare({ sheetTitle:C.name + ' 공유', title:entry.name + '님의 ' + C.name, desc:C.sk ? '오늘 ' + f.scores[C.sk] + '점 · ' + f.lines[C.sk] : '나에게 맞는 일 · ' + CAT_JOB[Object.keys(natalGroups(r)).sort(function(a, b){ var g = natalGroups(r); return g[b] - g[a]; })[0]].t,
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
         text:'[우니조아] ' + entry.name + '님의 ' + C.name + (C.sk ? ' ' + f.scores[C.sk] + '점\n“' + f.lines[C.sk] + '”' : ''),
-        cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry] });
+        cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry],
+        card:C.sk ? { kicker:entry.name + '님의 오늘 ' + C.name, head:'“' + f.lines[C.sk] + '”', rows:[[C.name, f.scores[C.sk]]] } : null });
     };
   }
 
@@ -2068,7 +2070,8 @@
       openShare({ sheetTitle:'행운 번호 공유', title:me.name + '님의 오늘 행운 번호', desc:yong.map(function(o){ return o.n; }).join(' · ') + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·'),
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
         text:'[우니조아] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n추가 ' + (i+1) + ' ' + l.join(' · '); }).join('') + '\n오늘도 우니조아 🍀',
-        cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me] });
+        cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me],
+        card:{ kicker:me.name + '님의 오늘 행운 번호', head:'우니가 전하는 오늘의 번호', nums:yong.map(function(o){ return o.n; }) } });
     };
   }
 
@@ -2345,7 +2348,8 @@
       openShare({ sheetTitle:'궁합 결과 공유', title:A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점', desc:m.grade + ' · ' + m.summary,
         fig:figSVG(ra.animal, ANIMAL_EL[ra.animal], 'mini'),
         text:'[우니조아] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
-        cta:'우리 궁합 결과 보러 가기 →', link:resultLink('g', todayStr(), [A, B]), shareEntries:[A, B] });
+        cta:'우리 궁합 결과 보러 가기 →', link:resultLink('g', todayStr(), [A, B]), shareEntries:[A, B],
+        card:{ kicker:A.name + ' × ' + B.name + ' 궁합', head:'“' + m.summary + '”', rows:[['궁합 점수', m.score]], tag:m.grade } });
     };
     if ($('btnGhInvite')) $('btnGhInvite').onclick = openInvite;
     if (!open){
@@ -3067,13 +3071,74 @@
   var shareState = null;
   function currentLink(){ var o = shareState; return o.inviteEntry ? inviteLink(o.inviteEntry, o.withTime) : o.link; }
   function fullMsg(){ return shareState.text + '\n\n' + shareState.cta + '\n' + currentLink(); }
+  /* ---- 공유 카드 이미지 (1080×1350): 결과만 깔끔하게 ---- */
+  var SAVE_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+  function makeShareCard(o, cb){
+    var W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var x = cv.getContext('2d'), c = o.card || { kicker:o.title, head:o.desc };
+    var FONT = '"IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif';
+    function rr(X, Y, w, h, r){ x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+    function wrap(t, maxW, maxL){ var out = [], line = ''; t.split(' ').forEach(function(wd){ var tt = line ? line + ' ' + wd : wd; if (x.measureText(tt).width <= maxW || !line){ line = tt; } else { out.push(line); line = wd; } while (x.measureText(line).width > maxW && line.length > 1){ var k = line.length; while (k > 1 && x.measureText(line.slice(0, k)).width > maxW) k--; out.push(line.slice(0, k)); line = line.slice(k); } }); if (line) out.push(line);
+      if (out.length > maxL){ out = out.slice(0, maxL); out[maxL - 1] = out[maxL - 1].slice(0, -1) + '…'; } return out; }
+    function draw(uni){
+      var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#120d36'); g.addColorStop(.55, '#2b2170'); g.addColorStop(1, '#4b3b9c');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      var rg = x.createRadialGradient(540, 360, 20, 540, 360, 520); rg.addColorStop(0, 'rgba(185,168,255,.35)'); rg.addColorStop(1, 'rgba(185,168,255,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);
+      var rnd = mulberry32(seedHash(c.kicker || 'w'));
+      for (var i = 0; i < 90; i++){ x.globalAlpha = .25 + rnd() * .6; x.fillStyle = '#fff'; x.beginPath(); x.arc(rnd() * W, rnd() * H, rnd() * 2.6 + .6, 0, 7); x.fill(); }
+      x.globalAlpha = 1;
+      x.textBaseline = 'middle';
+      x.font = '700 48px "Space Grotesk",' + FONT; x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText('Wooni', 80, 100);
+      var ww = x.measureText('Wooni').width; x.fillStyle = '#b3a8ff'; x.fillText('Joa', 80 + ww, 100);
+      var d = new Date(); x.font = '500 32px ' + FONT; x.fillStyle = '#cfc7f2'; x.textAlign = 'right'; x.fillText(d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate(), W - 80, 100);
+      /* 유리 패널 */
+      rr(70, 330, W - 140, 840, 56); x.fillStyle = 'rgba(255,255,255,.10)'; x.fill(); x.lineWidth = 2; x.strokeStyle = 'rgba(255,255,255,.28)'; x.stroke();
+      if (uni) x.drawImage(uni, W / 2 - 150, 150, 300, 300);
+      x.textAlign = 'center';
+      x.font = '600 40px ' + FONT; x.fillStyle = '#d9d1ff'; x.fillText(c.kicker || '', W / 2, 500);
+      x.font = '700 66px ' + FONT; x.fillStyle = '#fff';
+      var lines = wrap(c.head || '', W - 260, 3), y = 600;
+      lines.forEach(function(l){ x.fillText(l, W / 2, y); y += 86; });
+      y += 30;
+      if (c.tag){ x.font = '700 36px ' + FONT; var tw = x.measureText(c.tag).width + 60; rr(W / 2 - tw / 2, y - 32, tw, 64, 32); x.fillStyle = '#f5d48a'; x.fill(); x.fillStyle = '#2a1c00'; x.fillText(c.tag, W / 2, y); y += 90; }
+      if (c.nums){
+        var n = c.nums.length, R = 62, gap = 22, tot = n * R * 2 + (n - 1) * gap, sx = W / 2 - tot / 2 + R;
+        c.nums.forEach(function(v, i){ var cx = sx + i * (R * 2 + gap), cy = y + 60;
+          var bg = x.createRadialGradient(cx - 20, cy - 24, 6, cx, cy, R); bg.addColorStop(0, '#fff8e0'); bg.addColorStop(.6, '#f5d48a'); bg.addColorStop(1, '#d6a03e');
+          x.fillStyle = bg; x.beginPath(); x.arc(cx, cy, R, 0, 7); x.fill(); x.fillStyle = '#3a2600'; x.font = '800 52px "Space Grotesk",' + FONT; x.fillText(String(v), cx, cy + 2); });
+        y += 170;
+      }
+      if (c.rows){
+        c.rows.forEach(function(rw){
+          x.textAlign = 'left'; x.font = '600 38px ' + FONT; x.fillStyle = '#e6e1f7'; x.fillText(rw[0], 160, y);
+          x.textAlign = 'right'; x.font = '800 52px "Space Grotesk",' + FONT; x.fillStyle = rw[1] >= 80 ? '#f5d48a' : rw[1] >= 60 ? '#c9b9ff' : rw[1] >= 40 ? '#8fe3d0' : '#ff9aa5'; x.fillText(rw[1] + '점', W - 160, y);
+          rr(160, y + 38, W - 320, 12, 6); x.fillStyle = 'rgba(255,255,255,.14)'; x.fill();
+          rr(160, y + 38, (W - 320) * Math.max(.04, rw[1] / 100), 12, 6); x.fillStyle = rw[1] >= 80 ? '#f5d48a' : '#b9a8ff'; x.fill();
+          y += 120;
+        });
+      }
+      x.textAlign = 'center'; x.font = '500 30px ' + FONT; x.fillStyle = 'rgba(230,225,247,.75)'; x.fillText('재미로 보는 운세예요', W / 2, 1136);
+      /* 하단 */
+      x.textAlign = 'left'; x.font = '700 40px ' + FONT; x.fillStyle = '#fff'; x.fillText('내 사주로 뽑는 여섯 개의 행운 번호', 80, 1236);
+      x.font = '500 30px ' + FONT; x.fillStyle = '#cfc7f2'; x.fillText('생년월일만 넣으면 바로 · 우니조아', 80, 1290);
+      x.font = '700 32px ' + FONT; var pw = x.measureText('woonijoa.com').width + 56; rr(W - 80 - pw, 1230, pw, 64, 32); x.fillStyle = '#fff'; x.fill();
+      x.fillStyle = '#1b1440'; x.textAlign = 'center'; x.fillText('woonijoa.com', W - 80 - pw / 2, 1263);
+      cv.toBlob(function(b){ if (b) cb(b, URL.createObjectURL(b)); }, 'image/png');
+    }
+    var go = function(){
+      var img = new Image(), svg = petSVG('love', 2, '').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" ');
+      img.onload = function(){ draw(img); }; img.onerror = function(){ draw(null); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    };
+    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 66px "IBM Plex Sans KR"'), document.fonts.load('700 48px "Space Grotesk"')]).then(go, go); else go();
+  }
   function openShare(o){ shareState = o; o.withTime = true; renderShareSheet(); }
   document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#shNative,#shLink,#shMsg')) markTodo('shared'); });
   function renderShareSheet(){
     var o = shareState, link = currentLink();
     var h = '<h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
-      '<div class="share-card">' + (o.fig ? '<span class="sc-fig">' + o.fig + '</span>' : '') +
-      '<div class="sc-txt"><span class="sc-brand">우니조아 WooniJoa</span><b>' + esc(o.title) + '</b><p>' + esc(o.desc) + '</p><span class="sc-url">' + SH_IC.link + esc(shortUrl(link)) + '</span></div></div>';
+      '<div class="sh-cardimg"><img id="shImg" alt="공유할 결과 카드 미리보기"></div>' +
+      '<a class="sc-url sh-link" href="' + esc(link) + '" target="_blank" rel="noopener">' + SH_IC.link + esc(shortUrl(link)) + '</a>';
     if (o.inviteEntry){
       h += '<button type="button" class="unk-btn" id="shTime" aria-pressed="' + !o.withTime + '"' + (o.inviteEntry.unknown ? ' hidden' : '') + '><span>태어난 시간은 빼고 보내기</span><span class="ck">' + (!o.withTime ? OK_SVG : '') + '</span></button>' +
         '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>이 링크에는 궁합 계산을 위해 ' + esc(o.inviteEntry.name) + '님의 이름·생년월일' + (o.withTime && !o.inviteEntry.unknown ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
@@ -3083,13 +3148,27 @@
         (o.shareEntries.some(function(e){ return !e.unknown; }) ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
     }
     h += '<div class="share-actions">' +
-      '<button class="btn-primary" id="shNative">' + SH_IC.send + '카톡·메시지로 보내기</button>' +
-      '<div class="row"><button class="btn-soft grow" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-ghost grow" id="shMsg">메시지와 함께 복사</button></div></div>' +
+      '<div class="sh-3"><button class="btn-soft" id="shSave">' + SAVE_IC + '이미지 저장</button><button class="btn-soft" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-primary" id="shNative">' + SH_IC.send + '공유하기</button></div>' +
+      '<button class="text-btn" id="shMsg">메시지와 링크만 복사</button></div>' +
       '<details class="sh-qr" id="shQrBox"><summary>QR 코드로 열기 <span class="helper">PC에서 휴대폰으로 넘길 때</span></summary><div id="shQr"></div></details>';
     if (!isHosted()) h += '<p class="mock-note" style="margin-top:12px">지금은 Claude 공유 링크로 연결돼요. 직접 배포한 주소에서 열면 그 주소로 공유돼요.</p>';
     openSheet(h);
+    var cardBlob = null;
+    makeShareCard(o, function(blob, url){ cardBlob = blob; if ($('shImg')) $('shImg').src = url; });
+    $('shSave').onclick = function(){
+      if (!cardBlob){ toast('카드를 만드는 중이에요. 잠시 후 다시 눌러 주세요'); return; }
+      var a = document.createElement('a'); a.href = URL.createObjectURL(cardBlob); a.download = 'woonijoa-' + todayStr() + '.png';
+      document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요'); markTodo('shared');
+    };
     $('shNative').onclick = function(){
-      var data = { title:o.title, text:o.text + '\n\n' + o.cta, url:currentLink() };
+      var link = currentLink(), data = { title:o.title, text:o.text + '\n\n' + o.cta + '\n' + link, url:link };
+      if (cardBlob && navigator.canShare){
+        var file = new File([cardBlob], 'woonijoa.png', { type:'image/png' }), fd = { files:[file], title:o.title, text:o.title + '\n' + o.cta + '\n' + link };
+        if (navigator.canShare(fd)){
+          navigator.share(fd).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){ if (err && err.name !== 'AbortError') copyText(fullMsg(), '메시지와 링크를 복사했어요. 카톡에 붙여넣어 주세요'); });
+          return;
+        }
+      }
       if (navigator.share){
         navigator.share(data).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){
           if (err && err.name === 'AbortError') return;
