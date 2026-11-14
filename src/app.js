@@ -885,7 +885,7 @@
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
 
-  var SIGNUP_COINS = 1000;
+  var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
   function isGuest(){ return !NS && !store('unsu_auth'); }
   function getCoins(){ var c = store('unsu_coin'); return typeof c === 'number' ? c : 0; }
   function renderCoin(bump){
