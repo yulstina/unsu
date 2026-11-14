@@ -489,7 +489,7 @@
   body.focus{padding-block:0 24px;}
 
   /* ---------- intro ---------- */
-  .intro{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(80% 60% at 50% 45%,rgba(138,124,240,.22),rgba(5,6,15,0) 70%),#05060f;transition:opacity .5s ease;cursor:pointer;}
+  .intro{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(80% 60% at 50% 45%,rgba(138,124,240,.22),rgba(5,6,15,0) 70%),#05060f;transition:opacity .8s ease;cursor:pointer;}
   .intro.out{opacity:0;pointer-events:none;}
   .intro-in{display:flex;flex-direction:column;align-items:center;gap:14px;}
   .intro-logo{width:120px;height:120px;}
@@ -1430,13 +1430,17 @@
      .lt 안에서는 색 변수만 다시 정의하므로 기존 컴포넌트가 그대로 따라옵니다.
      ========================================================= */
   .card.lt{
-    --lt-ink:#1b1440; --lt-body:#2f2b57; --lt-muted:#524c78; --lt-acc:#4b3bc4;
+    --lt-ink:#1b1440; --lt-body:#2f2b57; --lt-muted:#4d4773; --lt-acc:#4b3bc4;
     --text-headline:var(--lt-ink); --text-body:var(--lt-body); --text-muted:var(--lt-muted); --text-helper:var(--lt-muted);
     --border-hairline:rgba(27,20,64,.12); --border-hairline-strong:rgba(27,20,64,.22); --icon-accent:var(--lt-acc);
-    background:#f8f6ff;color:var(--lt-body);-webkit-backdrop-filter:none;backdrop-filter:none;
-    box-shadow:inset 0 1px 0 #fff,0 18px 34px -16px rgba(6,4,26,.7);
+    position:relative;color:var(--lt-body);
+    /* 서리 유리: 반투명 흰 면 + 뒤 배경 흐림 + 위쪽 빛 반사 */
+    background:linear-gradient(160deg,rgba(255,255,255,.90) 0%,rgba(246,243,255,.80) 45%,rgba(232,226,255,.74) 100%);
+    -webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(255,255,255,.55),inset 0 -18px 30px -18px rgba(138,124,240,.28),0 18px 36px -16px rgba(6,4,26,.7);
   }
-  .card.lt::before,.card.lt::after{opacity:.0;}
+  .card.lt::before{content:'';position:absolute;inset:0 0 auto;height:46%;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));pointer-events:none;opacity:1;}
+  .card.lt>*{position:relative;}
   .lt .sec-title,.lt .lucky-title,.lt .score-row .ln,.lt .row-link,.lt .cat-chips button,.lt .todo-list li{color:var(--lt-ink);}
   .lt .sec-meta{color:var(--lt-muted);}
   .lt .body-text{color:var(--lt-body);}
@@ -1465,6 +1469,26 @@
   /* 배너 카드: 밤하늘 이미지 + 왼쪽 글자 영역 스크림 */
   .ny-card{background:linear-gradient(90deg,rgba(18,12,56,.86) 0%,rgba(18,12,56,.62) 55%,rgba(18,12,56,.28) 100%),url(/img/banner-night.webp) 78% 50%/cover no-repeat,#1b1440;}
   .ny-card .ny-eyebrow{color:#f7dfa0;}
+  /* 일러스트 선이 작은 크기에서도 보이도록 굵게 */
+  .mini-z .fig-line,svg.mini .fig-line{stroke-width:3.4px;stroke-opacity:1;}
+  .mini-z .fig-links,svg.mini .fig-links{stroke-width:1.6px;stroke-opacity:.9;}
+  .today-fig .fig-line{stroke-width:1.9px;stroke-opacity:1;} .today-fig .fig-links{stroke-opacity:.85;}
+  .lt .mini-z svg{background:radial-gradient(circle at 50% 40%,#3a2d86,#1b1440 75%);}
+  /* 분야별 운세 · 우니 */
+  .uni-cat{position:relative;display:block;width:48px;height:48px;flex:none;}
+  .uni-cat .uc-prop{position:absolute;right:-4px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#fff3cf,#f2c76a);box-shadow:0 2px 6px rgba(40,20,0,.25),inset 0 0 0 1px rgba(255,255,255,.7);color:#6b4300;}
+  .uni-cat .uc-prop svg{width:13px;height:13px;}
+  .cat-guide{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px rgba(75,59,196,.14);}
+  .cat-guide .uni-cat{width:58px;height:58px;}
+  .cg-say{position:relative;font-size:calc(14px*var(--fs));line-height:1.5;color:var(--lt-ink,#fff);}
+  .cg-say b{color:var(--lt-acc,#cfc6fb);}
+  .cat-chips.uni button{flex-direction:column;align-items:flex-start;gap:6px;padding:12px 12px 10px;position:relative;}
+  .cat-chips.uni .uni-cat{width:46px;height:46px;margin-bottom:2px;}
+  .cat-chips.uni .nm{font-weight:600;font-size:calc(14px*var(--fs));}
+  .cat-chips.uni b{position:absolute;top:12px;right:12px;font-family:var(--font-display);font-size:calc(18px*var(--fs));font-weight:700;}
+  .cat-chips.uni b small{font-size:calc(11.5px*var(--fs));font-weight:500;margin-left:1px;}
+  .cat-chips.uni b.go{font-family:inherit;font-size:calc(12.5px*var(--fs));font-weight:600;top:auto;bottom:12px;}
+  .cat-head .ch-uni{width:58px;height:58px;}
   .lt .todo-n{color:var(--lt-acc);}
   .lt .todo-list li i{box-shadow:inset 0 0 0 1.5px rgba(27,20,64,.3);}
   .lt .todo-list li.done i{background:#2fb89d;color:#fff;}

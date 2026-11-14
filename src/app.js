@@ -1807,7 +1807,7 @@
   function catHTML(entry, r, cat){
     var C = CATS[cat], g = natalGroups(r), f = todayLuck(entry, r).f, nm = esc(entry.name);
     var yG = TEN_GRP[r.seun.tenStem], d = nowD(), md = (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
-    var h = '<div class="cat-head"><span class="cat-ic">' + CAT_IC[C.ic] + '</span><div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
+    var h = '<div class="cat-head">' + uniCatHTML(cat, C.sk ? tierOf(f.scores[C.sk]) : '', 'ch-uni') + '<div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
       (C.sk ? '<span class="cat-score"><b data-count="' + f.scores[C.sk] + '">' + f.scores[C.sk] + '</b><small>점</small><em class="tier-tag">' + TIER_LABEL[tierOf(f.scores[C.sk])] + '</em></span>' : '') + '</div>';
     if (C.sk){
       var star = cat === 'money' ? '재성' : cat === 'career' ? '관성' : (entry.gender === 'M' ? '재성' : '관성');
@@ -1827,9 +1827,20 @@
     h += '<p class="disclaimer">사주 원국과 일진으로 계산한 재미용 풀이예요. 실제 결과를 보장하지 않습니다.</p>';
     return h;
   }
+  /* 분야별 운세: 우니 일러스트 (점수 단계 → 우니 표정, 분야 → 옆에 떠 있는 작은 배지) */
+  var TIER_MOOD = { gold:'love', violet:'happy', mint:'calm', rose:'sleepy' };
+  function uniCatHTML(cat, tier, cls){
+    var C = CATS[cat];
+    return '<span class="uni-cat ' + (cls || '') + '" aria-hidden="true">' + petSVG(tier ? TIER_MOOD[tier] : 'calm', 1, '') + '<i class="uc-prop">' + CAT_IC[C.ic] + '</i></span>';
+  }
   function catChipsHTML(f){
-    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div><div class="cat-chips">' +
-      CAT_ORDER.map(function(k){ var C = CATS[k]; return '<button type="button" data-cat="' + k + '"' + (C.sk ? ' data-tier="' + tierOf(f.scores[C.sk]) + '"' : '') + '><span class="ic">' + CAT_IC[C.ic] + '</span><span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '</b>' : '<b class="go">›</b>') + '</button>'; }).join('') +
+    var best = CAT_ORDER.filter(function(k){ return CATS[k].sk; }).sort(function(a, b){ return f.scores[CATS[b].sk] - f.scores[CATS[a].sk]; })[0];
+    var bt = tierOf(f.scores[CATS[best].sk]);
+    var say = bt === 'gold' || bt === 'violet' ? '오늘은 <b>' + CATS[best].name + '</b>이 제일 좋아요. 먼저 볼까요?' : '오늘은 <b>' + CATS[best].name + '</b>부터 차근차근 살펴봐요.';
+    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div>' +
+      '<div class="cat-guide">' + uniCatHTML(best, bt, 'cg-uni') + '<p class="cg-say">' + say + '</p></div>' +
+      '<div class="cat-chips uni">' +
+      CAT_ORDER.map(function(k){ var C = CATS[k], t = C.sk ? tierOf(f.scores[C.sk]) : ''; return '<button type="button" data-cat="' + k + '"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(k, t) + '<span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '<small>점</small></b>' : '<b class="go">보기 ›</b>') + '</button>'; }).join('') +
       '</div></div>';
   }
   function openCat(entry, r, cat){
@@ -2931,9 +2942,9 @@
     if (store('unsu_intro')) return;
     store('unsu_intro', 1);
     var el = $('intro'); el.hidden = false;
-    var done = function(){ if (el.hidden) return; el.classList.add('out'); setTimeout(function(){ el.hidden = true; }, 500); };
+    var done = function(){ if (el.hidden) return; el.classList.add('out'); setTimeout(function(){ el.hidden = true; }, 800); };
     el.onclick = done;
-    setTimeout(done, reduceMotion ? 600 : 2400);
+    setTimeout(done, reduceMotion ? 900 : 3400);  /* 로고가 다 그려진 뒤 한 박자 쉬고 넘어가도록 */
   })();
 
   /* =========================================================
