@@ -61,7 +61,7 @@
   /* ---------- tab bar ---------- */
   .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
     display:flex;justify-content:center;pointer-events:none;}
-  .tabbar-inner{pointer-events:auto;width:100%;max-width:440px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
+  .tabbar-inner{pointer-events:auto;width:100%;max-width:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;
     background:rgba(12,14,32,.72);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);
     border-radius:22px;padding:6px;box-shadow:inset 0 0 0 1px var(--border-hairline),0 18px 40px rgba(0,0,0,.55);}
   .tab{background:transparent;border:none;color:var(--text-helper);display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -969,7 +969,7 @@
   .tabbar-inner::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
     background:radial-gradient(120% 140% at 20% -40%,rgba(255,255,255,.18),transparent 45%),radial-gradient(80% 120% at 100% 140%,rgba(150,190,255,.10),transparent 55%);}
   /* 선택 탭 아래로 미끄러지는 렌즈 */
-  .tab-lens{position:absolute;z-index:0;top:5px;bottom:5px;left:5px;width:calc((100% - 10px) / 5);border-radius:999px;pointer-events:none;
+  .tab-lens{position:absolute;z-index:0;top:5px;bottom:5px;left:5px;width:calc((100% - 10px) / 4);border-radius:999px;pointer-events:none;
     background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
     box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 18px rgba(0,0,0,.28);
     transform:translateX(calc(var(--ti,0) * 100%));transition:transform .5s var(--ease-spring);}
@@ -1342,6 +1342,42 @@
   .dmc-typing{display:inline-flex;gap:4px;padding:14px 16px;} .dmc-typing i{width:6px;height:6px;border-radius:50%;background:#cfc8f2;animation:dmDot 1.1s infinite;} .dmc-typing i:nth-child(2){animation-delay:.15s;} .dmc-typing i:nth-child(3){animation-delay:.3s;}
   .dmc-ctx{display:flex;flex-wrap:wrap;gap:6px;} .dmc-ctx span{font-size:calc(12px*var(--fs));padding:4px 10px;border-radius:999px;background:rgba(143,227,208,.12);color:#8fe3d0;font-weight:600;}
   .dm-warn details summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:6px;color:#f6d0c4;font-size:calc(14px*var(--fs));} .dm-warn summary svg{width:16px;height:16px;flex:none;} .dm-warn details[open] summary{margin-bottom:8px;} .dm-warn details summary::-webkit-details-marker{display:none;}
+
+  /* ===== 005 1단계 (2026-11-14 밤) ===== */
+  body[data-tab="box"]{--cat:#b9a8ff;}
+  .tab.bump svg{animation:tabBump .5s var(--ease-spring);}
+  @keyframes tabBump{40%{transform:scale(1.25) translateY(-2px);}}
+  .quick-row.q4{grid-template-columns:repeat(4,1fr);}
+  .quick-row.q4 button{font-size:calc(12.5px*var(--fs));}
+  .quick-row button svg{width:20px;height:20px;}
+  .num-wait .balls .ball.q{color:rgba(255,255,255,.55);background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);}
+  .num-reveal{display:flex;flex-direction:column;gap:inherit;}
+  .num-reveal[hidden]{display:none;}
+  .num-reveal.nr-in>*{animation:nrIn .55s var(--ease-spring) both;}
+  .num-reveal.nr-in>*:nth-child(2){animation-delay:.12s;}
+  @keyframes nrIn{from{opacity:0;transform:translateY(18px) scale(.98);}}
+  .machine-card .mc-canvas{transition:transform .5s var(--ease-ios),opacity .4s;transform-origin:50% 0;}
+  .machine-card.mc-done .mc-canvas{transform:scale(.82);margin-bottom:-12%;}
+  .wel-sample{position:relative;width:100%;max-width:340px;margin:4px auto 0;padding:14px 14px 12px;border-radius:18px;
+    background:linear-gradient(160deg,rgba(245,212,138,.14),rgba(124,86,246,.12));box-shadow:inset 0 0 0 1px rgba(245,212,138,.35);text-align:left;}
+  .wel-sample .ws-badge{position:absolute;top:10px;right:12px;font-size:11px;font-weight:700;color:#1b1440;background:#f5d48a;border-radius:999px;padding:2px 8px;}
+  .wel-sample .ws-top{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;}
+  .wel-sample .ws-top b{color:#fff;font-size:calc(14px*var(--fs));}
+  .wel-sample .ws-top small{color:#d6dcf2;font-size:calc(12px*var(--fs));}
+  .wel-sample .balls{justify-content:space-between;}
+  .wel-steps{list-style:none;margin:14px 0 0;padding:0;display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;}
+  .wel-steps li{display:flex;align-items:center;gap:6px;font-size:calc(11.5px*var(--fs));color:#e3e8fb;background:rgba(255,255,255,.06);border-radius:999px;padding:5px 8px 5px 5px;white-space:nowrap;}
+  .wel-steps li b{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#f5d48a;color:#1b1440;font-size:11px;}
+  .bx-list{display:flex;flex-direction:column;}
+  .bx-row{display:grid;grid-template-columns:1fr auto;grid-template-areas:"meta del" "balls balls";gap:8px;padding:12px 0;border-top:1px solid var(--border-hairline);}
+  .bx-row:first-child{border-top:none;padding-top:4px;}
+  .bx-meta{grid-area:meta;display:flex;gap:8px;align-items:baseline;}
+  .bx-meta b{color:#fff;font-size:calc(14px*var(--fs));font-weight:600;}
+  .bx-meta small{color:#c3cae6;font-size:calc(12px*var(--fs));}
+  .bx-row .balls{grid-area:balls;justify-content:flex-start;}
+  .bx-row .balls.sm .ball{width:34px;height:34px;font-size:13px;}
+  .bx-del{grid-area:del;border:none;background:transparent;color:#c3cae6;font-size:14px;padding:4px 6px;cursor:pointer;}
+  @media (prefers-reduced-motion:reduce){ .num-reveal.nr-in>*,.tab.bump svg{animation:none;} .machine-card .mc-canvas{transition:none;} }
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -1547,6 +1583,11 @@
     </div>
   </section>
 
+  <!-- ================= 보관함 ================= -->
+  <section class="view" id="v-box" hidden>
+    <div id="boxBody" class="view"></div>
+  </section>
+
   <!-- ================= 꿈 해몽 번호 ================= -->
   <section class="view" id="v-dream" hidden>
     <div id="dmInput" class="view"></div>
@@ -1556,11 +1597,10 @@
 
 <nav class="tabbar" aria-label="주요 메뉴">
   <div class="tabbar-inner"><i class="tab-lens" aria-hidden="true"></i>
-    <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>오늘</span></button>
+    <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>홈</span></button>
+    <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2"/></svg><span>번호 뽑기</span></button>
     <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
-    <button class="tab" data-tab="gunghap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg><span>궁합</span></button>
-    <button class="tab" data-tab="dream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/><path d="M16 3.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>꿈해몽</span></button>
-    <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2"/></svg><span>번호</span></button>
+    <button class="tab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg><span>보관함</span></button>
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
