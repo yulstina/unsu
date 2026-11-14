@@ -1380,6 +1380,43 @@
   .gh-duo p{margin:0;font-size:calc(13px*var(--fs));color:var(--text-helper);}
   @media (prefers-reduced-motion:no-preference){ .duo-svg .duo-h{transform-box:fill-box;transform-origin:center;animation:duoBeat 1.6s ease-in-out infinite;} }
   @keyframes duoBeat{0%,100%{transform:scale(1);}15%{transform:scale(1.18);}30%{transform:scale(1);}}
+  /* 엽전 충전소 */
+  .cs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .cs-head h3{margin:0;}
+  .cs-bal{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(243,220,160,.12);box-shadow:inset 0 0 0 1px rgba(243,220,160,.3);font-size:calc(12.5px*var(--fs));color:var(--text-helper);}
+  .cs-bal svg{width:16px;height:16px;color:#f3dca0;} .cs-bal b{color:#ffe7a3;font-size:calc(14px*var(--fs));}
+  .cs-reason{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(255,143,177,.12);color:#ffd1dc;font-size:calc(13px*var(--fs));}
+  .cs-packs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .cs-pack{position:relative;display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:12px;padding:14px 16px;border:0;border-radius:18px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(226,220,255,.12);color:#fff;text-align:left;cursor:pointer;transition:transform .12s ease-out,box-shadow .2s,background-color .2s;}
+  .cs-pack:active{transform:scale(.98);}
+  .cs-pack.on{background:rgba(157,140,255,.16);box-shadow:inset 0 0 0 2px #a996ff,0 10px 24px -14px #8f74ff;}
+  .cs-pack.hot{padding-top:20px;}
+  .cs-pack.hot.on{background:linear-gradient(135deg,rgba(243,220,160,.2),rgba(157,140,255,.18));box-shadow:inset 0 0 0 2px #f3dca0,0 12px 28px -14px rgba(243,200,110,.8);}
+  .cs-coin{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c4,#f3c75a 60%,#b98a1e);color:#7a5200;}
+  .cs-coin svg{width:20px;height:20px;}
+  .cs-n{display:flex;flex-direction:column;gap:1px;} .cs-n b{font-size:calc(17px*var(--fs));font-weight:800;}
+  .cs-n small{font-size:calc(12px*var(--fs));color:#ffd98a;font-weight:600;}
+  .cs-p{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-weight:700;font-size:calc(15px*var(--fs));}
+  .cs-p small{font-size:calc(11px*var(--fs));font-weight:500;color:var(--text-helper);}
+  .cs-badge{position:absolute;top:-8px;left:14px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;background:linear-gradient(90deg,#ffd36b,#ff9f6b);color:#3a2000;box-shadow:0 4px 10px -4px rgba(255,170,80,.8);}
+  .cs-badge.sub{position:static;grid-column:1/-1;justify-self:start;margin:-4px 0 -6px;background:rgba(169,150,255,.2);color:#d9d2ff;box-shadow:none;order:-1;}
+  .cs-pack:has(.cs-badge.sub){grid-template-columns:40px 1fr auto;}
+  .cs-use{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px;}
+  .cs-use div{display:flex;flex-direction:column;gap:2px;padding:12px 10px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(226,220,255,.08);}
+  .cs-use span{font-size:calc(12.5px*var(--fs));color:var(--text-helper);} .cs-use b{font-size:calc(16px*var(--fs));color:#ffe7a3;} .cs-use small{font-size:calc(11px*var(--fs));color:var(--text-helper);opacity:.8;}
+  /* 분야별 운세 잠금 */
+  .cat-lock{display:flex;flex-direction:column;align-items:center;text-align:center;}
+  .cat-lock .cl-uni{width:96px;height:96px;margin-bottom:4px;}
+  .cl-k{font-size:calc(13px*var(--fs));color:var(--text-helper);}
+  .cat-lock h3{margin:2px 0 6px;}
+  .cl-score{font-size:calc(14px*var(--fs));color:var(--text-helper);} .cl-score b{font-size:calc(40px*var(--fs));font-weight:800;color:#fff;margin-right:2px;}
+  .cl-line{margin:6px 0 14px;font-size:calc(15px*var(--fs));font-weight:600;color:#fff;max-width:20em;}
+  .cl-blur{display:flex;flex-direction:column;gap:8px;width:100%;padding:16px;border-radius:16px;background:rgba(255,255,255,.04);margin-bottom:12px;}
+  .cl-blur i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,rgba(226,220,255,.22),rgba(226,220,255,.08));filter:blur(1.5px);}
+  .cl-blur i:nth-child(2){width:86%;} .cl-blur i:nth-child(3){width:92%;} .cl-blur i:nth-child(4){width:60%;}
+  .cl-list{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:6px;font-size:calc(13.5px*var(--fs));color:#e6e1f7;}
+  .cl-list li::before{content:'✦';margin-right:6px;color:#f3dca0;}
+  .cat-lock .btn-primary svg{width:18px;height:18px;}
   .quick-row.q4{grid-template-columns:repeat(4,1fr);}
   .quick-row.q4 button{font-size:calc(12.5px*var(--fs));}
   .quick-row button svg{width:20px;height:20px;}

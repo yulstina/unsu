@@ -884,6 +884,7 @@
   var LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
+  var CAT_COST = 100;   /* 2026-11-15 소율: 분야별 운세 분야당 100닢 */
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
   function isGuest(){ return !NS && !store('unsu_auth'); }
@@ -1023,29 +1024,60 @@
   };
   $('adClaim').onclick = function(){ if (!adFinished) return; closeAd(); var f = adDone; adDone = null; if (f) f(); };
 
-  $('coinChip').onclick = openCoinSheet;
+  $('coinChip').onclick = function(){ openCoinSheet(); };
   $('fsBtn').onclick = openFsSheet;
-  function openCoinSheet(){
-    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 상세 궁합 같은 리포트를 여는 데 쓸 수 있어요.'); return; }
+  /* 엽전 충전소 — 패키지 가격은 제안값(결제 연동은 2차, 1월) */
+  var COIN_PACKS = [
+    { id:'p300', n:300, b:0, p:3300 },
+    { id:'p1000', n:1000, b:100, p:9900, hot:true },
+    { id:'p2000', n:2000, b:300, p:18900, tag:'+15%' },
+    { id:'p5000', n:5000, b:1000, p:44000, tag:'최대 혜택' }
+  ];
+  var coinPick = 'p1000';
+  function openCoinSheet(reason){
+    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 분야별 운세·꿈 해몽·상세 궁합을 여는 데 쓸 수 있어요.'); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
-    var h = '<h3 id="sheetTitle">내 엽전 ' + getCoins() + '닢</h3>' +
-      '<div class="eyebrow"><span class="line"></span>모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
+    var won = function(n){ return n.toLocaleString() + '원'; };
+    var h = '<div class="cs-head"><h3 id="sheetTitle">엽전 충전소</h3><div class="cs-bal">' + COIN_SVG + '<span>내 엽전</span><b>' + getCoins().toLocaleString() + '닢</b></div></div>' +
+      (typeof reason === 'string' ? '<p class="cs-reason">' + reason + '</p>' : '') +
+      '<div class="cs-packs" role="radiogroup" aria-label="엽전 패키지">' + COIN_PACKS.map(function(k){
+        return '<button type="button" role="radio" class="cs-pack' + (k.hot ? ' hot' : '') + (k.id === coinPick ? ' on' : '') + '" data-pack="' + k.id + '" aria-checked="' + (k.id === coinPick) + '">' +
+          (k.hot ? '<span class="cs-badge">인기 1위</span>' : k.tag ? '<span class="cs-badge sub">' + k.tag + '</span>' : '') +
+          '<span class="cs-coin">' + COIN_SVG + '</span><span class="cs-n"><b>' + k.n.toLocaleString() + '닢</b>' + (k.b ? '<small>+' + k.b.toLocaleString() + ' 보너스</small>' : '<small>기본</small>') + '</span>' +
+          '<span class="cs-p">' + won(k.p) + (k.hot ? '<small>가장 많이 골라요</small>' : '') + '</span></button>';
+      }).join('') + '</div>' +
+      '<button class="btn-primary btn-block" id="csBuy"></button>' +
+      '<p class="helper" style="text-align:center;margin:8px 0 18px">카드 결제는 1월에 열려요. 그동안은 아래 방법으로 무료로 모을 수 있어요.</p>' +
+      '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
+      '<div><span>분야별 운세</span><b>' + CAT_COST + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +
+      '<div><span>꿈 해몽</span><b>' + DM.cost + '닢</b><small>꿈 하나 풀이</small></div>' +
+      '<div><span>상세 궁합</span><b>' + GH_COST + '닢</b><small>한 번 열면 계속</small></div></div>' +
+      '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
       '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
       '<div class="earn-row"><div><div class="t">7일 연속 보너스 +30</div><div class="s">' + (left === 7 ? '이번 주기 보너스를 받았어요' : '앞으로 ' + left + '일 더 출석하면 받아요') + '</div></div><button class="btn-ghost" id="csCal" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">캘린더</button></div>' +
+      '<div class="earn-row"><div><div class="t">우니 꾹 뽑기 +' + GIFT_COIN + '</div><div class="s">매일 한 번, 가끔 엽전이 나와요</div></div><button class="btn-ghost" id="csPeek" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">하러 가기</button></div>' +
       '<div class="earn-row"><div><div class="t">광고 보고 +' + AD_REWARD + '</div><div class="s">하루 ' + AD_LIMIT + '번 · 오늘 ' + used + '/' + AD_LIMIT + '</div></div><button class="btn-soft" id="csAd" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))"' + (used >= AD_LIMIT ? ' disabled' : '') + '>' + (used >= AD_LIMIT ? '내일 다시' : '광고 보기') + '</button></div>' +
-      '</div><div class="eyebrow"><span class="line"></span>쓰기<span class="line right"></span></div>' +
-      '<button class="row-link" id="csGh" style="border-top:none;margin:4px 0 16px"><span class="ic" style="color:#f3dca0">' + COIN_SVG + '</span><span>상세 궁합 리포트 열기<br><span class="helper">' + GH_COST + '닢 · 한 번 열면 계속 볼 수 있어요</span></span><span class="chev">›</span></button>' +
-      '<div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
+      '</div><div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
       (log.length ? log.slice(0, 8).map(function(x){ var d = new Date(x.t); return '<div><span>' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + esc(x.why) + '</span><b class="' + (x.n < 0 ? 'minus' : '') + '">' + (x.n > 0 ? '+' : '') + x.n + '</b></div>'; }).join('') : '<div><span>아직 내역이 없어요</span></div>') +
-      '</div><button class="btn-primary btn-block" data-close>확인</button>';
+      '</div><button class="btn-ghost btn-block" data-close>닫기</button>';
     openSheet(h);
+    var setBuy = function(){ var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0]; $('csBuy').innerHTML = (k.n + k.b).toLocaleString() + '닢 · ' + won(k.p) + ' 결제하기'; };
+    setBuy();
+    $('sheetBody').querySelectorAll('[data-pack]').forEach(function(btn){
+      btn.onclick = function(){
+        coinPick = btn.dataset.pack;
+        $('sheetBody').querySelectorAll('[data-pack]').forEach(function(x){ var on = x === btn; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
+        setBuy();
+      };
+    });
+    $('csBuy').onclick = function(){ toast('엽전 구매는 1월에 열려요. 지금은 출석·꾹 뽑기로 모아 주세요'); };
     $('csAd').onclick = function(){
       if (adCount() >= AD_LIMIT) return;
       closeSheet();
       playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); toast('엽전 +' + AD_REWARD + '닢을 받았어요'); openCoinSheet(); });
     };
-    $('csGh').onclick = function(){ closeSheet(); go('gunghap'); };
+    $('csPeek').onclick = function(){ closeSheet(); go('today'); setTimeout(function(){ var pc = $('peekCard'); if (pc) pc.scrollIntoView({ block:'center', behavior: reduceMotion ? 'auto' : 'smooth' }); }, 350); };
     $('csCal').onclick = function(){ var me = getMe(); if (!me) return; openAttSheet(me, compute(me)); };
   }
 
@@ -1893,13 +1925,35 @@
     var best = CAT_ORDER.filter(function(k){ return CATS[k].sk; }).sort(function(a, b){ return f.scores[CATS[b].sk] - f.scores[CATS[a].sk]; })[0];
     var bt = tierOf(f.scores[CATS[best].sk]);
     var say = bt === 'gold' || bt === 'violet' ? '오늘은 <b>' + CATS[best].name + '</b>이 제일 좋아요. 먼저 볼까요?' : '오늘은 <b>' + CATS[best].name + '</b>부터 차근차근 살펴봐요.';
-    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div>' +
+    return '<div class="card lt cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">분야당 ' + CAT_COST + '닢</span></div>' +
       '<div class="cat-guide">' + uniCatHTML(best, bt, 'cg-uni') + '<p class="cg-say">' + say + '</p></div>' +
       '<div class="cat-chips uni">' +
       CAT_ORDER.map(function(k){ var C = CATS[k], t = C.sk ? tierOf(f.scores[C.sk]) : ''; return '<button type="button" data-cat="' + k + '"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(k, t) + '<span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '<small>점</small></b>' : '<b class="go">보기 ›</b>') + '</button>'; }).join('') +
       '</div></div>';
   }
+  /* 분야별 운세: 분야당 CAT_COST닢, 연 분야는 그날 하루 다시 볼 수 있다 */
+  function catPaid(cat){ var c = store('unsu_catpaid'); return !!(c && c.d === todayStr() && c.c && c.c[cat]); }
+  function setCatPaid(cat){ var c = store('unsu_catpaid'); if (!c || c.d !== todayStr()) c = { d:todayStr(), c:{} }; c.c[cat] = 1; store('unsu_catpaid', c); }
+  function openCatLock(entry, r, cat){
+    var C = CATS[cat], f = todayLuck(entry, r).f, t = C.sk ? tierOf(f.scores[C.sk]) : '';
+    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < CAT_COST;
+    openSheet('<div class="cat-lock"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(cat, t, 'cl-uni') +
+      '<div class="cl-k">' + esc(entry.name) + '님의 오늘</div><h3 id="sheetTitle">' + C.name + '</h3>' +
+      (C.sk ? '<div class="cl-score"><b>' + f.scores[C.sk] + '</b>점</div><p class="cl-line">“' + f.lines[C.sk] + '”</p>' : '<p class="cl-line">타고난 사주로 보는 나에게 맞는 일</p>') +
+      '<div class="cl-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' +
+      '<ul class="cl-list"><li>오늘 이 분야의 자세한 흐름</li><li>좋은 시간과 조심할 점</li><li>우니가 고른 오늘의 한 가지 행동</li></ul>' +
+      '<button class="btn-primary btn-block" id="clBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : COIN_SVG + '엽전 ' + CAT_COST + '닢으로 열기') + '</button>' +
+      '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 바로 받은 엽전으로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (CAT_COST - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 열면 오늘 하루 계속 볼 수 있어요') + '</p></div>');
+    $('clBuy').onclick = function(){
+      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 분야별 운세는 분야당 ' + CAT_COST + '닢이에요.'); return; }
+      if (short){ openCoinSheet('분야별 운세를 열려면 엽전이 ' + (CAT_COST - coins) + '닢 더 필요해요.'); return; }
+      if (NS) toast('예시 모드라 엽전 없이 열었어요');
+      else addCoins(-CAT_COST, C.name + ' 열기');
+      setCatPaid(cat); openCat(entry, r, cat);
+    };
+  }
   function openCat(entry, r, cat){
+    if (!catPaid(cat)){ openCatLock(entry, r, cat); return; }
     var date = todayStr();
     var cf = todayLuck(entry, r).f, csk = CATS[cat].sk;
     openSheet('<div class="cat-sheet"' + (csk ? ' data-tier="' + tierOf(cf.scores[csk]) + '"' : '') + '>' + catHTML(entry, r, cat) + '</div>' +
