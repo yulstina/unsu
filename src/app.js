@@ -665,7 +665,7 @@
       var ig0 = ILGAN[P.day.stem];
       openShare({ sheetTitle:'사주 풀이 공유', title:entry.name + '님의 사주 · ' + P.day.name + '(' + P.day.hanja + ')일주', desc:ig0.t + ' — ' + ig0.img,
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-        text:'[운픽] ' + entry.name + '님의 사주\n' + P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주\n일간 ' + ig0.t + ' — ' + ig0.img,
+        text:'[우니조아] ' + entry.name + '님의 사주\n' + P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주\n일간 ' + ig0.t + ' — ' + ig0.img,
         cta:'생년월일만 넣으면 내 여덟 글자도 풀어 줘요 →', link:resultLink('s', cur.date, [entry]), shareEntries:[entry] });
     };
   }
@@ -681,7 +681,7 @@
       var rg = g.createRadialGradient(o[0],o[1],0,o[0],o[1],o[2]); rg.addColorStop(0,o[3]); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0,0,1080,1350); });
     for (var i = 0; i < 70; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
     function rr(x,y,w,h,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); }
-    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('운픽 WoonPick  ·  나의 사주 리포트', 540, 96);
+    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('우니조아 WooniJoa  ·  나의 사주 리포트', 540, 96);
     g.fillStyle = '#fff'; g.font = '700 64px ' + F; g.fillText(entry.name + '님', 540, 650);
     g.fillStyle = '#c9d4ff'; g.font = '400 34px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 706);
     /* 사주 네 기둥 */
@@ -721,7 +721,7 @@
         if (!blob){ toast('이미지를 만들지 못했어요'); return; }
         var file = null; try { file = new File([blob], 'unsu-saju.png', { type:'image/png' }); } catch(_){}
         if (file && navigator.canShare && navigator.canShare({ files:[file] })){
-          navigator.share({ files:[file], title:'운픽 · ' + entry.name + '님의 사주', text:'[운픽] ' + entry.name + '님의 사주 리포트' }).catch(function(){});
+          navigator.share({ files:[file], title:'우니조아 · ' + entry.name + '님의 사주', text:'[우니조아] ' + entry.name + '님의 사주 리포트' }).catch(function(){});
         } else {
           var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'unsu-saju-' + entry.name + '.png';
           document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요');
@@ -732,7 +732,7 @@
   function summaryText(){
     var e = cur.entry, r = cur.r, P = r.pillars;
     var g = ['hour','day','month','year'].map(function(k){ return P[k] ? P[k].hanja : '??'; }).join(' ');
-    return '운픽 — ' + e.name + '님의 사주\n' +
+    return '우니조아 — ' + e.name + '님의 사주\n' +
       '원국(시일월년): ' + g + '\n' +
       P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · 일간 ' + ILGAN[P.day.stem].t + ' (' + ILGAN[P.day.stem].img + ')\n' +
       '오행 목' + r.cnt[0] + ' 화' + r.cnt[1] + ' 토' + r.cnt[2] + ' 금' + r.cnt[3] + ' 수' + r.cnt[4] + ' · ' + r.strength + ' · 용신 ' + MS.EL_K[r.yong] + '\n' +
@@ -812,12 +812,12 @@
     drawOn($('zFig'));
     $('btnZBack').onclick = function(){ $('zResult').hidden = true; $('zHome').hidden = false; };
     $('btnZDraw').onclick = function(){ $('zNums').hidden = false; this.hidden = true; revealBalls($('ballsZ')); };
-    var txt = '운픽 — ' + z.name + '(' + z.en + ') ' + todayStr() + '\n오늘의 행운 번호: ' + nums.join(', ');
+    var txt = '우니조아 — ' + z.name + '(' + z.en + ') ' + todayStr() + '\n오늘의 행운 번호: ' + nums.join(', ');
     $('btnZCopy').onclick = function(){ copyText(txt, '결과를 복사했어요'); };
     $('btnZShare').onclick = function(){
       openShare({ sheetTitle:'별자리 운세 공유', title:'오늘의 ' + z.name + ' (' + z.en + ')', desc:'오늘의 행운 번호 ' + nums.join(' · '),
         fig:figSVG(z.name, z.el, 'mini'),
-        text:'[운픽] 오늘의 ' + z.name + '(' + z.en + ') 운세\n행운 번호 ' + nums.join(' · '),
+        text:'[우니조아] 오늘의 ' + z.name + '(' + z.en + ') 운세\n행운 번호 ' + nums.join(' · '),
         cta:'내 별자리 운세도 보기 →', link:resultLink('z', zDate, [], z.name + '~' + (iso || '')) });
     };
   }
@@ -856,7 +856,7 @@
     grid.querySelectorAll('.num-cell').forEach(function(c){ c.classList.remove('selected'); });
     $('ballsFill').hidden = $('fillResultActions').hidden = $('fillDisclaimer').hidden = $('fillCompare').hidden = true; $('ballsFill').innerHTML = '';
   };
-  $('btnCopyFill').onclick = function(){ copyText('운픽 — 내 번호 채우기\n' + lastFill.join(', '), '번호를 복사했어요'); };
+  $('btnCopyFill').onclick = function(){ copyText('우니조아 — 내 번호 채우기\n' + lastFill.join(', '), '번호를 복사했어요'); };
 
   /* =========================================================
      대표 사주 · 엽전 · 바텀시트 · 광고 목업
@@ -1443,7 +1443,7 @@
       }).join('') + '</ul>' : '') +
       (related.length ? '<h4 class="ny-h">관련 숫자 <small>상징에서 나온 숫자</small></h4><div class="dm-rel">' + related.map(function(n){ return '<i>' + n + '</i>'; }).join('') + '</div>' : '') +
       '<h4 class="ny-h">꿈 번호 6개</h4><div class="balls">' + d.picks.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div>' +
-      '<p class="disclaimer">재미로 즐기는 꿈 해몽이며 실제 당첨이나 미래를 보장하지 않습니다.' + (d.source === 'ai' ? ' AI가 운픽 해몽 사전을 바탕으로 풀었어요.' : ' 운픽 해몽 사전으로 풀었어요.') + '</p></div>' +
+      '<p class="disclaimer">재미로 즐기는 꿈 해몽이며 실제 당첨이나 미래를 보장하지 않습니다.' + (d.source === 'ai' ? ' AI가 우니조아 해몽 사전을 바탕으로 풀었어요.' : ' 우니조아 해몽 사전으로 풀었어요.') + '</p></div>' +
       '<div class="row"><button class="btn-soft grow" id="btnDmNew">다른 꿈 풀기</button><button class="btn-ghost grow" id="btnDmNum">행운 번호 보기</button></div>' +
       adSlotHTML('꿈풀이 결과를 다 본 뒤');
     $('dmResult').innerHTML = h;
@@ -1483,7 +1483,7 @@
       '<h4>받는 방법</h4><p>앱 알림(웹 푸시), 이메일, 카카오 알림톡 중 동의한 방법</p>' +
       '<h4>야간 알림</h4><p>밤 9시부터 다음 날 아침 8시 사이에는 따로 동의한 경우에만 보내요.</p>' +
       '<h4>보유 기간</h4><p>동의를 철회하거나 탈퇴할 때까지. 동의 여부는 2년마다 다시 확인해요.</p>' +
-      '<p>동의하지 않아도 운픽의 모든 기능을 쓸 수 있고, 설정 &gt; 알림 설정에서 언제든 바꿀 수 있어요.</p>'; },
+      '<p>동의하지 않아도 우니조아의 모든 기능을 쓸 수 있고, 설정 &gt; 알림 설정에서 언제든 바꿀 수 있어요.</p>'; },
     refund:function(){ return '<h3 id="sheetTitle">환불 정책</h3>' +
       '<p>유료 리포트는 결제 후 <b>열기 전</b>이라면 결제일로부터 7일 안에 전액 환불해요.</p>' +
       '<p>리포트를 연 뒤에는 디지털 콘텐츠 특성상 청약철회가 제한돼요(전자상거래법 제17조 제2항). 결제 화면에서 이 내용을 먼저 안내해요.</p>' +
@@ -1730,7 +1730,7 @@
       var md = (now.getMonth()+1) + '월 ' + now.getDate() + '일';
       openShare({ sheetTitle:'오늘의 운세 공유', title:me.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         fig:figSVG(r.animal, f.auraEl, 'mini'),
-        text:'[운픽] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
+        text:'[우니조아] ' + me.name + '님의 ' + md + ' 운세\n“' + f.head + '”\n재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me] });
     };
     $('btnTips').onclick = function(){
@@ -1845,7 +1845,7 @@
       var f = todayLuck(entry, r).f, C = CATS[cat];
       openShare({ sheetTitle:C.name + ' 공유', title:entry.name + '님의 ' + C.name, desc:C.sk ? '오늘 ' + f.scores[C.sk] + '점 · ' + f.lines[C.sk] : '나에게 맞는 일 · ' + CAT_JOB[Object.keys(natalGroups(r)).sort(function(a, b){ var g = natalGroups(r); return g[b] - g[a]; })[0]].t,
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-        text:'[운픽] ' + entry.name + '님의 ' + C.name + (C.sk ? ' ' + f.scores[C.sk] + '점\n“' + f.lines[C.sk] + '”' : ''),
+        text:'[우니조아] ' + entry.name + '님의 ' + C.name + (C.sk ? ' ' + f.scores[C.sk] + '점\n“' + f.lines[C.sk] + '”' : ''),
         cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry] });
     };
   }
@@ -2036,7 +2036,7 @@
     $('btnNumCopy').onclick = function(){
       openShare({ sheetTitle:'행운 번호 공유', title:me.name + '님의 오늘 행운 번호', desc:yong.map(function(o){ return o.n; }).join(' · ') + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·'),
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-        text:'[운픽] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n보너스 ' + (i+1) + ' ' + l.join(' · '); }).join(''),
+        text:'[우니조아] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n보너스 ' + (i+1) + ' ' + l.join(' · '); }).join(''),
         cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me] });
     };
   }
@@ -2278,7 +2278,7 @@
       var me = getMe();
       openShare({ sheetTitle:'궁합 결과 공유', title:A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점', desc:m.grade + ' · ' + m.summary,
         fig:figSVG(ra.animal, ANIMAL_EL[ra.animal], 'mini'),
-        text:'[운픽] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
+        text:'[우니조아] ' + A.name + ' × ' + B.name + ' 궁합 ' + m.score + '점 · ' + m.grade + '\n“' + m.summary + '”',
         cta:'우리 궁합 결과 보러 가기 →', link:resultLink('g', todayStr(), [A, B]), shareEntries:[A, B] });
     };
     if ($('btnGhInvite')) $('btnGhInvite').onclick = openInvite;
@@ -2350,7 +2350,7 @@
       '</div>' +
       '<div class="st-group st-fs"><div class="st-cap">글자 크기</div>' + fsSegHTML() + '</div>' +
       '<div class="st-group">' +
-        row('stAbout', SET_IC.info, '앱 정보', '운픽 v1.0') +
+        row('stAbout', SET_IC.info, '앱 정보', '우니조아 v1.0') +
       '</div>' +
       (guest && !NS ? '<button class="btn-primary btn-block" id="stLogin" style="margin-top:14px">로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button>' : '') +
       bizFootHTML();
@@ -2701,7 +2701,7 @@
       (NS ? '<button class="set-row" id="setDemo"><span>예시 모드 끝내기</span><span class="s">첫 화면으로 ›</span></button>' : '') +
       '<button class="set-row danger" id="setReset"><span>이 기기의 데이터 초기화</span><span class="s">›</span></button>' +
       (myConfirm === 'reset' ? '<div class="inline-confirm">이 기기에 저장된 사주, 출석, 엽전이 모두 지워져요.' + (auth ? ' 계정에 보관된 기록은 남아 있어요.' : ' 로그인하지 않았다면 되돌릴 수 없어요.') + '<div class="row"><button class="btn-ghost grow" data-mc="cancel">취소</button><button class="btn-ghost btn-danger grow" id="btnResetOk">초기화</button></div></div>' : '') +
-      '<div class="set-row" style="cursor:default"><span>앱 정보</span><span class="s">운픽 v1.0 · 재미로 즐기는 콘텐츠</span></div>' +
+      '<div class="set-row" style="cursor:default"><span>앱 정보</span><span class="s">우니조아 v1.0 · 재미로 즐기는 콘텐츠</span></div>' +
       '</div></div>' + bizFootHTML();
     $('myBody').innerHTML = h;
     bindFsSeg($('myBody'));
@@ -2751,14 +2751,14 @@
     var st = { age:false, terms:false, privacy:false, mkt:false, night:false };
     var items = [
       ['age', '만 14세 이상이에요', true, null],
-      ['terms', '운픽 이용약관 동의', true, 'terms'],
+      ['terms', '우니조아 이용약관 동의', true, 'terms'],
       ['privacy', '개인정보 수집·이용 동의', true, 'privacy'],
       ['mkt', '혜택·이벤트 알림 받기 (마케팅 정보 수신)', false, 'marketing'],
       ['night', '밤 9시~아침 8시에도 혜택 알림 받기', false, 'marketing']
     ];
     function draw(){
       var all = items.every(function(i){ return st[i[0]]; }), req = items.every(function(i){ return !i[2] || st[i[0]]; });
-      $('sheetBody').innerHTML = '<h3 id="sheetTitle">운픽 시작 전에 확인해 주세요</h3>' +
+      $('sheetBody').innerHTML = '<h3 id="sheetTitle">우니조아 시작 전에 확인해 주세요</h3>' +
         '<button type="button" class="cs-all" data-ck="all" aria-pressed="' + all + '"><span class="ck"></span><b>모두 동의하기</b><small>선택 항목 포함 · 선택은 동의하지 않아도 가입할 수 있어요</small></button>' +
         '<div class="cs-list">' + items.map(function(i){
           return '<div class="cs-item"><button type="button" class="cs-ck" data-ck="' + i[0] + '" aria-pressed="' + st[i[0]] + '"><span class="ck"></span><span><em class="' + (i[2] ? 'req' : 'opt') + '">' + (i[2] ? '필수' : '선택') + '</em>' + i[1] + '</span></button>' + (i[3] ? '<button type="button" class="cs-view" data-doc="' + i[3] + '">보기</button>' : '') + '</div>';
@@ -2799,7 +2799,7 @@
         swHTML('ntNight', n.night, '야간 혜택 알림', '밤 9시~아침 8시에도 받기') +
       '</div>' +
       '<p class="helper nt-law">' + (c && c.mkt ? '혜택 알림 동의일 ' + fmtDate(c.mkt) + ' · 2년마다 다시 확인해요. ' : '') + '혜택 알림을 꺼도 출석·결제 같은 서비스 알림은 계속 받아요.' +
-      (guest ? ' 알림은 로그인하고 홈 화면에 운픽을 추가하면 받을 수 있어요(아이폰은 iOS 16.4 이상).' : '') + '</p>' +
+      (guest ? ' 알림은 로그인하고 홈 화면에 우니조아를 추가하면 받을 수 있어요(아이폰은 iOS 16.4 이상).' : '') + '</p>' +
       '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
     function save(){ store('unsu_notif', n); }
     function bind(id, key, after){ $(id).onclick = function(){ n[key] = !n[key]; this.setAttribute('aria-checked', String(n[key])); if (after) after(n[key]); save(); }; }
@@ -2830,7 +2830,7 @@
   }
   /* 고객센터: 공지 · FAQ · 문의 */
   var NOTICES = [
-    { d:'2026-12-14', t:'운픽 정식 오픈 · 2027 신년운세 무료 공개' },
+    { d:'2026-12-14', t:'우니조아 정식 오픈 · 2027 신년운세 무료 공개' },
     { d:'2026-12-14', t:'개인정보처리방침·이용약관 시행 안내' }
   ];
   var FAQ = [
@@ -2840,7 +2840,7 @@
     ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 구매한 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],
     ['꿈풀이에 쓴 엽전을 돌려받을 수 있나요?', '꿈풀이는 누르는 순간 바로 풀이가 만들어지는 디지털 콘텐츠라 엽전을 돌려드리지 않아요. 다만 오류로 결과가 나오지 않았다면 고객센터로 알려 주세요. 확인 후 엽전을 다시 넣어 드려요.'],
     ['행운 번호로 당첨될 수 있나요?', '행운 번호는 사주로 계산한 재미용 숫자예요. 당첨을 보장하거나 확률을 높여 주지 않아요.'],
-    ['알림이 오지 않아요.', '홈 화면에 운픽을 추가하고 설정 > 알림 설정에서 켜 주세요. 아이폰은 iOS 16.4 이상, 홈 화면에 추가한 경우에만 알림을 받을 수 있어요.']
+    ['알림이 오지 않아요.', '홈 화면에 우니조아를 추가하고 설정 > 알림 설정에서 켜 주세요. 아이폰은 iOS 16.4 이상, 홈 화면에 추가한 경우에만 알림을 받을 수 있어요.']
   ];
   function openHelpSheet(){
     var mail = BIZ.email || '';
@@ -2849,14 +2849,14 @@
       '<div class="st-cap" style="margin-top:14px">자주 묻는 질문</div><div class="st-group faq">' + FAQ.map(function(f){ return '<details><summary>' + esc(f[0]) + '</summary><p>' + esc(f[1]) + '</p></details>'; }).join('') + '</div>' +
       '<div class="st-cap" style="margin-top:14px">1:1 문의</div><div class="st-group" style="padding:14px">' +
         '<p class="helper">결제·환불·오류 문의는 메일로 받아요. 평일 10시~18시, 1영업일 안에 답해 드려요.</p>' +
-        (mail ? '<a class="btn-soft btn-block" style="margin-top:10px;text-decoration:none" href="mailto:' + esc(mail) + '?subject=' + encodeURIComponent('[운픽 문의] ') + '">메일로 문의하기</a>' : '<p class="helper" style="margin-top:8px"><span class="todo">출시 전 입력</span> 고객센터 메일 주소</p>') +
+        (mail ? '<a class="btn-soft btn-block" style="margin-top:10px;text-decoration:none" href="mailto:' + esc(mail) + '?subject=' + encodeURIComponent('[우니조아 문의] ') + '">메일로 문의하기</a>' : '<p class="helper" style="margin-top:8px"><span class="todo">출시 전 입력</span> 고객센터 메일 주소</p>') +
       '</div>' + bizFootHTML() +
       '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
   }
   /* 앱 정보 · 오픈소스 */
   function openAboutSheet(){
     openSheet('<h3 id="sheetTitle">앱 정보</h3><div class="st-group">' +
-      '<div class="od-row"><div><b>버전</b></div><span>운픽 v1.0</span></div>' +
+      '<div class="od-row"><div><b>버전</b></div><span>우니조아 v1.0</span></div>' +
       '<div class="od-row"><div><b>콘텐츠 안내</b><small>사주·운세·행운 번호는 전통 명리 이론을 바탕으로 한 재미·참고용 콘텐츠예요.</small></div></div>' +
       '<div class="od-row"><div><b>오픈소스 라이선스</b><small>korean-lunar-calendar v0.4.0 (MIT) · GSAP 3 (Standard License) · QRCode.js (MIT) · Pretendard (OFL)</small></div></div>' +
       '</div>' + bizFootHTML() + '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
@@ -2874,7 +2874,7 @@
     $('wdAgree').onclick = function(){ var v = this.getAttribute('aria-pressed') !== 'true'; this.setAttribute('aria-pressed', String(v)); $('wdGo').disabled = !v; };
     $('wdGo').onclick = function(){
       store('unsu_account', null); store('unsu_auth', null); store('unsu_consent', null); store('unsu_notif', null); clearData();
-      closeSheet(); updateSegCount(); updateTopbar(); go('today'); toast('탈퇴했어요. 그동안 운픽과 함께해 주셔서 고마워요');
+      closeSheet(); updateSegCount(); updateTopbar(); go('today'); toast('탈퇴했어요. 그동안 우니조아와 함께해 주셔서 고마워요');
     };
   }
   function openLoginSheet(reason){
@@ -2895,7 +2895,7 @@
         restored = true;
       }
       var me = getMe();
-      store('unsu_auth', { provider:provider, nick:me ? me.name : (acc && acc.nick) || '운픽 사용자', at:Date.now() });
+      store('unsu_auth', { provider:provider, nick:me ? me.name : (acc && acc.nick) || '우니조아 사용자', at:Date.now() });
       var gift = !store('unsu_gift');
       if (gift){ store('unsu_gift', 1); addCoins(SIGNUP_COINS, '가입 환영 선물'); }
       writeAccount(); closeSheet(); updateSegCount(); updateTopbar();
@@ -3005,7 +3005,7 @@
     var o = shareState, link = currentLink();
     var h = '<h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
       '<div class="share-card">' + (o.fig ? '<span class="sc-fig">' + o.fig + '</span>' : '') +
-      '<div class="sc-txt"><span class="sc-brand">운픽 WoonPick</span><b>' + esc(o.title) + '</b><p>' + esc(o.desc) + '</p><span class="sc-url">' + SH_IC.link + esc(shortUrl(link)) + '</span></div></div>';
+      '<div class="sc-txt"><span class="sc-brand">우니조아 WooniJoa</span><b>' + esc(o.title) + '</b><p>' + esc(o.desc) + '</p><span class="sc-url">' + SH_IC.link + esc(shortUrl(link)) + '</span></div></div>';
     if (o.inviteEntry){
       h += '<button type="button" class="unk-btn" id="shTime" aria-pressed="' + !o.withTime + '"' + (o.inviteEntry.unknown ? ' hidden' : '') + '><span>태어난 시간은 빼고 보내기</span><span class="ck">' + (!o.withTime ? OK_SVG : '') + '</span></button>' +
         '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>이 링크에는 궁합 계산을 위해 ' + esc(o.inviteEntry.name) + '님의 이름·생년월일' + (o.withTime && !o.inviteEntry.unknown ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
@@ -3046,7 +3046,7 @@
     var r = compute(me);
     openShare({ sheetTitle:'친구에게 궁합 신청하기', title:me.name + '님의 궁합 신청', desc:'생년월일만 입력하면 두 사람의 궁합이 바로 나와요',
       fig:r.error ? '' : figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-      text:'[운픽] ' + me.name + '님이 궁합 신청을 보냈어요\n생년월일만 입력하면 우리 둘의 궁합 점수와 풀이가 바로 나와요. 가입은 필요 없어요.',
+      text:'[우니조아] ' + me.name + '님이 궁합 신청을 보냈어요\n생년월일만 입력하면 우리 둘의 궁합 점수와 풀이가 바로 나와요. 가입은 필요 없어요.',
       cta:'궁합 보러 가기 →', inviteEntry:me });
   }
 

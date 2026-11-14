@@ -1,4 +1,4 @@
-<title>운픽 WoonPick</title>
+<title>우니조아 WooniJoa</title>
 <meta name="theme-color" content="#0d0b1e">
 <meta name="description" content="만세력 기반 사주 풀이와 별자리 운세, 행운 번호까지 한 번에 보는 모바일 웹앱">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1419,6 +1419,9 @@
   .cat-next small{font-size:calc(13.5px*var(--fs));font-weight:600;color:#e3def5;}
   .cat-next button{font-size:calc(14px*var(--fs));color:#fff;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(226,220,255,.28);}
   .cat-sheet .disclaimer{color:#c9c3e2;}
+
+  /* 우니 교감 알림이 상단 로고를 덮지 않도록 한 줄 아래로 */
+  .pet-pop{top:calc(70px + env(safe-area-inset-top,0px));}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -1434,9 +1437,9 @@
 </aside>
 
 <header class="topbar">
-  <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="운픽 홈으로" style="cursor:pointer">
+  <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="우니조아 홈으로" style="cursor:pointer">
     <svg class="brand-woni" width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="bwb" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/><path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/><ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/><path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#bwb)"/><ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/><ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><circle cx="46" cy="67" r="4.8" fill="#221a4a"/><circle cx="74" cy="67" r="4.8" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/><path d="M52 77q8 9 16 0z" fill="#3a1d5c"/></svg>
-    <span>Woon<span class="bp">Pick</span></span>
+    <span>Wooni<span class="bp">Joa</span></span>
   </div>
   <div class="top-actions">
     <button class="start-chip" id="startChip" hidden>시작하기</button>
@@ -1552,7 +1555,7 @@
   <!-- ================= 공유 링크로 받은 결과 ================= -->
   <section class="view" id="v-shared" hidden>
     <div class="flow-header">
-      <button class="icon-back" id="btnSharedBack" aria-label="운픽 홈으로">‹</button>
+      <button class="icon-back" id="btnSharedBack" aria-label="우니조아 홈으로">‹</button>
       <span class="ttl" id="sharedTtl">공유받은 결과</span>
     </div>
     <div id="sharedBody" class="view"></div>
@@ -1648,7 +1651,7 @@
 <div class="intro" id="intro" hidden aria-hidden="true">
   <div class="intro-in">
     <svg class="intro-logo intro-woni" viewBox="0 0 120 120"><defs><radialGradient id="iwb" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/><path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/><ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/><path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#iwb)"/><ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/><ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><circle cx="46" cy="67" r="4.8" fill="#221a4a"/><circle cx="74" cy="67" r="4.8" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/><path d="M52 77q8 9 16 0z" fill="#3a1d5c"/></svg>
-    <div class="intro-name"><span>Woon<span class="bp">Pick</span></span></div>
+    <div class="intro-name"><span>Wooni<span class="bp">Joa</span></span></div>
     <div class="intro-sub" id="introSub">태어난 순간의 하늘로 읽는 오늘</div>
   </div>
 </div>

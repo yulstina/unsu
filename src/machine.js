@@ -97,7 +97,7 @@ var LottoMachine = (function(){
       rr(76, 208, 168, 8, 4); ctx.fillStyle = 'rgba(234,197,111,.35)'; ctx.fill();
       /* 이름판 */
       rr(112, 224, 96, 24, 12); ctx.fillStyle = 'rgba(10,8,32,.65)'; ctx.fill(); ctx.strokeStyle = 'rgba(234,197,111,.6)'; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = '#f3dca0'; ctx.font = '600 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Woon 추첨기', 160, 237);
+      ctx.fillStyle = '#f3dca0'; ctx.font = '600 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Wooni 추첨기', 160, 237);
       /* 배출구 */
       rr(138, 258, 44, 30, 10); ctx.fillStyle = '#0a0820'; ctx.fill(); ctx.strokeStyle = 'rgba(234,197,111,.5)'; ctx.stroke();
       /* 표시등 */
