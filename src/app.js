@@ -1538,8 +1538,42 @@
   function petDone(p){ return p.day === todayStr() ? (p.done || {}) : {}; }
   function getCoupons(){ var c = store('unsu_coupons'); return Array.isArray(c) ? c.filter(function(x){ return x.t === 'dream1' && !x.used && x.exp > Date.now(); }) : []; }
   var petUid = 0;
-  function petSVG(mood, lv, cls){
+  /* 우니 + 조아(친구) 손잡은 일러스트. pose: 'hold' | 'hug' */
+  function duoSVG(pose, cls){
+    var hug = pose === 'hug';
+    var a = petSVG('love', 1, ''), b = petSVG(hug ? 'love' : 'happy', 1, '', 'joa');
+    var inner = function(svg){ return svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, ''); };
+    var dx = hug ? 82 : 96;
+    return '<svg class="duo-svg ' + (cls || '') + '" viewBox="0 0 ' + (120 + dx) + ' 124" aria-hidden="true">' +
+      '<g class="duo-a" transform="rotate(' + (hug ? 8 : 4) + ' 60 100)"><svg x="0" y="4" width="120" height="120" viewBox="0 0 120 120" overflow="visible">' + inner(a) + '</svg></g>' +
+      '<g class="duo-b" transform="translate(' + dx + ' 0) rotate(' + (hug ? -8 : -4) + ' 60 100)"><svg x="0" y="4" width="120" height="120" viewBox="0 0 120 120" overflow="visible">' + inner(b) + '</svg></g>' +
+      (hug
+        ? '<path d="M86 104q20 6 38-4" fill="none" stroke="#7d5cf5" stroke-width="7" stroke-linecap="round"/><path d="M118 106q-14 5-28-1" fill="none" stroke="#f0707f" stroke-width="7" stroke-linecap="round"/>'
+        : '<path d="M94 86q8 6 18 6" fill="none" stroke="#7d5cf5" stroke-width="7" stroke-linecap="round"/><path d="M122 86q-4 6-10 6" fill="none" stroke="#f0707f" stroke-width="7" stroke-linecap="round"/><circle cx="112" cy="92" r="5.5" fill="#ffd1dc"/>') +
+      '<path class="duo-h" d="M' + ((120 + dx) / 2) + ' 30c-5-8-17-4-13 5l13 11 13-11c4-9-8-13-13-5z" fill="#ff8fb1"/>' +
+      '</svg>';
+  }
+  /* 홈 2×2 메뉴 타일용 일러스트 */
+  function tileArtSVG(kind){
+    var inner = function(svg){ return svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, ''); };
+    var pet = function(m, x, y, s){ return '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" viewBox="0 0 120 120" overflow="visible">' + inner(petSVG(m, 1, '')) + '</svg>'; };
+    if (kind === 'gh') return duoSVG('hold', 'tile-art');
+    var h = '<svg class="tile-art" viewBox="0 0 140 120" aria-hidden="true">';
+    if (kind === 'dream'){
+      h += '<path d="M104 14a16 16 0 1 0 14 24a13 13 0 1 1-14-24z" fill="#ffe7a3"/>' +
+        '<path d="M14 98c-10 0-12-14-1-15c1-10 15-12 19-3c9-3 15 6 10 12c6 1 6 6 0 6z" fill="#fff" opacity=".9"/>' +
+        '<path d="M98 104c-8 0-9-11 0-12c1-8 12-9 15-2c7-2 12 5 8 10c5 1 5 4 0 4z" fill="#fff" opacity=".85"/>' + pet('sleepy', 20, 4, 108);
+    } else if (kind === 'zodiac'){
+      h += '<g stroke="#fff" stroke-width="1.6" opacity=".9" fill="none"><path d="M12 30L34 14L56 24M98 18L122 30L128 56"/></g>' +
+        '<g fill="#fff6c9"><circle cx="12" cy="30" r="3.4"/><circle cx="34" cy="14" r="2.6"/><circle cx="56" cy="24" r="3"/><circle cx="98" cy="18" r="2.6"/><circle cx="122" cy="30" r="3.4"/><circle cx="128" cy="56" r="2.6"/></g>' + pet('happy', 18, 8, 108);
+    } else {
+      h += '<g transform="translate(92 54)"><path d="M6 14c-6 10-6 34 18 34s24-24 18-34z" fill="#ff6f7d"/><path d="M8 14h32l-4-8H12z" fill="#e2485a"/><path d="M14 6c4-4 16-4 20 0" fill="none" stroke="#ffd36b" stroke-width="3" stroke-linecap="round"/><text x="24" y="38" font-size="15" font-weight="800" text-anchor="middle" fill="#ffe7a3" font-family="serif">福</text></g>' + pet('love', 4, 6, 108);
+    }
+    return h + '</svg>';
+  }
+  function petSVG(mood, lv, cls, pal){
     var u = mood + (++petUid);
+    var C = pal === 'joa' ? { hi:'#fff6ee', mid:'#ffc2a6', lo:'#ff7f8e', glow:'#ff9fa8', foot:'#e8566e', ant:'#ffc9b8' } : { hi:'#eef3ff', mid:'#b9a8ff', lo:'#6a45f0', glow:'#8f74ff', foot:'#5b3be8' };
     var eyes, mouth, extra = '', blush = mood === 'love' ? .7 : mood === 'happy' ? .45 : .28;
     if (mood === 'sleepy'){
       eyes = '<path d="M40 66q6 5 12 0M68 66q6 5 12 0" fill="none" stroke="#221a4a" stroke-width="3" stroke-linecap="round"/>';
@@ -1560,12 +1594,13 @@
     var antGlow = lv >= 2 ? '<circle class="pstar" cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/>' : '';
     var cheekStar = lv >= 3 ? '<path d="M30 84l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4zM90 84l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4z" fill="#fff4cc"/>' : '';
     return '<svg class="pet-svg ' + (cls || '') + ' m-' + mood + '" viewBox="0 0 120 120" aria-hidden="true"><defs>' +
-      '<radialGradient id="pb' + u + '" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient>' +
-      '<radialGradient id="pg' + u + '" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="#8f74ff" stop-opacity=".55"/><stop offset="1" stop-color="#8f74ff" stop-opacity="0"/></radialGradient></defs>' +
+      '<radialGradient id="pb' + u + '" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="' + C.hi + '"/><stop offset=".45" stop-color="' + C.mid + '"/><stop offset="1" stop-color="' + C.lo + '"/></radialGradient>' +
+      '<radialGradient id="pg' + u + '" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="' + C.glow + '" stop-opacity=".55"/><stop offset="1" stop-color="' + C.glow + '" stop-opacity="0"/></radialGradient></defs>' +
       '<circle cx="60" cy="66" r="56" fill="url(#pg' + u + ')"/>' + acc +
-      '<g class="pbody"><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/>' + antGlow +
-      '<path class="pstar" d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/>' +
-      '<ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/>' +
+      '<g class="pbody">' + (pal === 'joa' ? '<path d="M52 38c-2-7 3-12 9-13M68 38c2-7-3-12-9-13" fill="none" stroke="' + C.ant + '" stroke-width="2.6" stroke-linecap="round"/><path class="pstar" d="M60 26c-4-6-13-3-10 4l10 8 10-8c3-7-6-10-10-4z" fill="#ff6f91"/>' :
+      '<path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/>' + antGlow +
+      '<path class="pstar" d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/>') +
+      '<ellipse cx="45" cy="101" rx="9" ry="5" fill="' + C.foot + '"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="' + C.foot + '"/>' +
       '<path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#pb' + u + ')"/>' +
       '<ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/>' +
       '<ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity="' + blush + '"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity="' + blush + '"/>' +
@@ -1708,7 +1743,7 @@
       '<h1 class="today-title">' + f.head + '</h1>' +
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
-    h += '<div class="quick-row q4"><button type="button" id="btnQNum" class="new">' + TIP_IC.star + '꿈 해몽</button><button type="button" id="btnQGh">' + FEAT_IC.gh + '궁합</button><button type="button" id="btnQZ">' + TIP_IC.star + '별자리</button><button type="button" id="btnQNY">' + TIP_IC.star + '신년운세</button></div>';
+    h += '<div class="qgrid">' + [['btnQNum','dream','꿈 해몽','간밤 꿈, 우니가 풀어줘요','NEW'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','새해 흐름 미리 보기','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + '</div>';
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -2290,7 +2325,7 @@
     gh.b = B ? B.id : null;
     if (!gh.edit){ if (!A) gh.edit = 'a'; else if (!B) gh.edit = 'b'; }
     if (gh.edit && !gh.f) gh.f = freshGhForm(gh.edit);
-    var h = '<div class="card gh-box"><div class="gh-pair">' + slotHTML(A, 'a', getMe() ? '첫 번째 사람' : '나') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b', '상대') + '</div>';
+    var h = '<div class="card gh-box">' + (!(A && B) || gh.edit ? '<div class="gh-duo">' + duoSVG('hug') + '<p>우니와 조아처럼, 두 사람은 얼마나 잘 맞을까요?</p></div>' : '') + '<div class="gh-pair">' + slotHTML(A, 'a', getMe() ? '첫 번째 사람' : '나') + '<div class="gh-amp">合</div>' + slotHTML(B, 'b', '상대') + '</div>';
     if (gh.edit) h += ghEditorHTML(gh.edit);
     if (gh.edit === 'b' && getMe() && !NS) h += '<button class="ge-invite" id="btnGhInv2">' + SH_IC.link + '<span>상대 생년월일을 모른다면<br><b>궁합 신청 링크 보내기</b></span><span class="chev">›</span></button>';
     else if (!getMe()) h += '<button class="text-btn" id="btnGhDemo" style="align-self:center">예시 두 사람으로 먼저 보기</button>';

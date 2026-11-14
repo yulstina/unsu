@@ -1359,6 +1359,27 @@
   body[data-tab="box"]{--cat:#b9a8ff;}
   .tab.bump svg{animation:tabBump .5s var(--ease-spring);}
   @keyframes tabBump{40%{transform:scale(1.25) translateY(-2px);}}
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 4px;}
+  .qtile{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:146px;padding:14px 14px 0;border:0;border-radius:22px;text-align:left;cursor:pointer;color:#1b1440;
+    background:linear-gradient(160deg,rgba(255,255,255,.92),var(--qt-bg) 70%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 10px 26px -12px var(--qt-sh);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:transform .12s ease-out;}
+  .qtile:active{transform:scale(.97);}
+  .qtile::before{content:'';position:absolute;right:-30px;bottom:-40px;width:130px;height:130px;border-radius:50%;background:radial-gradient(closest-side,var(--qt-glow),transparent);pointer-events:none;}
+  .q-dream{--qt-bg:#d9ecff;--qt-sh:rgba(110,160,255,.6);--qt-glow:rgba(120,140,255,.45);}
+  .q-gh{--qt-bg:#ffdbe6;--qt-sh:rgba(255,120,160,.55);--qt-glow:rgba(255,140,170,.45);}
+  .q-zodiac{--qt-bg:#e6dcff;--qt-sh:rgba(150,120,255,.6);--qt-glow:rgba(160,130,255,.45);}
+  .q-ny{--qt-bg:#ffe8c4;--qt-sh:rgba(255,180,90,.55);--qt-glow:rgba(255,190,110,.5);}
+  .qt-t{position:relative;display:flex;align-items:center;gap:6px;font-size:calc(16px*var(--fs));font-weight:800;letter-spacing:-.02em;}
+  .qt-t em{font-style:normal;font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;background:#6a45f0;color:#fff;letter-spacing:.02em;}
+  .qt-s{position:relative;font-size:calc(12px*var(--fs));font-weight:500;color:#4d4773;line-height:1.35;}
+  .qtile .tile-art{position:relative;align-self:flex-end;width:118px;height:auto;margin:auto -6px -4px 0;}
+  .qtile .duo-svg.tile-art{width:128px;margin-bottom:-2px;}
+  .qtile .tile-art .pz,.qtile .tile-art .ph{opacity:.9;}
+  .gh-duo{display:flex;flex-direction:column;align-items:center;gap:2px;margin:-2px 0 10px;}
+  .gh-duo .duo-svg{width:170px;height:auto;}
+  .gh-duo p{margin:0;font-size:calc(13px*var(--fs));color:var(--text-helper);}
+  @media (prefers-reduced-motion:no-preference){ .duo-svg .duo-h{transform-box:fill-box;transform-origin:center;animation:duoBeat 1.6s ease-in-out infinite;} }
+  @keyframes duoBeat{0%,100%{transform:scale(1);}15%{transform:scale(1.18);}30%{transform:scale(1);}}
   .quick-row.q4{grid-template-columns:repeat(4,1fr);}
   .quick-row.q4 button{font-size:calc(12.5px*var(--fs));}
   .quick-row button svg{width:20px;height:20px;}
