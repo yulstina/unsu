@@ -252,6 +252,9 @@
   }
   /* 오늘 점수 → 배경 기운 4단계 (ai/decisions/003 피드백 3) */
   var MOODS = [[80, 'gold', '맑음'], [60, 'violet', '순풍'], [40, 'calm', '차분'], [0, 'care', '조심']];
+  /* 점수 한 개 → 색 단계 (분야별 칩·시트·점수 카드). 80~ 금 / 60~ 보라 / 40~ 민트 / ~39 장미 */
+  function tierOf(v){ return v >= 80 ? 'gold' : v >= 60 ? 'violet' : v >= 40 ? 'mint' : 'rose'; }
+  var TIER_LABEL = { gold:'아주 좋음', violet:'좋음', mint:'보통', rose:'조심' };
   function moodOf(f){
     var avg = Math.round((f.scores.w + f.scores.l + f.scores.j) / 3);
     for (var i = 0; i < MOODS.length; i++) if (avg >= MOODS[i][0]) return { key:MOODS[i][1], label:MOODS[i][2], avg:avg };
@@ -544,7 +547,7 @@
     h += zoneHTML('me', '나', '타고난 나의 모습');
     /* --- 일간 --- */
     h += '<div class="card me-card ' + EL_CLASS[dEl] + '"><div class="sec-head"><h2 class="sec-title">나를 나타내는 글자</h2><span class="sec-meta">일간 日干</span></div>' +
-      '<div class="ilgan-head ' + EL_CLASS[dEl] + '"><div class="ilgan-mark">' + P.day.sh + '</div><div><div class="ilgan-t">' + ig.t + '</div><div class="ilgan-img">' + ig.img + '</div></div></div>' +
+      '<div class="ilgan-head ' + EL_CLASS[dEl] + '"><div class="ilgan-mark">' + P.day.sh + '</div><div><div class="ilgan-t">' + ig.t + '</div><div class="ilgan-img">' + ig.img + '</div><span class="me-badge">' + MS.EL_K[dEl] + '(' + MS.EL_H[dEl] + ') 기운을 타고난 ' + esc(entry.name) + '님</span></div></div>' +
       '<div class="chip-row">' + ig.kw.map(function(k){ return '<span class="chip">' + k + '</span>'; }).join('') + '</div>' +
       '<p class="body-text">' + ig.d + '</p><div class="divider"></div>' +
       '<div class="sub-block"><h4>타고난 강점</h4><p class="body-text">' + ig.good + '</p></div>' +
@@ -1114,7 +1117,7 @@
     var cats = [['w','재물운'],['l','연애운'],['j','직업운']];
     return '<div class="view" style="gap:16px">' + cats.map(function(c){
       var v = f.scores[c[0]];
-      return '<div class="score-row"><span class="cat">' + c[1] + '</span><span class="ln">' + f.lines[c[0]] + '</span><span class="sc"><b data-count="' + v + '">' + v + '</b><small>점</small></span><span class="score-bar"><i style="--v:' + (v / 100) + '"></i></span></div>';
+      return '<div class="score-row" data-tier="' + tierOf(v) + '"><span class="cat">' + c[1] + ' <em class="tier-tag">' + TIER_LABEL[tierOf(v)] + '</em></span><span class="ln">' + f.lines[c[0]] + '</span><span class="sc"><b data-count="' + v + '">' + v + '</b><small>점</small></span><span class="score-bar"><i style="--v:' + (v / 100) + '"></i></span></div>';
     }).join('') + '</div>';
   }
 
@@ -1266,31 +1269,76 @@
   function getDreams(){ var d = store('unsu_dreams'); return Array.isArray(d) ? d : []; }
   function dmCoupon(){ return getCoupons()[0] || null; }
   function openDream(){ renderDreamInput(); $('dmResult').hidden = true; $('dmInput').hidden = false; show('dream'); }
+  /* 대화형 입력: 주제 → (사람이면) 누구 → 이름(선택) → 꿈 이야기. 고른 맥락은 해몽 사전·AI 둘 다에 넘긴다 */
+  var DM_THEMES = [['person','사람이 나왔어'],['animal','동물'],['nature','물·불·자연'],['money','돈·물건'],['place','집·장소'],['event','떨어지거나 쫓기는 꿈'],['etc','잘 모르겠어']];
+  var DM_WHO = [['celeb','연예인·유명인'],['family','가족'],['lover','연인·짝사랑'],['ex','전 애인'],['friend','친구·동료'],['stranger','모르는 사람'],['ancestor','돌아가신 분']];
+  var DM_HINT = { person:'그 사람이 뭘 했는지, 나는 어떤 기분이었는지 적어 줘.', animal:'어떤 동물이었는지, 색깔·크기, 나한테 다가왔는지 적어 줘.', nature:'물이 맑았는지 탁했는지, 불이 컸는지처럼 모습을 적어 줘.',
+    money:'무엇을 얻었는지 잃었는지, 얼마나 많았는지 적어 줘.', place:'어떤 곳이었는지, 거기서 무슨 일이 있었는지 적어 줘.', event:'어디서 떨어졌는지, 누가 쫓아왔는지, 끝은 어떻게 됐는지 적어 줘.', etc:'기억나는 장면을 생각나는 대로 적어 줘.' };
+  var dmCtx = { theme:'', who:'', name:'', named:false };
+  function dmLabel(list, k){ var x = list.filter(function(i){ return i[0] === k; })[0]; return x ? x[1] : ''; }
+  function dmNeedName(){ return dmCtx.theme === 'person' && dmCtx.who && dmCtx.who !== 'stranger' && !dmCtx.named; }
+  function dmReady(){ return dmCtx.theme && (dmCtx.theme !== 'person' || (dmCtx.who && !dmNeedName())); }
+  function dmChatHTML(){
+    var av = '<span class="dmc-av">' + petSVG('happy', getPet().lv, 'mini') + '</span>';
+    function uni(t, sub){ return '<div class="dmc-row">' + av + '<div class="dmc-b">' + t + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>'; }
+    function me(t){ return '<div class="dmc-row me"><div class="dmc-b">' + esc(t) + '</div></div>'; }
+    function chips(list, attr){ return '<div class="dmc-chips">' + list.map(function(i){ return '<button type="button" ' + attr + '="' + i[0] + '">' + i[1] + '</button>'; }).join('') + '</div>'; }
+    var h = uni('어젯밤엔 어떤 꿈을 꿨어?', '제일 기억나는 걸 하나만 골라 줘. 고르면 더 정확하게 풀 수 있어.');
+    if (!dmCtx.theme) return h + chips(DM_THEMES, 'data-dmt');
+    h += me(dmLabel(DM_THEMES, dmCtx.theme));
+    if (dmCtx.theme === 'person'){
+      h += uni('누가 나왔어?');
+      if (!dmCtx.who) return h + chips(DM_WHO, 'data-dmw');
+      h += me(dmLabel(DM_WHO, dmCtx.who));
+      if (dmCtx.who !== 'stranger'){
+        h += uni(dmCtx.who === 'celeb' ? '누구였는지 이름을 알려 줄래?' : '뭐라고 부르면 될까?', dmCtx.who === 'celeb' ? '이름을 알면 이름 글자를 물건으로 잘못 읽지 않아. 안 적어도 괜찮아.' : '실명 대신 별명이나 호칭(엄마, 팀장님)으로 적어 줘.');
+        if (!dmCtx.named) return h + '<div class="dmc-name"><input class="text-input" id="dmName" maxlength="12" placeholder="' + (dmCtx.who === 'celeb' ? '예) 차은우' : '예) 엄마, 팀장님') + '" autocomplete="off"><button type="button" class="btn-soft" id="dmNameGo">다음</button></div>';
+        h += me(dmCtx.name || '건너뛸게');
+      }
+    }
+    return h + uni('좋아! 이제 꿈 이야기를 들려줘.', DM_HINT[dmCtx.theme]);
+  }
+  function openDream(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); $('dmResult').hidden = true; $('dmInput').hidden = false; show('dream'); }
   function renderDreamInput(){
     var guest = isGuest(), cp = dmCoupon(), coins = getCoins(), past = getDreams(), draft = store('unsu_dmdraft') || '';
     dmAgree = false;
-    var h = '<div class="flow-header"><button class="icon-back" id="btnDmBack" aria-label="뒤로">‹</button><span class="ttl">꿈 해몽 번호</span></div>' +
-      '<div class="hero-copy"><div class="eyebrow">DREAM · 재미로 보는 꿈 해몽</div><h1 class="hero-title">간밤의 꿈,<br>숫자로 풀어 드려요</h1>' +
-      '<p class="helper">꿈 이야기를 적으면 어떤 꿈인지 풀고, 꿈속 상징마다 관련 숫자를 붙여 드려요.</p></div>' +
-      '<div class="card dm-card"><label class="dm-lab" for="dmText">어떤 꿈을 꾸셨나요?</label>' +
-      '<textarea class="text-input dm-text" id="dmText" maxlength="' + DM.max + '" rows="6" placeholder="예) 맑은 강에서 큰 잉어를 잡았는데 배 속에서 금반지가 나왔어요. 꿈에서 정말 기뻤어요.">' + esc(draft) + '</textarea>' +
-      '<div class="dm-meta"><span class="helper">등장한 동물·사람·물건, 색깔, 꿈속 기분까지 적을수록 자세히 풀려요</span><span class="dm-count" id="dmCount">0/' + DM.max + '</span></div>' +
-      '<p class="field-hint" id="dmHint" role="alert"></p></div>' +
-      '<div class="dm-warn" role="note"><b>' + LOCK_SVG + '꿈풀이 전에 꼭 읽어 주세요</b><ul>' +
-        '<li><strong>꿈풀이 하러 가기를 누르면 엽전 ' + DM.cost + '닢이 바로 쓰여요.</strong> 풀이는 누르는 즉시 만들어지는 디지털 콘텐츠라, 시작된 뒤에는 엽전을 돌려드리지 않아요. 내용을 꼼꼼히 확인하고 눌러 주세요.</li>' +
-        '<li>욕설·비방·성적인 표현, 특정인을 해치거나 깎아내리는 내용은 풀이하지 않아요. 이런 글은 엽전이 쓰이기 전에 막혀요.</li>' +
-        '<li>이름·전화번호·주소·주민번호 같은 개인정보는 적지 마세요. 적은 글은 풀이를 만드는 데만 쓰고(AI 풀이 서비스로 전송), 결과는 이 기기에만 보관돼요.</li>' +
-        '<li>꿈 해몽과 번호는 재미로 즐기는 콘텐츠예요. 미래를 예언하거나 복권 당첨을 보장하지 않아요. 복권은 만 19세 이상만 살 수 있어요.</li>' +
-        '<li>같은 꿈을 다시 풀면 엽전이 다시 쓰여요. 지난 풀이는 이 화면 아래에서 언제든 다시 볼 수 있어요.</li>' +
-      '</ul></div>' +
-      '<button type="button" class="unk-btn" id="dmAgree" aria-pressed="false"><span>위 내용을 확인했어요</span><span class="ck"></span></button>' +
-      '<div class="dm-pay">' + (guest ? '<span>로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 · 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번</span>'
-        : cp ? '<span class="pet-ticket sm"><small>COUPON</small><b>' + esc(cp.name) + ' 사용</b><span>이번 풀이는 엽전이 쓰이지 않아요</span></span>'
-        : '<span>' + COIN_SVG + '내 엽전 <b>' + coins.toLocaleString() + '닢</b></span><span>이번 풀이 <b>' + DM.cost + '닢</b></span>') + '</div>' +
-      '<button class="btn-primary btn-block" id="btnDmGo" disabled>' + DM_IC + '꿈풀이 하러 가기' + (guest || cp ? '' : ' · ' + DM.cost + '닢') + '</button>';
+    var ready = dmReady();
+    var h = '<div class="flow-header"><button class="icon-back" id="btnDmBack" aria-label="뒤로">‹</button><span class="ttl">꿈 해몽 번호</span>' + (dmCtx.theme ? '<button class="btn-ghost" id="btnDmReset" style="padding:8px 14px;font-size:calc(12.5px*var(--fs))">처음부터</button>' : '') + '</div>' +
+      '<div class="card dmc" id="dmChat">' + dmChatHTML() + '</div>';
+    if (ready){
+      h += '<div class="card dm-card"><label class="dm-lab" for="dmText">내 꿈 이야기</label>' +
+        '<div class="dmc-ctx">' + '<span>' + dmLabel(DM_THEMES, dmCtx.theme) + '</span>' + (dmCtx.who ? '<span>' + dmLabel(DM_WHO, dmCtx.who) + (dmCtx.name ? ' · ' + esc(dmCtx.name) : '') + '</span>' : '') + '</div>' +
+        '<textarea class="text-input dm-text" id="dmText" maxlength="' + DM.max + '" rows="5" placeholder="' + (dmCtx.name ? esc(dmCtx.name) + '이(가) 꿈에 나와서 나한테 웃어 줬어요. 너무 설렜어요.' : '예) 맑은 강에서 큰 잉어를 잡았는데 배 속에서 금반지가 나왔어요. 꿈에서 정말 기뻤어요.') + '">' + esc(draft) + '</textarea>' +
+        '<div class="dm-meta"><span class="helper">꿈속 기분까지 적으면 더 자세히 풀려요</span><span class="dm-count" id="dmCount">0/' + DM.max + '</span></div>' +
+        '<p class="field-hint" id="dmHint" role="alert"></p></div>' +
+        '<div class="dm-warn" role="note"><details><summary>' + LOCK_SVG + '꿈풀이 전에 꼭 읽어 주세요 ›</summary><ul>' +
+          '<li><strong>꿈풀이 하러 가기를 누르면 엽전 ' + DM.cost + '닢이 바로 쓰여요.</strong> 풀이는 누르는 즉시 만들어지는 디지털 콘텐츠라, 시작된 뒤에는 엽전을 돌려드리지 않아요.</li>' +
+          '<li>욕설·비방·성적인 표현, 특정인을 해치거나 깎아내리는 내용은 풀이하지 않아요. 이런 글은 엽전이 쓰이기 전에 막혀요.</li>' +
+          '<li>전화번호·주소·주민번호 같은 개인정보는 적지 마세요. 적은 글은 풀이를 만드는 데만 쓰고(AI 풀이 서비스로 전송), 결과는 이 기기에만 보관돼요.</li>' +
+          '<li>꿈 해몽과 번호는 재미로 즐기는 콘텐츠예요. 미래를 예언하거나 복권 당첨을 보장하지 않아요. 복권은 만 19세 이상만 살 수 있어요.</li>' +
+        '</ul></details></div>' +
+        '<button type="button" class="unk-btn" id="dmAgree" aria-pressed="false"><span>위 내용을 확인했어요</span><span class="ck"></span></button>' +
+        '<div class="dm-pay">' + (guest ? '<span>로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 · 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번</span>'
+          : cp ? '<span class="pet-ticket sm"><small>COUPON</small><b>' + esc(cp.name) + ' 사용</b><span>이번 풀이는 엽전이 쓰이지 않아요</span></span>'
+          : '<span>' + COIN_SVG + '내 엽전 <b>' + coins.toLocaleString() + '닢</b></span><span>이번 풀이 <b>' + DM.cost + '닢</b></span>') + '</div>' +
+        '<button class="btn-primary btn-block sheen" id="btnDmGo" disabled>' + DM_IC + '꿈풀이 하러 가기' + (guest || cp ? '' : ' · ' + DM.cost + '닢') + '</button>';
+    }
     if (past.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">지난 꿈풀이</h2><span class="sec-meta">' + past.length + '개 · 이 기기</span></div><div class="dm-past">' +
       past.map(function(d, i){ return '<button type="button" data-dm="' + i + '"><b>' + esc(d.title) + '</b><span>' + fmtDate(d.at) + ' · ' + d.picks.join(' ') + '</span></button>'; }).join('') + '</div></div>';
     $('dmInput').innerHTML = h;
+    $('btnDmBack').onclick = function(){ go('today'); };
+    if ($('btnDmReset')) $('btnDmReset').onclick = function(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); };
+    var box = $('dmChat');
+    box.querySelectorAll('[data-dmt]').forEach(function(b){ b.onclick = function(){ dmCtx.theme = b.dataset.dmt; renderDreamInput(); dmScroll(); }; });
+    box.querySelectorAll('[data-dmw]').forEach(function(b){ b.onclick = function(){ dmCtx.who = b.dataset.dmw; renderDreamInput(); dmScroll(); }; });
+    if ($('dmNameGo')){
+      var ni = $('dmName');
+      var nx = function(){ var v = ni.value.trim(); dmCtx.name = DREAM.cleanCtx({ name:v }).name; dmCtx.named = true; renderDreamInput(); dmScroll(); };
+      $('dmNameGo').onclick = nx; ni.onkeydown = function(e){ if (e.key === 'Enter') nx(); };
+      if (!('ontouchstart' in window)) ni.focus();
+    }
+    document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ renderDreamResult(getDreams()[+b.dataset.dm], false); }; });
+    if (!ready) return;
     var ta = $('dmText');
     function sync(){
       var v = ta.value.trim(), n = ta.value.length;
@@ -1302,16 +1350,18 @@
     }
     ta.oninput = sync; sync();
     $('dmAgree').onclick = function(){ dmAgree = !dmAgree; this.setAttribute('aria-pressed', String(dmAgree)); this.querySelector('.ck').innerHTML = dmAgree ? OK_SVG : ''; sync(); };
-    $('btnDmBack').onclick = function(){ go('today'); };
     $('btnDmGo').onclick = function(){ dreamGo(ta.value.trim()); };
-    document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ renderDreamResult(getDreams()[+b.dataset.dm], false); }; });
+  }
+  function dmScroll(){
+    var t = $('dmText') || $('dmName') || document.querySelector('#dmChat .dmc-chips');
+    if (t) t.scrollIntoView({ block:'center', behavior: reduceMotion ? 'auto' : 'smooth' });
   }
   function dreamGo(text){
     if (text.length < DM.min){ $('dmHint').textContent = DM.min + '자 이상 적어 주세요.'; return; }
     if (isGuest()){ openLoginSheet('꿈풀이는 로그인하고 엽전으로 볼 수 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번을 볼 수 있는 만큼이에요.'); return; }
     var cp = dmCoupon();
     if (!cp && getCoins() < DM.cost){ dreamShortSheet(); return; }
-    if (!DREAM.find(text).length && text.length < 40){
+    if (!dmCtx.who && !DREAM.find(DREAM.maskName(text, dmCtx.name)).length && text.length < 40){
       openSheet('<h3 id="sheetTitle">꿈속 장면을 조금 더 적어 볼까요?</h3><p class="body-text">지금 글에서는 풀이할 상징이 잘 보이지 않아요. 등장한 동물·사람·물건이나 꿈속 기분을 한두 줄 더 적으면 훨씬 자세히 풀려요.</p>' +
         '<button class="btn-primary btn-block" data-close>더 적을게요</button><button class="text-btn" id="btnDmAnyway">이대로 풀기 · ' + (cp ? '1회권 사용' : DM.cost + '닢') + '</button>');
       $('btnDmAnyway').onclick = function(){ closeSheet(); dreamRun(text); };
@@ -1341,10 +1391,10 @@
     $('dmResult').innerHTML = '<div class="flow-header"><span class="ttl">꿈풀이</span></div><div class="card dm-loading">' + petSVG('calm', getPet().lv, 'mini') +
       '<b>우니가 꿈을 읽고 있어요</b><p class="helper">꿈속 상징을 찾아 숫자를 맞추는 중이에요. 잠시만 기다려 주세요.</p><div class="dm-dots"><i></i><i></i><i></i></div></div>' +
       adSlotHTML('꿈 분석 중', 'loading');
-    var local = DREAM.analyze(text), done = false;
+    var ctx = { theme:dmCtx.theme, who:dmCtx.who, name:dmCtx.name }, local = DREAM.analyze(text, ctx), done = false;
     function finish(res){
       if (done) return; done = true;
-      var item = { id:'d' + Date.now().toString(36), at:Date.now(), text:text, cat:res.cat, catName:res.catName, title:res.title, summary:res.summary,
+      var item = { id:'d' + Date.now().toString(36), at:Date.now(), text:text, ctx:ctx, cat:res.cat, catName:res.catName, title:res.title, summary:res.summary,
         symbols:(res.symbols || []).map(function(s){ return { word:s.word, meaning:s.meaning, nums:s.nums }; }), picks:res.picks, source:res.source || 'local', paid:cp ? 'coupon' : DM.cost };
       var list = getDreams(); list.unshift(item); if (list.length > 20) list.length = 20; store('unsu_dreams', list);
       renderDreamResult(item, true);
@@ -1353,7 +1403,7 @@
     var ctl = window.AbortController ? new AbortController() : null;
     var t = setTimeout(function(){ if (ctl) ctl.abort(); finish(local); }, 20000);
     var started = Date.now();
-    fetch('/api/dream', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ text:text }), signal:ctl ? ctl.signal : undefined })
+    fetch('/api/dream', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ text:text, ctx:ctx }), signal:ctl ? ctl.signal : undefined })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(j){
         var res = j && j.title && Array.isArray(j.picks) && j.picks.length === 6 ? j : local;
@@ -1397,7 +1447,7 @@
       adSlotHTML('꿈풀이 결과를 다 본 뒤');
     $('dmResult').innerHTML = h;
     window.scrollTo(0, 0);
-    $('btnDmRBack').onclick = $('btnDmNew').onclick = function(){ renderDreamInput(); $('dmResult').hidden = true; $('dmInput').hidden = false; window.scrollTo(0, 0); };
+    $('btnDmRBack').onclick = $('btnDmNew').onclick = function(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); $('dmResult').hidden = true; $('dmInput').hidden = false; window.scrollTo(0, 0); };
     $('btnDmNum').onclick = function(){ go('num'); };
     if (fresh) toast(d.paid === 'coupon' ? '꿈풀이 1회권을 사용했어요' : '엽전 ' + DM.cost + '닢을 사용했어요');
   }
@@ -1757,7 +1807,7 @@
     var C = CATS[cat], g = natalGroups(r), f = todayLuck(entry, r).f, nm = esc(entry.name);
     var yG = TEN_GRP[r.seun.tenStem], d = nowD(), md = (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
     var h = '<div class="cat-head"><span class="cat-ic">' + CAT_IC[C.ic] + '</span><div><small>' + md + ' · ' + nm + '님</small><b>' + C.name + '</b></div>' +
-      (C.sk ? '<span class="cat-score"><b data-count="' + f.scores[C.sk] + '">' + f.scores[C.sk] + '</b><small>점</small></span>' : '') + '</div>';
+      (C.sk ? '<span class="cat-score"><b data-count="' + f.scores[C.sk] + '">' + f.scores[C.sk] + '</b><small>점</small><em class="tier-tag">' + TIER_LABEL[tierOf(f.scores[C.sk])] + '</em></span>' : '') + '</div>';
     if (C.sk){
       var star = cat === 'money' ? '재성' : cat === 'career' ? '관성' : (entry.gender === 'M' ? '재성' : '관성');
       h += '<div class="cat-bar"><i style="--v:' + (f.scores[C.sk] / 100) + '"></i></div><p class="cat-today">“' + f.lines[C.sk] + '”</p>' +
@@ -1778,12 +1828,13 @@
   }
   function catChipsHTML(f){
     return '<div class="card cat-card"><div class="sec-head"><h2 class="sec-title">분야별 운세</h2><span class="sec-meta">무료</span></div><div class="cat-chips">' +
-      CAT_ORDER.map(function(k){ var C = CATS[k]; return '<button type="button" data-cat="' + k + '"><span class="ic">' + CAT_IC[C.ic] + '</span><span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '</b>' : '<b class="go">›</b>') + '</button>'; }).join('') +
+      CAT_ORDER.map(function(k){ var C = CATS[k]; return '<button type="button" data-cat="' + k + '"' + (C.sk ? ' data-tier="' + tierOf(f.scores[C.sk]) + '"' : '') + '><span class="ic">' + CAT_IC[C.ic] + '</span><span class="nm">' + (C.chip || C.name) + '</span>' + (C.sk ? '<b>' + f.scores[C.sk] + '</b>' : '<b class="go">›</b>') + '</button>'; }).join('') +
       '</div></div>';
   }
   function openCat(entry, r, cat){
     var date = todayStr();
-    openSheet('<div class="cat-sheet">' + catHTML(entry, r, cat) + '</div>' +
+    var cf = todayLuck(entry, r).f, csk = CATS[cat].sk;
+    openSheet('<div class="cat-sheet"' + (csk ? ' data-tier="' + tierOf(cf.scores[csk]) + '"' : '') + '>' + catHTML(entry, r, cat) + '</div>' +
       '<div class="cat-next"><small>다른 분야도 볼까요?</small><div>' + CAT_ORDER.filter(function(k){ return k !== cat; }).map(function(k){ return '<button type="button" data-next="' + k + '">' + (CATS[k].chip || CATS[k].name) + '</button>'; }).join('') + '</div></div>' +
       '<button class="btn-primary btn-block" id="btnCatShare" style="margin-top:14px">' + SH_IC.send + '이 결과 공유하기</button>' +
       adSlotHTML(CATS[cat].name + '을 본 뒤'));
@@ -2967,7 +3018,7 @@
         h += sharedCtaHTML(S.type === 'd' ? '내 오늘 운세 보기' : '내 사주로 행운 번호 받기', '생년월일만 넣으면 30초 만에 나만의 운세와 번호가 나와요. 가입은 필요 없어요.');
       } else if (S.type === 'c'){
         $('sharedTtl').textContent = A.name + '님의 ' + CATS[S.extra].name;
-        h += sharedBarHTML(S, A.name) + '<div class="card cat-sheet">' + catHTML(A, ra, S.extra) + '</div>';
+        h += sharedBarHTML(S, A.name) + '<div class="card cat-sheet"' + (CATS[S.extra].sk ? ' data-tier="' + tierOf(todayLuck(A, ra).f.scores[CATS[S.extra].sk]) + '"' : '') + '>' + catHTML(A, ra, S.extra) + '</div>';
         h += sharedCtaHTML('내 ' + CATS[S.extra].name + ' 보기', '생년월일만 넣으면 30초 만에 내 분야별 운세가 나와요. 가입은 필요 없어요.');
       } else if (S.type === 'g'){
         var rb = compute(B), m = DAILY.match(A, ra, B, rb);
