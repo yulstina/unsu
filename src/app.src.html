@@ -1380,6 +1380,19 @@
   .gh-duo p{margin:0;font-size:calc(13px*var(--fs));color:var(--text-helper);}
   @media (prefers-reduced-motion:no-preference){ .duo-svg .duo-h{transform-box:fill-box;transform-origin:center;animation:duoBeat 1.6s ease-in-out infinite;} }
   @keyframes duoBeat{0%,100%{transform:scale(1);}15%{transform:scale(1.18);}30%{transform:scale(1);}}
+  /* 결제 시트 · 쉬운 풀이 잠금 */
+  .pay-sheet{display:flex;flex-direction:column;align-items:stretch;}
+  .pay-hero{display:grid;place-items:center;margin:-4px 0 4px;} .pay-hero .tile-art{width:150px;height:auto;}
+  .pay-sheet h3{text-align:center;margin:0 0 6px;}
+  .pay-who{margin:0 0 10px;text-align:center;font-size:calc(13px*var(--fs));color:var(--text-helper);}
+  .pay-list{list-style:none;margin:6px 0 14px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(226,220,255,.1);display:flex;flex-direction:column;gap:8px;font-size:calc(14px*var(--fs));color:#e6e1f7;}
+  .pay-list li::before{content:'✦';margin-right:8px;color:#f3dca0;}
+  .pay-price{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:12px;}
+  .pay-price s{color:var(--text-helper);font-size:calc(14px*var(--fs));} .pay-price b{font-size:calc(28px*var(--fs));font-weight:800;color:#fff;}
+  .pay-up{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:12px 14px;border:0;border-radius:14px;background:rgba(243,220,160,.1);box-shadow:inset 0 0 0 1px rgba(243,220,160,.3);color:#e6e1f7;font-size:calc(12.5px*var(--fs));text-align:left;cursor:pointer;}
+  .pay-up b{color:#ffe7a3;margin-right:4px;} .pay-up s{color:var(--text-helper);margin-right:4px;} .pay-up span:last-child{white-space:nowrap;font-weight:700;color:#fff;}
+  .pay-note{text-align:center;margin-top:10px;}
+  .ez-art{display:grid;place-items:center;margin:2px 0 6px;} .ez-art .tile-art{width:130px;height:auto;}
   /* 엽전 충전소 */
   .cs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
   .cs-head h3{margin:0;}
