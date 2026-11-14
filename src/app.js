@@ -2079,11 +2079,15 @@
   /* ---- 우니 꾹 누르기: 길게 누르면 오늘 번호 1개 공개 (005) ---- */
   function peekCardHTML(me, nums, elc){
     var opened = todoDone('peek'), first = nums.filter(function(o){ return o.y; })[0] || nums[0];
-    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">시그니처</span></div>' +
-      '<div class="peek-stage"><button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘 번호 한 개 보기"' + (opened ? ' disabled' : '') + '>' +
+    var sparks = ''; for (var k = 0; k < 10; k++) sparks += '<i class="pk-spark" style="--a:' + (k * 36 + (k % 2 ? 12 : 0)) + 'deg;--d:' + (k % 2 ? 66 : 94) + 'px"></i>';
+    return '<div class="card peek-card ' + elc + (opened ? ' open' : '') + '" id="peekCard"><div class="sec-head"><h2 class="sec-title">오늘의 내 번호</h2><span class="sec-meta">하루 한 번</span></div>' +
+      '<div class="peek-stage">' +
+        '<div class="peek-pop" aria-hidden="true"><span class="pk-flash"></span>' + sparks + '</div>' +
+        '<div class="peek-ball ball' + (first.y ? ' yong' : '') + '" aria-live="polite">' + (opened ? first.n : '') + '</div>' +
+        '<button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘 번호 한 개 보기"' + (opened ? ' disabled' : '') + '>' +
         '<svg class="peek-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54"/></svg>' +
-        '<span class="peek-fig">' + petSVG('happy', 2, 'mini') + '</span></button>' +
-        '<div class="peek-ball ball' + (first.y ? ' yong' : '') + '" aria-live="polite">' + (opened ? first.n : '') + '</div></div>' +
+        '<span class="peek-fig">' + petSVG(opened ? 'love' : 'happy', 2, 'mini') + '</span></button>' +
+      '</div>' +
       '<p class="helper peek-msg">' + (opened ? '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.' : '우니를 <b>꾹</b> 누르고 있으면 오늘 번호 하나를 먼저 알려 줘요.') + '</p>' +
       '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">' + (opened ? '나머지 번호 뽑으러 가기' : '추첨기로 바로 가기') + '</button></div>';
   }
@@ -2091,14 +2095,17 @@
     var btn = $('peekBtn'); if (!btn || btn.disabled) return;
     var first = nums.filter(function(o){ return o.y; })[0] || nums[0], t = null, card = $('peekCard');
     function done(){
-      t = null; card.classList.remove('hold'); card.classList.add('open'); btn.disabled = true;
+      t = null; card.classList.remove('hold'); btn.disabled = true;
       card.querySelector('.peek-ball').textContent = first.n;
-      card.querySelector('.peek-msg').innerHTML = '오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.';
+      card.querySelector('.peek-fig').innerHTML = petSVG('love', 2, 'mini');
+      card.classList.add('open');
+      if (!reduceMotion){ card.classList.add('burst'); setTimeout(function(){ card.classList.remove('burst'); }, 1400); }
+      card.querySelector('.peek-msg').innerHTML = '짠! 오늘 ' + esc(me.name) + '님의 첫 번호는 <b>' + first.n + '</b>이에요. 나머지 다섯 개는 추첨기에서 만나요.';
       $('btnGoNum').textContent = '나머지 번호 뽑으러 가기';
-      if (navigator.vibrate) try { navigator.vibrate(20); } catch (e){}
+      if (navigator.vibrate) try { navigator.vibrate([12, 40, 24]); } catch (e){}
       markTodo('peek');
     }
-    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); t = setTimeout(done, 650); }
+    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); t = setTimeout(done, 750); }
     function cancel(){ if (t){ clearTimeout(t); t = null; card.classList.remove('hold'); } }
     btn.addEventListener('pointerdown', start); btn.addEventListener('keydown', start);
     ['pointerup','pointerleave','pointercancel','keyup'].forEach(function(ev){ btn.addEventListener(ev, cancel); });
