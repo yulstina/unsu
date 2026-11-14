@@ -1921,7 +1921,7 @@
       (canDraw ? '<div class="mc-seg" role="group" aria-label="번호 종류"><button type="button" data-mk="today" aria-pressed="true">오늘 번호</button><button type="button" data-mk="life" aria-pressed="false">평생 번호</button></div>' : '') +
       '<canvas id="mcCanvas" class="mc-canvas" role="img" aria-label="로또 추첨기 일러스트. 버튼을 누르면 내 사주로 계산한 번호 6개가 하나씩 나와요."></canvas>' +
       '<span class="sr-only" id="mcResult" aria-live="polite"></span>' +
-      '<button class="btn-primary btn-block" id="btnMcDraw">' + (canDraw ? '추첨 시작' : '내 사주 등록하고 뽑기') + '</button>' +
+      '<button class="btn-primary btn-block" id="btnMcDraw">' + (canDraw ? '우니야, 오늘 번호 부탁해!' : '내 사주 등록하고 뽑기') + '</button>' +
       '<p class="helper" style="text-align:center">번호는 사주로 계산해요. 추첨 연출은 재미 요소이고 당첨을 보장하지 않아요.</p></div>';
   }
   function mountMachine(sets){
@@ -1933,16 +1933,16 @@
       b.onclick = function(){
         if (machine.isBusy()) return; kind = b.dataset.mk;
         document.querySelectorAll('[data-mk]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
-        machine.reset(); box.textContent = ''; btn.textContent = '추첨 시작';
+        machine.reset(); box.textContent = ''; btn.textContent = '우니야, 오늘 번호 부탁해!';
       };
     });
     btn.onclick = function(){
       if (!sets){ startOnboarding('new'); return; }
       if (machine.isBusy()) return;
-      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '추첨 중…'; box.textContent = '';
+      var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '우니가 고르는 중…'; box.textContent = '';
       machine.draw(nums, null, function(){
         box.textContent = '뽑힌 번호 ' + nums.slice().sort(function(a, b){ return a - b; }).join(', ');
-        btn.disabled = false; btn.textContent = '다시 뽑기';
+        btn.disabled = false; btn.textContent = '우니, 다시 뽑아줘!';
         markTodo('drawn'); revealNums();
         toast((kind === 'today' ? '오늘의' : '평생') + ' 행운 번호가 나왔어요');
         bond('num');
@@ -2004,7 +2004,7 @@
     h += '<div class="card num-wait" id="numWait"' + (drawn ? ' hidden' : '') + '><div class="balls">' + [0,1,2,3,4,5].map(function(i){ return '<div class="ball q" style="--i:' + i + '">?</div>'; }).join('') + '</div><p class="helper" style="text-align:center">추첨을 시작하면 ' + esc(me.name) + '님의 번호가 여기에 나타나요.</p></div>';
     h += '<div id="numReveal" class="num-reveal"' + (drawn ? '' : ' hidden') + '>';
     h += '<div class="card"><div class="num-set"><div class="lab">평생 행운 번호 <small>' + (store('unsu_lifeseen') ? '사주 원국 · 고정' : '금박을 눌러 벗겨 보세요') + '</small></div><div class="balls" id="lifeBalls">' + life.map(function(n){ return store('unsu_lifeseen') ? '<div class="ball">' + n + '</div>' : '<button type="button" class="ball foil" aria-label="금박 벗기기">' + n + '<i aria-hidden="true"></i></button>'; }).join('') + '</div></div>' +
-      '<div class="num-set"><div class="lab">오늘의 행운 번호 <small>행운 숫자 ' + EL_TEXT[lEl].num.join('·') + '</small></div><div class="balls">' + yong.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + EL_CLASS[lEl] : '') + '">' + o.n + '</div>'; }).join('') + '</div></div>' +
+      '<div class="num-set"><div class="lab">우니가 전하는 오늘의 행운 번호 <small>행운 숫자 ' + EL_TEXT[lEl].num.join('·') + '</small></div><div class="balls">' + yong.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + EL_CLASS[lEl] : '') + '">' + o.n + '</div>'; }).join('') + '</div></div>' +
       extra.lines.map(function(l, i){ return '<div class="num-set"><div class="lab">추가 한 줄 ' + (i+1) + ' <small>엽전 ' + EXTRA_COST + '닢</small></div><div class="balls">' + l.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div></div>'; }).join('') +
       '<button class="btn-primary btn-block sheen" id="btnNumSave">' + SAVE_IC + '보관함에 저장</button>' +
       '<div class="row" style="margin-top:8px"><button class="btn-soft grow" id="btnNumCopy">공유하기</button><button class="btn-ghost grow" id="btnExtra"' + (extra.lines.length >= 3 ? ' disabled' : '') + '>' + (extra.lines.length >= 3 ? '오늘은 다 뽑았어요' : '한 줄 더 · ' + EXTRA_COST + '닢') + '</button></div>' +
@@ -2036,7 +2036,7 @@
     $('btnNumCopy').onclick = function(){
       openShare({ sheetTitle:'행운 번호 공유', title:me.name + '님의 오늘 행운 번호', desc:yong.map(function(o){ return o.n; }).join(' · ') + ' · 행운 숫자 ' + EL_TEXT[lEl].num.join('·'),
         fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
-        text:'[우니조아] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n보너스 ' + (i+1) + ' ' + l.join(' · '); }).join(''),
+        text:'[우니조아] ' + me.name + '님의 오늘 행운 번호\n' + yong.map(function(o){ return o.n; }).join(' · ') + '\n평생 번호 ' + life.join(' · ') + extra.lines.map(function(l, i){ return '\n추가 ' + (i+1) + ' ' + l.join(' · '); }).join('') + '\n오늘도 우니조아 🍀',
         cta:'내 사주로 뽑는 행운 번호 받기 →', link:resultLink('n', todayStr(), [me]), shareEntries:[me] });
     };
   }

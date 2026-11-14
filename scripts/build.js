@@ -9,7 +9,7 @@ const CleanCSS = require('clean-css');
 const ROOT = path.join(__dirname, '..');
 const r = f => fs.readFileSync(path.join(ROOT, f.startsWith('node_modules') ? f : 'src/' + f), 'utf8');
 const OUT = path.join(ROOT, 'public');
-const SITE = 'https://unsu.vercel.app';
+const SITE = 'https://woonijoa.com';
 
 (async () => {
   ['css', 'js', 'icons'].forEach(d => fs.mkdirSync(path.join(OUT, d), { recursive: true }));

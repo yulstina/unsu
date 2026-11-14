@@ -32,7 +32,7 @@ const fs = require('fs');
     <div class="brand"><svg width="44" height="44" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#d1e4fa" stroke-width="1.4" opacity=".6"/><circle cx="20" cy="9" r="2.4" fill="#fff"/><circle cx="30" cy="26" r="1.8" fill="#98c0ef"/><circle cx="10" cy="26" r="1.8" fill="#98c0ef"/><path d="M20 9 L30 26 L10 26 Z" fill="none" stroke="#98c0ef" stroke-width=".9" opacity=".8"/></svg>Wooni<small>Joa</small></div>
     <h1>내 사주로 여는<br>오늘의 운세</h1>
     <p>만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호</p>
-    <div class="url">생년월일만 넣으면 30초 · unsu.vercel.app</div>
+    <div class="url">생년월일만 넣으면 30초 · woonijoa.com</div>
   </div>
   <div class="fig" id="fig"></div>
   <div class="hj">丙午 · 붉은 말의 해</div>
