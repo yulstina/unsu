@@ -691,7 +691,7 @@
       var rg = g.createRadialGradient(o[0],o[1],0,o[0],o[1],o[2]); rg.addColorStop(0,o[3]); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0,0,1080,1350); });
     for (var i = 0; i < 70; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
     function rr(x,y,w,h,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); }
-    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('우니조아 WooniJoa  ·  나의 사주 리포트', 540, 96);
+    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('우니조아  ·  나의 사주 리포트', 540, 96);
     g.fillStyle = '#fff'; g.font = '700 64px ' + F; g.fillText(entry.name + '님', 540, 650);
     g.fillStyle = '#c9d4ff'; g.font = '400 34px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 706);
     /* 사주 네 기둥 */
@@ -1230,8 +1230,8 @@
   function deepHTML(me, r){
     var ny = newYear(r);
     var B = [
-      { id:'dpDm', tone:'gold', badge:'HOT', title:'꿈풀이 번호받기', sub:'간밤 꿈 속 상징으로 뽑는 나만의 번호 6개', price:COST.dream + '닢', cta:'꿈 번호 받기', art:'dreamnum' },
-      { id:'dpNY', tone:'violet', badge:'무료', title:'2027 신년운세 전체', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'광고 한 편', cta:'전체 보기', art:'ny' },
+      { id:'dpDm', tone:'night', badge:'HOT', title:'꿈풀이 번호받기', sub:'간밤 꿈 속 상징으로 뽑는 나만의 번호 6개', price:COST.dream + '닢', cta:'꿈 번호 받기', art:'dreamnum' },
+      { id:'dpNY', tone:'sun', badge:'무료', title:'2027 신년운세 전체', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'광고 한 편', cta:'전체 보기', art:'ny' },
       { id:'dpGh', tone:'rose', badge:'', title:'궁합 상세 리포트', sub:'둘의 성향 차이와 잘 맞는 대화법까지', price:COST.gh + '닢', cta:'리포트 열기', art:'gh' },
       { id:'dpEz', tone:'mint', badge:'', title:'쉬운 사주 풀이', sub:'어려운 한자 없이, 내 사주를 이야기처럼', price:COST.ez + '닢', cta:'풀이 보기', art:'book' }
     ];
@@ -2125,6 +2125,7 @@
       '<canvas id="mcCanvas" class="mc-canvas" role="img" aria-label="로또 추첨기 일러스트. 버튼을 누르면 내 사주로 계산한 번호 6개가 하나씩 나와요."></canvas>' +
       '<span class="sr-only" id="mcResult" aria-live="polite"></span>' +
       '<button class="btn-primary btn-block" id="btnMcDraw">' + (canDraw ? '우니야, 오늘 번호 부탁해!' : '내 사주 등록하고 뽑기') + '</button>' +
+      '<button type="button" class="text-btn mc-skip" id="btnMcSkip" hidden>연출 건너뛰고 바로 보기</button>' +
       '<p class="helper" style="text-align:center">번호는 사주로 계산해요. 추첨 연출은 재미 요소이고 당첨을 보장하지 않아요.</p></div>';
   }
   function mountMachine(sets){
@@ -2143,7 +2144,9 @@
       if (!sets){ startOnboarding('new'); return; }
       if (machine.isBusy()) return;
       var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '우니가 고르는 중…'; box.textContent = '';
+      if ($('btnMcSkip')){ $('btnMcSkip').hidden = false; $('btnMcSkip').onclick = function(){ if (machine.skip) machine.skip(); }; }
       machine.draw(nums, null, function(){
+        if ($('btnMcSkip')) $('btnMcSkip').hidden = true;
         box.textContent = '뽑힌 번호 ' + nums.slice().sort(function(a, b){ return a - b; }).join(', ');
         btn.disabled = false; btn.textContent = '우니, 다시 뽑아줘!';
         markTodo('drawn'); revealNums();
@@ -3091,7 +3094,7 @@
       '<ul class="pay-list">' + P.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
       '<div class="pay-price">' + COIN_SVG + '<b>' + P.coin.toLocaleString() + '닢</b></div>' +
       '<button class="btn-primary btn-block" id="payGo">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : '엽전 ' + P.coin.toLocaleString() + '닢으로 열기') + '</button>' +
-      '<p class="helper pay-note">' + (guest ? '처음 로그인하면 받는 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (P.coin - coins).toLocaleString() + '닢 부족해요 · 보유 ' + coins.toLocaleString() + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 한 번 열면 ' + P.keep) + '</p></div>');
+      '<p class="helper pay-note">' + (guest ? '처음 로그인하면 받는 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (P.coin - coins).toLocaleString() + '닢 부족해요 · 보유 ' + coins.toLocaleString() + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 한 번 열면 ' + P.keep) + '</p><p class="helper pay-note" style="margin-top:2px">연 리포트는 보관함 › 열어 둔 리포트에서 다시 열 수 있어요. ' + (isGuest() || NS ? '' : '지금은 이 기기에 보관되고, 계정 연동이 열리면 기기를 바꿔도 이어져요.') + '</p></div>');
     $('payGo').onclick = function(){
       if (guest){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. ' + P.name + '은(는) ' + P.coin + '닢이에요.'); return; }
       if (short){ openCoinSheet(P.name + '을(를) 열려면 엽전이 ' + (P.coin - coins).toLocaleString() + '닢 더 필요해요.'); return; }
@@ -3301,8 +3304,8 @@
       for (var i = 0; i < 90; i++){ x.globalAlpha = .25 + rnd() * .6; x.fillStyle = '#fff'; x.beginPath(); x.arc(rnd() * W, rnd() * H, rnd() * 2.6 + .6, 0, 7); x.fill(); }
       x.globalAlpha = 1;
       x.textBaseline = 'middle';
-      x.font = '700 48px "Space Grotesk",' + FONT; x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText('Wooni', 80, 100);
-      var ww = x.measureText('Wooni').width; x.fillStyle = '#b3a8ff'; x.fillText('Joa', 80 + ww, 100);
+      x.font = '700 46px ' + FONT; x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText('우니', 80, 100);
+      var ww = x.measureText('우니').width; x.fillStyle = '#b3a8ff'; x.fillText('조아', 80 + ww, 100);
       var d = new Date(); x.font = '500 32px ' + FONT; x.fillStyle = '#cfc7f2'; x.textAlign = 'right'; x.fillText(d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate(), W - 80, 100);
       /* 유리 패널 */
       rr(70, 330, W - 140, 840, 56); x.fillStyle = 'rgba(255,255,255,.10)'; x.fill(); x.lineWidth = 2; x.strokeStyle = 'rgba(255,255,255,.28)'; x.stroke();

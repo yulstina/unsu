@@ -1,4 +1,4 @@
-<title>우니조아 WooniJoa</title>
+<title>우니조아</title>
 <meta name="theme-color" content="#0d0b1e">
 <meta name="description" content="만세력 기반 사주 풀이와 별자리 운세, 행운 번호까지 한 번에 보는 모바일 웹앱">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -265,7 +265,7 @@
   .ss p{font-size:calc(12.5px*var(--fs));color:var(--text-muted);line-height:1.55;}
 
   /* ---------- 대운 ---------- */
-  .scroller{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;padding-top:8px;margin-inline:-4px;padding-inline:4px;scroll-snap-type:x proximity;scrollbar-width:thin;}
+  .scroller{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;padding-top:8px;margin-inline:-4px;padding-inline:4px;scroll-snap-type:x proximity;}
   .du{position:relative;flex:none;width:64px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:12px;background:rgba(214,208,236,.04);box-shadow:inset 0 0 0 1px var(--border-hairline);}
   .du.now{box-shadow:inset 0 0 0 1.5px var(--violet),0 0 18px rgba(138,124,240,.35);background:rgba(138,124,240,.1);}
   .du .age{font-family:var(--font-display);font-size:calc(13px*var(--fs));color:#fff;font-variant-numeric:tabular-nums;}
@@ -1676,6 +1676,53 @@
   .dmu-list li::before{content:'✓ ';color:#ffd36b;font-weight:700;}
   .ny-free{text-align:center;} .ny-free-fig{width:92px;height:92px;margin:-4px auto 0;}
   @media (prefers-reduced-motion:no-preference){ .dmu-fig,.dmo-fig{animation:float 5s ease-in-out infinite;} }
+
+  /* ===== 2026-11-15 · 더 깊이 보기 배너 4색 (소율: 색은 다 다르게, 우니와 어울리는 배경) =====
+     우니(라벤더) 뒤에는 둥근 빛을 깔아 캐릭터가 묻히지 않게, 배경 색은 보라와 겹치지 않는 계열로 */
+  .deep-bn{isolation:isolate;}
+  .deep-bn .db-uni::before{content:'';position:absolute;inset:-6px -2px -4px;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,var(--halo,rgba(255,255,255,.55)),transparent);}
+  .deep-bn::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(1.4px 1.4px at 18% 22%,var(--dot,rgba(255,255,255,.8)),transparent),radial-gradient(1.2px 1.2px at 42% 78%,var(--dot,rgba(255,255,255,.6)),transparent),radial-gradient(1.6px 1.6px at 64% 18%,var(--dot,rgba(255,255,255,.7)),transparent),radial-gradient(1px 1px at 86% 64%,var(--dot,rgba(255,255,255,.6)),transparent);}
+  /* 꿈 번호: 깊은 밤하늘 남색 + 금빛 달무리 */
+  .deep-bn.t-night{background:radial-gradient(70% 110% at 92% 30%,rgba(255,214,120,.55),transparent 58%),linear-gradient(120deg,#0f1a4a 0%,#1e2f7a 55%,#3a4fb0 100%);--halo:rgba(255,230,160,.55);}
+  .deep-bn.t-night .db-txt b{color:#ffe08a;} .deep-bn.t-night .db-txt small{color:#d6def8;}
+  /* 신년운세: 새해 해돋이 — 다홍에서 금빛으로 */
+  .deep-bn.t-sun{background:radial-gradient(80% 120% at 88% 100%,rgba(255,236,170,.9),transparent 55%),linear-gradient(115deg,#a3263a 0%,#d9533a 50%,#f39a3d 100%);--halo:rgba(255,248,220,.7);--dot:rgba(255,240,200,.9);}
+  .deep-bn.t-sun .db-txt b{color:#fff4d6;} .deep-bn.t-sun .db-txt small{color:#ffe9dc;} .deep-bn.t-sun .db-txt b em{color:#fff4d6;box-shadow:inset 0 0 0 1.5px #fff4d6;}
+  .deep-bn.t-sun .db-cta{color:#a3263a;}
+  /* 궁합: 조아 색에 맞춘 밝은 복숭아 · 분홍 (글자는 진한 자두색) */
+  .deep-bn.t-rose{background:radial-gradient(70% 110% at 90% 40%,rgba(255,255,255,.75),transparent 60%),linear-gradient(115deg,#ffb3c7 0%,#ffc9b8 60%,#ffe2c4 100%);color:#4a1631;--halo:rgba(255,255,255,.85);--dot:rgba(255,255,255,.95);}
+  .deep-bn.t-rose .db-txt b{color:#7a1d45;} .deep-bn.t-rose .db-txt small{color:#5e2a42;}
+  .deep-bn.t-rose .db-cta{background:#7a1d45;color:#fff;}
+  /* 쉬운 사주 풀이: 맑은 민트 숲 (글자는 진한 청록) */
+  .deep-bn.t-mint{background:radial-gradient(70% 110% at 90% 40%,rgba(255,255,255,.7),transparent 60%),linear-gradient(115deg,#7fe0c4 0%,#a8ecd6 55%,#d9f7e8 100%);color:#0d3b33;--halo:rgba(255,255,255,.85);--dot:rgba(255,255,255,.95);}
+  .deep-bn.t-mint .db-txt b{color:#0b4a3e;} .deep-bn.t-mint .db-txt small{color:#1f5248;}
+  .deep-bn.t-mint .db-cta{background:#0b4a3e;color:#fff;}
+  .deep-bn.t-rose .db-txt b em,.deep-bn.t-mint .db-txt b em{color:#d1452f;box-shadow:inset 0 0 0 1.5px #d1452f;}
+  .deep-bn.t-night .db-txt b em{color:#ffb27a;box-shadow:inset 0 0 0 1.5px #ffb27a;}
+  .brand>span,.intro-name>span{font-weight:700;letter-spacing:-.03em;}
+
+  /* ===== 2026-11-15 · 스크롤바 (소율: 얇고 깔끔하게) =====
+     Chromium·Safari: ::-webkit-scrollbar(화살표 없음) · Firefox: scrollbar-width/color
+     얇은 반투명 라벤더 막대, 화살표 없음, 평소엔 흐리고 마우스를 올리면 진해짐. 터치 스크롤은 그대로 */
+  :root{--sb-thumb:rgba(190,176,255,.28);--sb-thumb-hover:rgba(206,194,255,.55);}
+  /* Chrome 121+는 scrollbar-width를 쓰면 ::-webkit-scrollbar를 무시하고 화살표가 남는다 → 표준 속성은 Firefox에만 */
+  @supports not selector(::-webkit-scrollbar){
+    *{scrollbar-width:thin;scrollbar-color:var(--sb-thumb) transparent;}
+    *:hover{scrollbar-color:var(--sb-thumb-hover) transparent;}
+  }
+  ::-webkit-scrollbar{width:10px;height:10px;background:transparent;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--sb-thumb);border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px;}
+  ::-webkit-scrollbar-thumb:hover{background-color:var(--sb-thumb-hover);}
+  ::-webkit-scrollbar-button,::-webkit-scrollbar-corner{display:none;width:0;height:0;background:transparent;}
+  /* 시트: 둥근 위 모서리에 막대가 걸리지 않게 위아래 여백, 안쪽 스크롤이 페이지로 새지 않게 */
+  .sheet{overscroll-behavior:contain;scrollbar-gutter:stable;}
+  .sheet::-webkit-scrollbar-track{margin:22px 0 12px;}
+  /* 가로로 넘기는 칩·카드 줄은 막대를 숨긴다(손가락·트랙패드로 넘김) */
+  .cat-chips,.cat-next>div{scrollbar-width:none;} .cat-chips::-webkit-scrollbar,.cat-next>div::-webkit-scrollbar{display:none;}
+  /* 마우스로 넘겨야 하는 가로 목록(대운 등)은 얇은 막대를 남기되 평소엔 거의 안 보이게 */
+  @supports not selector(::-webkit-scrollbar){ .scroller,#duScroll{scrollbar-color:transparent transparent;} .scroller:hover,#duScroll:hover{scrollbar-color:var(--sb-thumb-hover) transparent;} }
+  .scroller::-webkit-scrollbar-thumb,#duScroll::-webkit-scrollbar-thumb{background-color:transparent;} .scroller:hover::-webkit-scrollbar-thumb,#duScroll:hover::-webkit-scrollbar-thumb{background-color:var(--sb-thumb-hover);}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -1693,7 +1740,7 @@
 <header class="topbar">
   <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="우니조아 홈으로" style="cursor:pointer">
     <img class="brand-woni" src="img/u-calm.webp" width="30" height="30" alt="" aria-hidden="true" draggable="false">
-    <span>Wooni<span class="bp">Joa</span></span>
+    <span>우니<span class="bp">조아</span></span>
   </div>
   <div class="top-actions">
     <button class="start-chip" id="startChip" hidden>시작하기</button>
@@ -1905,7 +1952,7 @@
 <div class="intro" id="intro" hidden aria-hidden="true">
   <div class="intro-in">
     <img class="intro-logo intro-woni" src="img/u-calm.webp" width="400" height="400" alt="" draggable="false">
-    <div class="intro-name"><span>Wooni<span class="bp">Joa</span></span></div>
+    <div class="intro-name"><span>우니<span class="bp">조아</span></span></div>
     <div class="intro-sub" id="introSub">태어난 순간의 하늘로 읽는 오늘</div>
   </div>
 </div>

@@ -3,12 +3,13 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 (async () => {
   const ROOT = __dirname + '/..';
+  const uniB64 = n => 'data:image/webp;base64,' + fs.readFileSync(ROOT + '/src/img/' + n + '.webp').toString('base64');
   const figs = fs.readFileSync(ROOT + '/src/figures.js', 'utf8');
   const rend = fs.readFileSync(ROOT + '/src/render.js', 'utf8');
   const stars = Array.from({ length: 90 }, () => { const x = Math.random() * 1200, y = Math.random() * 420, r = Math.random() * 1.3 + .4, o = Math.random() * .6 + .25; return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="#e2f0ff" opacity="${o.toFixed(2)}"/>`; }).join('');
   const html = `<html><head><style>
   *{margin:0;box-sizing:border-box}
-  body{width:1200px;height:630px;overflow:hidden;background:#0d0b1e;font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif;color:#d8ecf8;position:relative}
+  body{width:1200px;height:630px;overflow:hidden;background:#0d0b1e;font-family:'Pretendard','Noto Sans CJK KR','Noto Sans CJK JP',sans-serif;color:#d8ecf8;position:relative}
   .aur{position:absolute;inset:0;background:
     radial-gradient(38% 70% at 12% 110%,rgba(170,160,240,.6),transparent 70%),
     radial-gradient(30% 60% at 42% 115%,rgba(226,178,226,.4),transparent 70%),
@@ -23,20 +24,22 @@ const fs = require('fs');
   p{margin-top:28px;font-size:27px;color:#c7d3ea;letter-spacing:-.01em}
   .url{margin-top:44px;display:inline-flex;align-items:center;gap:10px;font-size:22px;color:#fff;padding:12px 22px;border-radius:999px;background:rgba(102,58,243,.9);font-weight:500}
   .fig{position:absolute;right:40px;top:70px;width:470px;height:470px}
-  .fig svg{width:100%;height:100%}
-  .hj{position:absolute;right:92px;bottom:54px;font-family:'Noto Serif CJK KR',serif;font-weight:700;font-size:26px;letter-spacing:.35em;color:rgba(216,236,248,.75)}
+  .fig img{width:100%;height:100%;filter:drop-shadow(0 30px 40px rgba(40,10,100,.55))}
+  .glow{position:absolute;right:20px;top:60px;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,214,120,.35),rgba(150,120,255,.18) 55%,transparent)}
+  .brand em{font-style:normal;color:#b3a8ff}
+  .brand span{font-weight:800;letter-spacing:-.03em}
+  .hj{position:absolute;right:92px;bottom:54px;font-family:'Pretendard',sans-serif;font-weight:700;font-size:26px;letter-spacing:.35em;color:rgba(216,236,248,.75)}
   </style></head><body>
   <div class="aur"></div><div class="rays"></div>
   <svg class="st" viewBox="0 0 1200 630">${stars}</svg>
   <div class="l">
-    <div class="brand"><svg width="44" height="44" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="#d1e4fa" stroke-width="1.4" opacity=".6"/><circle cx="20" cy="9" r="2.4" fill="#fff"/><circle cx="30" cy="26" r="1.8" fill="#98c0ef"/><circle cx="10" cy="26" r="1.8" fill="#98c0ef"/><path d="M20 9 L30 26 L10 26 Z" fill="none" stroke="#98c0ef" stroke-width=".9" opacity=".8"/></svg>Wooni<small>Joa</small></div>
-    <h1>내 사주로 여는<br>오늘의 운세</h1>
-    <p>만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호</p>
-    <div class="url">생년월일만 넣으면 30초 · woonijoa.com</div>
+    <div class="brand"><img src="${uniB64('u-calm')}" width="52" height="52"><span>우니<em>조아</em></span></div>
+    <h1>내 사주로 뽑는<br>여섯 개의 행운 번호</h1>
+    <p>오늘의 운세 · 꿈 해몽 · 궁합 · 2027 신년운세</p>
+    <div class="url">생년월일만 넣으면 무료 · woonijoa.com</div>
   </div>
-  <div class="fig" id="fig"></div>
-  <div class="hj">丙午 · 붉은 말의 해</div>
-  <script>${figs}\n${rend}; document.getElementById('fig').innerHTML = figSVG('말','fire');</script>
+  <div class="glow"></div><div class="fig"><img src="${uniB64('u-ball')}"></div>
+  <div class="hj">2027 丁未 · 붉은 양의 해</div>
   </body></html>`;
   const b = await chromium.launch();
   const p = await b.newPage({ viewport:{ width:1200, height:630 }, deviceScaleFactor:1 });
