@@ -97,7 +97,7 @@ var LottoMachine = (function(){
       rr(76, 208, 168, 8, 4); ctx.fillStyle = 'rgba(234,197,111,.35)'; ctx.fill();
       /* 이름판 */
       rr(112, 224, 96, 24, 12); ctx.fillStyle = 'rgba(10,8,32,.65)'; ctx.fill(); ctx.strokeStyle = 'rgba(234,197,111,.6)'; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = '#f3dca0'; ctx.font = '600 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Wooni 추첨기', 160, 237);
+      ctx.fillStyle = '#f3dca0'; ctx.font = '600 13px "IBM Plex Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('우니 추첨기', 160, 237);
       /* 배출구 */
       rr(138, 258, 44, 30, 10); ctx.fillStyle = '#0a0820'; ctx.fill(); ctx.strokeStyle = 'rgba(234,197,111,.5)'; ctx.stroke();
       /* 표시등 */
@@ -193,14 +193,16 @@ var LottoMachine = (function(){
     var api = {
       draw: function(nums, onBall, onDone){
         api.reset();
-        total = nums.length; cbBall = onBall; cbDone = onDone;
+        total = nums.length; cbBall = onBall; cbDone = onDone; api._all = nums.slice();
         if (reduce){ placeRackFinal(nums); state = 'done'; render(performance.now()); onDone && onDone(); return; }
         queue = nums.slice(); state = 'spin'; tStart = performance.now(); nextAt = tStart + 1300; done_burst = false;
         if (!raf) raf = requestAnimationFrame(frame);
       },
       reset: function(){ queue = []; out = []; rack = []; sparks = []; state = 'idle'; spin = 0; seedBalls(); done_burst = false; if (reduce) render(performance.now()); },
       destroy: function(){ dead = true; cancelAnimationFrame(raf); raf = 0; },
-      isBusy: function(){ return state === 'spin'; }
+      isBusy: function(){ return state === 'spin'; },
+      /* 연출 건너뛰기 (GPT 검토 7장): 남은 공을 한 번에 랙에 놓고 끝낸다 */
+      skip: function(){ if (state !== 'spin') return; queue = []; out = []; sparks = []; placeRackFinal(api._all || []); state = 'done'; render(performance.now()); var f = cbDone; cbDone = null; f && f(); }
     };
     if (reduce) render(performance.now()); else start();
     return api;
