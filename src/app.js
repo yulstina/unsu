@@ -180,8 +180,7 @@
     var r = MS.calc({ y:now.getFullYear(), m:now.getMonth()+1, d:now.getDate(), cal:'solar', hour:now.getHours(), minute:now.getMinutes(), gender:'M', lonCorr:false });
     var yb = r.error ? 6 : r.pillars.year.br;
     var an = MS.BR_ANIMAL[yb];
-    $('heroFig').innerHTML = petSVG('happy', 2, 'fig') + '<figcaption>' + (r.error ? '' : r.seun.year + ' ' + r.pillars.year.hanja + ' · ' + r.color + ' ' + an) + '</figcaption>';
-    $('heroFig').querySelector('svg').classList.add('fig');
+    $('heroFig').innerHTML = uniImg('u-ball', 'fig', '행운 번호 공을 든 우니') + '<figcaption>' + (r.error ? '' : r.seun.year + ' ' + r.pillars.year.hanja + ' · ' + r.color + ' ' + an) + '</figcaption>';
   })();
 
   /* =========================================================
@@ -263,7 +262,7 @@
   var pcMQ = window.matchMedia('(min-width:1100px)'), pcDone = false;
   function initPcSide(){
     if (pcDone || !pcMQ.matches) return; pcDone = true;
-    try { $('pcWoni').innerHTML = petSVG('happy', 2, 'fig'); } catch (e){}
+    try { $('pcWoni').innerHTML = uniImg('u-ball', 'fig', '행운 번호 공을 든 우니'); } catch (e){}
     if (!window.QRCode){ var qs = document.querySelector('.pc-side.r'); if (qs) qs.hidden = true; }
     try { if (window.QRCode) new QRCode($('pcQr'), { text:location.origin + location.pathname, width:232, height:232, colorDark:'#05060f', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); } catch (e){}
   }
@@ -640,11 +639,11 @@
     if (!ezOpen){
       var EZ = product('ez');
       h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') +
-        '<div class="card locked ez-lock"><div class="sec-head"><h2 class="sec-title">쉬운 사주 풀이</h2><span class="sec-meta">990원</span></div>' +
+        '<div class="card locked ez-lock"><div class="sec-head"><h2 class="sec-title">쉬운 사주 풀이</h2><span class="sec-meta">' + EZ.coin + '닢</span></div>' +
         '<div class="ez-art">' + tileArtSVG('book') + '</div><p class="body-text" style="text-align:center;margin:0 0 10px">어려운 한자 없이, ' + esc(entry.name) + '님의 사주를 이야기처럼 풀어 드려요.</p>' +
         '<ul class="lock-list">' + EZ.items.map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
-        '<div class="lock-cta"><button class="btn-primary" id="btnEzBuy">990원으로 풀이 열기</button><p class="helper" style="text-align:center">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
+        '<div class="lock-cta"><button class="btn-primary" id="btnEzBuy">' + COIN_SVG + '엽전 ' + EZ.coin + '닢으로 풀이 열기</button><p class="helper" style="text-align:center">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
     }
     h += '<div class="card num-cta"><div class="num-cta-q">사주를 다 봤다면,<br><em>내 번호</em>도 궁금하지 않으세요?</div>' +
       '<p class="helper">평생 번호는 사주 원국으로 한 번 정해지고, 오늘의 행운 번호는 오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자(' + EL_TEXT[lEl].num.join('·') + ')로 끝나는 번호 3개를 담아 매일 바뀌어요.</p>' +
@@ -891,11 +890,15 @@
     heart:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg>'
   };
 
+  var AD_PLAY_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="vertical-align:-4px;margin-right:6px"><rect x="3" y="5" width="18" height="14" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>';
   var COIN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="9.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
   var LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
-  var CAT_COST = 100;   /* 2026-11-15 소율: 분야별 운세 분야당 100닢 */
+  /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
+     값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
+  var COST = { cat:100, extra:100, dream:200, gh:100, ez:100 };
+  var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
   function isGuest(){ return !NS && !store('unsu_auth'); }
@@ -1010,14 +1013,16 @@
   $('sheet').addEventListener('click', function(e){ if (e.target.closest('[data-close]')) closeSheet(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ closeSheet(); } });
 
-  /* ---- 보상형 광고 목업: 끝까지 봐야 보상 ---- */
+  /* ---- 보상형 광고: 끝까지 봐야 보상 ----
+     지금은 목업(5초). 실제 광고는 Google Ad Manager '보상형 웹 광고'(rewardedSlotReady → rewardedSlotGranted) 승인 뒤
+     이 함수 안만 바꾸면 신년운세·엽전 보상이 그대로 이어진다. msg: 시작 안내 문구 */
   var adTimer = 0, adDone = null, adFinished = false;
-  function playAd(onReward){
+  function playAd(onReward, msg){
     adDone = onReward; adFinished = false;
     var total = 5, left = total, ring = $('adRing');
     $('adOverlay').hidden = false; document.body.style.overflow = 'hidden';
     $('adClaim').disabled = true; $('adSec').textContent = left;
-    $('adMsg').textContent = '끝까지 보면 보상을 받을 수 있어요';
+    $('adMsg').textContent = msg || '끝까지 보면 보상을 받을 수 있어요';
     ring.style.transition = 'none'; ring.style.strokeDashoffset = '326.7';
     clearInterval(adTimer);
     adTimer = setInterval(function(){
@@ -1037,10 +1042,11 @@
 
   $('coinChip').onclick = function(){ openCoinSheet(); };
   $('fsBtn').onclick = openFsSheet;
-  /* 엽전 충전소 — 패키지 가격은 제안값(결제 연동은 2차, 1월) */
+  /* 엽전 충전소 — 유료 콘텐츠는 전부 여기서 충전한 엽전으로 연다(2026-11-15). 패키지 가격은 제안값.
+     PAY_READY(토스 연결) 전에는 결제 버튼을 '준비 중'으로 잠근다 — GPT 검토 P0-1: 판매 전 버튼이 살아 보이면 안 됨 */
   var COIN_PACKS = [
     { id:'p300', n:300, b:0, p:3300 },
-    { id:'p1000', n:1000, b:100, p:9900, hot:true },
+    { id:'p1000', n:1000, b:100, p:9900, hot:true },   /* '추천' 표시 — 실제 판매 집계 전이라 '인기 1위' 같은 말은 쓰지 않는다 */
     { id:'p2000', n:2000, b:300, p:18900, tag:'+15%' },
     { id:'p5000', n:5000, b:1000, p:44000, tag:'최대 혜택' }
   ];
@@ -1050,20 +1056,22 @@
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
     var won = function(n){ return n.toLocaleString() + '원'; };
-    var h = '<div class="cs-head"><h3 id="sheetTitle">엽전 충전소</h3><div class="cs-bal">' + COIN_SVG + '<span>내 엽전</span><b>' + getCoins().toLocaleString() + '닢</b></div></div>' +
+    var h = '<div class="sheet-fig">' + uniImg('u-money') + '</div><div class="cs-head"><h3 id="sheetTitle">엽전 충전소</h3><div class="cs-bal">' + COIN_SVG + '<span>내 엽전</span><b>' + getCoins().toLocaleString() + '닢</b></div></div>' +
       (typeof reason === 'string' ? '<p class="cs-reason">' + reason + '</p>' : '') +
       '<div class="cs-packs" role="radiogroup" aria-label="엽전 패키지">' + COIN_PACKS.map(function(k){
         return '<button type="button" role="radio" class="cs-pack' + (k.hot ? ' hot' : '') + (k.id === coinPick ? ' on' : '') + '" data-pack="' + k.id + '" aria-checked="' + (k.id === coinPick) + '">' +
-          (k.hot ? '<span class="cs-badge">인기 1위</span>' : k.tag ? '<span class="cs-badge sub">' + k.tag + '</span>' : '') +
+          (k.hot ? '<span class="cs-badge">추천</span>' : k.tag ? '<span class="cs-badge sub">' + k.tag + '</span>' : '') +
           '<span class="cs-coin">' + COIN_SVG + '</span><span class="cs-n"><b>' + k.n.toLocaleString() + '닢</b>' + (k.b ? '<small>+' + k.b.toLocaleString() + ' 보너스</small>' : '<small>기본</small>') + '</span>' +
-          '<span class="cs-p">' + won(k.p) + (k.hot ? '<small>가장 많이 골라요</small>' : '') + '</span></button>';
+          '<span class="cs-p">' + won(k.p) + '<small>1닢 ' + (k.p / (k.n + k.b)).toFixed(1) + '원</small></span></button>';
       }).join('') + '</div>' +
       '<button class="btn-primary btn-block" id="csBuy"></button>' +
-      '<p class="helper" style="text-align:center;margin:8px 0 18px">카드 결제는 1월에 열려요. 그동안은 아래 방법으로 무료로 모을 수 있어요.</p>' +
+      '<p class="helper" style="text-align:center;margin:8px 0 18px">' + (PAY_READY ? '토스페이먼츠로 안전하게 결제돼요 · 쓰지 않은 엽전은 7일 안에 환불돼요' : '카드 결제를 연결하고 있어요. 열리기 전까지는 아래 방법으로 무료로 모을 수 있어요.') + '</p>' +
       '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
-      '<div><span>분야별 운세</span><b>' + CAT_COST + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +
-      '<div><span>꿈 해몽</span><b>' + DM.cost + '닢</b><small>꿈 하나 풀이</small></div>' +
-      '<div><span>번호 한 줄 더</span><b>' + EXTRA_COST + '닢</b><small>하루 3줄까지</small></div></div>' +
+      '<div class="hot"><span>꿈풀이 번호받기</span><b>' + COST.dream + '닢</b><small>꿈 하나 · 번호 6개</small></div>' +
+      '<div><span>분야별 운세</span><b>' + COST.cat + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +
+      '<div><span>궁합 상세</span><b>' + COST.gh + '닢</b><small>두 사람 · 계속 보기</small></div>' +
+      '<div><span>쉬운 사주 풀이</span><b>' + COST.ez + '닢</b><small>저장한 사람 모두</small></div>' +
+      '<div><span>번호 한 줄 더</span><b>' + COST.extra + '닢</b><small>하루 3줄까지</small></div></div>' +
       '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
       '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
       '<div class="earn-row"><div><div class="t">7일 연속 보너스 +30</div><div class="s">' + (left === 7 ? '이번 주기 보너스를 받았어요' : '앞으로 ' + left + '일 더 출석하면 받아요') + '</div></div><button class="btn-ghost" id="csCal" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">캘린더</button></div>' +
@@ -1073,7 +1081,7 @@
       (log.length ? log.slice(0, 8).map(function(x){ var d = new Date(x.t); return '<div><span>' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + esc(x.why) + '</span><b class="' + (x.n < 0 ? 'minus' : '') + '">' + (x.n > 0 ? '+' : '') + x.n + '</b></div>'; }).join('') : '<div><span>아직 내역이 없어요</span></div>') +
       '</div><button class="btn-ghost btn-block" data-close>닫기</button>';
     openSheet(h);
-    var setBuy = function(){ var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0]; $('csBuy').innerHTML = (k.n + k.b).toLocaleString() + '닢 · ' + won(k.p) + ' 결제하기'; };
+    var setBuy = function(){ var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0]; $('csBuy').disabled = !PAY_READY && !NS; $('csBuy').innerHTML = (PAY_READY || NS) ? (k.n + k.b).toLocaleString() + '닢 · ' + won(k.p) + ' 충전하기' : '결제 준비 중 · ' + (k.n + k.b).toLocaleString() + '닢 ' + won(k.p); };
     setBuy();
     $('sheetBody').querySelectorAll('[data-pack]').forEach(function(btn){
       btn.onclick = function(){
@@ -1082,7 +1090,12 @@
         setBuy();
       };
     });
-    $('csBuy').onclick = function(){ toast('엽전 구매는 1월에 열려요. 지금은 출석·꾹 뽑기로 모아 주세요'); };
+    $('csBuy').onclick = function(){
+      var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0];
+      if (NS){ addCoins(k.n + k.b, '충전(예시)'); toast('예시 모드라 결제 없이 ' + (k.n + k.b).toLocaleString() + '닢을 채웠어요'); openCoinSheet(); return; }
+      if (!PAY_READY) return;
+      /* TODO(토스페이먼츠): 결제위젯 요청(orderName=k.n+k.b+'닢') → /api/pay/confirm 서버 승인 → 서버가 엽전 적립 → addCoins 동기화 */
+    };
     $('csAd').onclick = function(){
       if (adCount() >= AD_LIMIT) return;
       closeSheet();
@@ -1140,7 +1153,7 @@
   }
   function openAttSheet(me, r){
     calOffset = 0;
-    openSheet('<h3 id="sheetTitle">운세 캘린더</h3><p class="helper" style="margin:-10px 0 16px">출석한 날의 운세는 언제든 다시 볼 수 있어요. 매일 +10닢, 7일 연속이면 +30닢.</p><div id="calWrap" class="view" style="gap:14px">' + calendarHTML() + '</div><button class="btn-primary btn-block" data-close style="margin-top:18px">확인</button>');
+    openSheet('<div class="sheet-fig">' + uniImg('u-attend') + '</div><h3 id="sheetTitle">운세 캘린더</h3><p class="helper" style="margin:-10px 0 16px">출석한 날의 운세는 언제든 다시 볼 수 있어요. 매일 +10닢, 7일 연속이면 +30닢.</p><div id="calWrap" class="view" style="gap:14px">' + calendarHTML() + '</div><button class="btn-primary btn-block" data-close style="margin-top:18px">확인</button>');
     justStamped = false;
     bindCalendar(me, r);
   }
@@ -1217,9 +1230,10 @@
   function deepHTML(me, r){
     var ny = newYear(r);
     var B = [
-      { id:'dpNY', tone:'gold', badge:'NEW', title:'2027 신년운세 자세히', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'5,500원', cta:'자세히 보기', art:'ny' },
-      { id:'dpGh', tone:'rose', badge:'', title:'궁합 상세 리포트', sub:'둘의 성향 차이와 잘 맞는 대화법까지', price:'990원', cta:'리포트 열기', art:'gh' },
-      { id:'dpEz', tone:'mint', badge:'', title:'쉬운 사주 풀이', sub:'어려운 한자 없이, 내 사주를 이야기처럼', price:'990원', cta:'풀이 보기', art:'book' }
+      { id:'dpDm', tone:'gold', badge:'HOT', title:'꿈풀이 번호받기', sub:'간밤 꿈 속 상징으로 뽑는 나만의 번호 6개', price:COST.dream + '닢', cta:'꿈 번호 받기', art:'dreamnum' },
+      { id:'dpNY', tone:'violet', badge:'무료', title:'2027 신년운세 전체', sub:'#' + ny.kw.join(' #') + ' · 12개월 흐름', price:'광고 한 편', cta:'전체 보기', art:'ny' },
+      { id:'dpGh', tone:'rose', badge:'', title:'궁합 상세 리포트', sub:'둘의 성향 차이와 잘 맞는 대화법까지', price:COST.gh + '닢', cta:'리포트 열기', art:'gh' },
+      { id:'dpEz', tone:'mint', badge:'', title:'쉬운 사주 풀이', sub:'어려운 한자 없이, 내 사주를 이야기처럼', price:COST.ez + '닢', cta:'풀이 보기', art:'book' }
     ];
     var IC = { star:TIP_IC.star, heart:CAT_IC.heart, scroll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13"/></svg>' };
     return '<section class="deep" aria-label="더 깊이 보기"><div class="deep-head"><h2 class="sec-title">더 깊이 보기</h2><small>궁금한 운, 하나 더 깊게</small></div>' +
@@ -1228,7 +1242,7 @@
           '<span class="db-cta">' + b.price + ' · ' + b.cta + ' →</span></span>' +
           '<span class="db-uni" aria-hidden="true">' + tileArtSVG(b.art) + '</span></button>';
       }).join('') +
-      '<button type="button" class="deep-set" id="dpSet"><span><b>3종 한 번에</b> 신년운세 · 궁합 상세 · 쉬운 풀이</span><span class="ds-p"><s>7,480원</s> 6,900원 ›</span></button></section>';
+      '<button type="button" class="deep-set" id="dpSet"><span><b>엽전 충전소</b> 내 엽전 ' + (isGuest() ? '0' : getCoins().toLocaleString()) + '닢 · 충전하고 더 깊게</span><span class="ds-p">충전 ›</span></button></section>';
   }
   function nyCardHTML(me, r){
     var ny = newYear(r);
@@ -1292,7 +1306,7 @@
   }
   function openNYSheet(me, r){
     setTimeout(function(){ bond('ny'); }, 900);
-    var ny = newYear(r), sc = nyScores(me, r), open = owns('ny');
+    var ny = newYear(r), sc = nyScores(me, r), open = nyOpen(me);
     var bars = '', FREE_M = 3;
     for (var i = 0; i < 12; i++){
       bars += (i < FREE_M || open)
@@ -1301,7 +1315,7 @@
     }
     var fields = Object.keys(sc.f).map(function(k){ return '<div class="nf"><span>' + k + '</span><i><u style="width:' + sc.f[k] + '%"></u></i><b>' + sc.f[k] + '</b></div>'; }).join('');
     var chap = NY_CHAPTERS.map(function(c, i){ return '<li class="nc"><div class="nc-h"><span>' + (i + 2) + '장 · ' + c.t + '</span>' + LOCK_SVG + '</div><p class="ny-blur" aria-hidden="true">' + c.pv + '</p></li>'; }).join('');
-    openSheet('<h3 id="sheetTitle">' + esc(me.name) + '님의 2027 신년운세</h3>' +
+    openSheet('<div class="sheet-fig">' + uniImg('u-newyear') + '</div><h3 id="sheetTitle">' + esc(me.name) + '님의 2027 신년운세</h3>' +
       '<p class="helper" style="margin:-4px 0 12px">' + r.pillars.day.name + '(' + r.pillars.day.hanja + ')일주 기준 · 만세력으로 계산 · ' + (open ? '전체 열림' : '총평과 1~3월 무료') + '</p>' +
       '<div class="ny-score"><div class="big"><b>' + sc.total + '</b><span>점</span><small>2027년 흐름</small></div><div class="nfs">' + fields + '</div></div>' +
       '<div class="ny-open"><b style="color:#f3dca0">1장 · 2027년 한 해의 흐름</b><br>' +
@@ -1310,17 +1324,26 @@
       '<h4 class="ny-h">월별 흐름 <small>' + (open ? '1~12월' : '1~3월 무료 · 4~12월은 전체 보기에서') + '</small></h4><div class="ny-months">' + bars + '</div>' +
       (open ? nyFullHTML(me, r, sc) + adSlotHTML('신년운세를 다 본 뒤')
         : '<h4 class="ny-h">전체 보기에서 열려요 <small>2~7장</small></h4><ul class="ny-chaps">' + chap + '</ul>' +
-          '<div class="ny-free"><b>2027 신년운세 전체 · 5,500원</b><p class="helper">4~12월 흐름과 2~7장이 모두 열리고, 한 번 열면 언제든 다시 볼 수 있어요.</p>' +
-          '<button class="btn-primary btn-block" id="btnNYBuy">5,500원으로 전체 보기</button></div>') +
+          '<div class="ny-free"><div class="ny-free-fig">' + uniImg('u-newyear') + '</div><b>광고 한 편 보면 전체가 무료로 열려요</b><p class="helper">4~12월 흐름과 2~7장(재물·직업·연애·건강·행운 처방·월별 번호)이 모두 열리고, ' + esc(me.name) + '님 신년운세는 계속 다시 볼 수 있어요.</p>' +
+          '<button class="btn-primary btn-block sheen" id="btnNYBuy">' + AD_PLAY_SVG + '광고 보고 전체 무료로 보기</button></div>') +
       '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button>');
-    if (!open) $('btnNYBuy').onclick = function(){ openPaySheet('ny', { onPaid:function(){ openNYSheet(me, r); } }); };
+    if (!open) $('btnNYBuy').onclick = function(){
+      closeSheet();
+      playAd(function(){ setNyOpen(me); toast('2027 신년운세 전체가 열렸어요'); openNYSheet(me, r); }, '끝까지 보면 신년운세 전체가 열려요');
+    };
+  }
+  /* 신년운세 전체 = 광고 시청(사람별, 한 번 열면 계속). 예시 모드도 광고 연출은 보여 준다 */
+  function nyOpen(me){ var o = store('unsu_ny_open'); return !!(o && typeof o === 'object' && me && o[me.id]); }
+  function setNyOpen(me){ var o = store('unsu_ny_open'); if (!o || typeof o !== 'object') o = {}; o[me.id] = Date.now(); store('unsu_ny_open', o);
   }
 
   /* =========================================================
-     꿈 해몽 번호 — 재미로 보는 꿈풀이 (엽전 소모형, 공유 없음)
+     꿈풀이 번호받기 (2026-11-15 소율: 단순 해몽이 아니라 '번호받기'가 유료 훅)
+     · 무료: 해몽 사전 풀이(제목·요약·상징 뜻) — 검색 유입·체류용, 비로그인도 가능, 분석 중 광고 1개
+     · 엽전 COST.dream: AI 정밀 풀이 + 상징별 숫자 + 꿈 번호 6개 (무료 결과에서 바로 이어서 받을 수도 있음)
      입력 → 경고문 확인 → 엽전 차감(또는 1회권) → /api/dream(AI) → 실패 시 자체 사전 풀이
      ========================================================= */
-  var DM = { cost:300, min:10, max:500 };
+  var DM = { cost:COST.dream, min:10, max:500 };
   var DM_BAN = /(씨발|시발|ㅅㅂ|병신|ㅂㅅ|좆|개새|지랄|미친놈|미친년|느금|니애미|애미|섹스|자살)/;
   var DM_PHONE = /01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}/;
   var DM_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/><path d="M15.5 4.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>';
@@ -1362,7 +1385,7 @@
     var guest = isGuest(), cp = dmCoupon(), coins = getCoins(), past = getDreams(), draft = store('unsu_dmdraft') || '';
     dmAgree = false;
     var ready = dmReady();
-    var h = '<div class="flow-header"><button class="icon-back" id="btnDmBack" aria-label="뒤로">‹</button><span class="ttl">꿈 해몽 번호</span>' + (dmCtx.theme ? '<button class="btn-ghost" id="btnDmReset" style="padding:8px 14px;font-size:calc(12.5px*var(--fs))">처음부터</button>' : '') + '</div>' +
+    var h = '<div class="flow-header"><button class="icon-back" id="btnDmBack" aria-label="뒤로">‹</button><span class="ttl">꿈풀이 번호받기</span>' + (dmCtx.theme ? '<button class="btn-ghost" id="btnDmReset" style="padding:8px 14px;font-size:calc(12.5px*var(--fs))">처음부터</button>' : '') + '</div>' +
       '<div class="card dmc" id="dmChat">' + dmChatHTML() + '</div>';
     if (ready){
       h += '<div class="card dm-card"><label class="dm-lab" for="dmText">내 꿈 이야기</label>' +
@@ -1371,19 +1394,21 @@
         '<div class="dm-meta"><span class="helper">꿈속 기분까지 적으면 더 자세히 풀려요</span><span class="dm-count" id="dmCount">0/' + DM.max + '</span></div>' +
         '<p class="field-hint" id="dmHint" role="alert"></p></div>' +
         '<div class="dm-warn" role="note"><details><summary>' + LOCK_SVG + '꿈풀이 전에 꼭 읽어 주세요 ›</summary><ul>' +
-          '<li><strong>꿈풀이 하러 가기를 누르면 엽전 ' + DM.cost + '닢이 바로 쓰여요.</strong> 풀이는 누르는 즉시 만들어지는 디지털 콘텐츠라, 시작된 뒤에는 엽전을 돌려드리지 않아요.</li>' +
+          '<li><strong>해몽만 보기는 무료예요.</strong> <strong>꿈 번호 받기를 누르면 엽전 ' + DM.cost + '닢이 바로 쓰여요.</strong> 번호 풀이는 누르는 즉시 만들어지는 디지털 콘텐츠라, 시작된 뒤에는 엽전을 돌려드리지 않아요. 오류로 결과가 안 나오면 엽전을 돌려드려요.</li>' +
           '<li>욕설·비방·성적인 표현, 특정인을 해치거나 깎아내리는 내용은 풀이하지 않아요. 이런 글은 엽전이 쓰이기 전에 막혀요.</li>' +
           '<li>전화번호·주소·주민번호 같은 개인정보는 적지 마세요. 적은 글은 풀이를 만드는 데만 쓰고(AI 풀이 서비스로 전송), 결과는 이 기기에만 보관돼요.</li>' +
           '<li>꿈 해몽과 번호는 재미로 즐기는 콘텐츠예요. 미래를 예언하거나 복권 당첨을 보장하지 않아요. 복권은 만 19세 이상만 살 수 있어요.</li>' +
         '</ul></details></div>' +
         '<button type="button" class="unk-btn" id="dmAgree" aria-pressed="false"><span>위 내용을 확인했어요</span><span class="ck"></span></button>' +
-        '<div class="dm-pay">' + (guest ? '<span>로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 · 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번</span>'
+        '<div class="dm-offer"><div class="dmo-fig">' + uniImg('u-ball') + '</div><div><b>이 꿈으로 번호 6개 받기</b><ul><li>AI가 꿈 장면을 하나하나 읽어요</li><li>상징마다 숫자를 찾아 <em>꿈 번호 6개</em>로</li><li>보관함에 저장해 두고 다시 보기</li></ul></div></div>' +
+        '<div class="dm-pay">' + (guest ? '<span>로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 · 꿈 번호 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번</span>'
           : cp ? '<span class="pet-ticket sm"><small>COUPON</small><b>' + esc(cp.name) + ' 사용</b><span>이번 풀이는 엽전이 쓰이지 않아요</span></span>'
-          : '<span>' + COIN_SVG + '내 엽전 <b>' + coins.toLocaleString() + '닢</b></span><span>이번 풀이 <b>' + DM.cost + '닢</b></span>') + '</div>' +
-        '<button class="btn-primary btn-block sheen" id="btnDmGo" disabled>' + DM_IC + '꿈풀이 하러 가기' + (guest || cp ? '' : ' · ' + DM.cost + '닢') + '</button>';
+          : '<span>' + COIN_SVG + '내 엽전 <b>' + coins.toLocaleString() + '닢</b></span><span>꿈 번호 <b>' + DM.cost + '닢</b></span>') + '</div>' +
+        '<button class="btn-primary btn-block sheen" id="btnDmGo" disabled>' + DM_IC + '꿈풀이 번호받기' + (guest || cp ? '' : ' · ' + DM.cost + '닢') + '</button>' +
+        '<button class="btn-ghost btn-block dm-free" id="btnDmFree" disabled>번호 없이 해몽만 무료로 보기</button>';
     }
     if (past.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">지난 꿈풀이</h2><span class="sec-meta">' + past.length + '개 · 이 기기</span></div><div class="dm-past">' +
-      past.map(function(d, i){ return '<button type="button" data-dm="' + i + '"><b>' + esc(d.title) + '</b><span>' + fmtDate(d.at) + ' · ' + d.picks.join(' ') + '</span></button>'; }).join('') + '</div></div>';
+      past.map(function(d, i){ return '<button type="button" data-dm="' + i + '"><b>' + esc(d.title) + '</b><span>' + fmtDate(d.at) + ' · ' + (d.free ? '해몽만 · 번호 받기 전' : d.picks.join(' ')) + '</span></button>'; }).join('') + '</div></div>';
     $('dmInput').innerHTML = h;
     $('btnDmBack').onclick = function(){ go('today'); };
     if ($('btnDmReset')) $('btnDmReset').onclick = function(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); };
@@ -1404,64 +1429,71 @@
       $('dmCount').textContent = n + '/' + DM.max;
       var bad = DM_BAN.test(v) ? '욕설이나 비방으로 보이는 표현이 있어요. 지우고 다시 적어 주세요.' : DM_PHONE.test(v) ? '전화번호 같은 개인정보는 지워 주세요.' : '';
       $('dmHint').textContent = bad;
-      $('btnDmGo').disabled = !dmAgree || v.length < DM.min || !!bad;
+      $('btnDmGo').disabled = $('btnDmFree').disabled = !dmAgree || v.length < DM.min || !!bad;
       try { store('unsu_dmdraft', ta.value); } catch (e) {}
     }
     ta.oninput = sync; sync();
     $('dmAgree').onclick = function(){ dmAgree = !dmAgree; this.setAttribute('aria-pressed', String(dmAgree)); this.querySelector('.ck').innerHTML = dmAgree ? OK_SVG : ''; sync(); };
-    $('btnDmGo').onclick = function(){ dreamGo(ta.value.trim()); };
+    $('btnDmGo').onclick = function(){ dreamGo(ta.value.trim(), true); };
+    $('btnDmFree').onclick = function(){ dreamGo(ta.value.trim(), false); };
   }
   function dmScroll(){
     var t = $('dmText') || $('dmName') || document.querySelector('#dmChat .dmc-chips');
     if (t) t.scrollIntoView({ block:'center', behavior: reduceMotion ? 'auto' : 'smooth' });
   }
-  function dreamGo(text){
+  function dreamGo(text, paid){
     if (text.length < DM.min){ $('dmHint').textContent = DM.min + '자 이상 적어 주세요.'; return; }
-    if (isGuest()){ openLoginSheet('꿈풀이는 로그인하고 엽전으로 볼 수 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번을 볼 수 있는 만큼이에요.'); return; }
+    if (!paid){ dreamRun(text, false); return; }
+    if (isGuest()){ openLoginSheet('꿈 번호 받기는 로그인하고 엽전으로 볼 수 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번을 볼 수 있는 만큼이에요.'); return; }
     var cp = dmCoupon();
     if (!cp && getCoins() < DM.cost){ dreamShortSheet(); return; }
     if (!dmCtx.who && !DREAM.find(DREAM.maskName(text, dmCtx.name)).length && text.length < 40){
       openSheet('<h3 id="sheetTitle">꿈속 장면을 조금 더 적어 볼까요?</h3><p class="body-text">지금 글에서는 풀이할 상징이 잘 보이지 않아요. 등장한 동물·사람·물건이나 꿈속 기분을 한두 줄 더 적으면 훨씬 자세히 풀려요.</p>' +
         '<button class="btn-primary btn-block" data-close>더 적을게요</button><button class="text-btn" id="btnDmAnyway">이대로 풀기 · ' + (cp ? '1회권 사용' : DM.cost + '닢') + '</button>');
-      $('btnDmAnyway').onclick = function(){ closeSheet(); dreamRun(text); };
+      $('btnDmAnyway').onclick = function(){ closeSheet(); dreamRun(text, true); };
       return;
     }
-    dreamRun(text);
+    dreamRun(text, true);
   }
   function dreamShortSheet(){
     var left = AD_LIMIT - adCount();
-    openSheet('<h3 id="sheetTitle">엽전이 조금 모자라요</h3><p class="body-text">꿈풀이에는 엽전 ' + DM.cost + '닢이 필요해요. 지금 ' + getCoins().toLocaleString() + '닢이 있어요.</p>' +
+    openSheet('<div class="short-fig">' + uniImg('u-money') + '</div><h3 id="sheetTitle">엽전이 조금 모자라요</h3><p class="body-text">꿈 번호 받기에는 엽전 ' + DM.cost + '닢이 필요해요. 지금 ' + getCoins().toLocaleString() + '닢이 있어요.</p>' +
       '<ul class="dm-tips">' +
         '<li><b>광고 보고 모으기</b><span>한 편에 ' + AD_REWARD + '닢 · 오늘 ' + Math.max(0, left) + '번 남음</span></li>' +
         '<li><b>매일 출석</b><span>하루 10닢 · 7일 연속이면 +30닢</span></li>' +
         '<li><b>우니와 교감</b><span>게이지를 채우면 꿈풀이 1회권</span></li></ul>' +
-      '<button class="btn-primary btn-block" id="btnDmAd"' + (left > 0 ? '' : ' disabled') + '>' + (left > 0 ? '광고 보고 엽전 ' + AD_REWARD + '닢 받기' : '오늘 광고 보상을 모두 받았어요') + '</button>' +
+      '<button class="btn-primary btn-block" id="btnDmCharge">엽전 충전소 가기</button>' +
+      '<button class="btn-ghost btn-block" id="btnDmAd" style="margin-top:8px"' + (left > 0 ? '' : ' disabled') + '>' + (left > 0 ? AD_PLAY_SVG + '광고 보고 엽전 ' + AD_REWARD + '닢 받기' : '오늘 광고 보상을 모두 받았어요') + '</button>' +
       '<button class="text-btn" data-close>닫기</button>');
+    $('btnDmCharge').onclick = function(){ openCoinSheet('꿈 번호 받기에 엽전이 ' + (DM.cost - getCoins()) + '닢 더 필요해요.'); };
     if (left > 0) $('btnDmAd').onclick = function(){ closeSheet(); playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); renderDreamInput(); }); };
   }
-  function dreamRun(text){
-    var btn = $('btnDmGo'); if (btn){ if (btn.dataset.busy) return; btn.dataset.busy = '1'; btn.disabled = true; }
-    var cp = dmCoupon();
-    if (cp){
-      var all = store('unsu_coupons') || []; all.forEach(function(c){ if (c.id === cp.id){ c.used = true; c.usedAt = Date.now(); } }); store('unsu_coupons', all);
-    } else addCoins(-DM.cost, '꿈풀이');
-    store('unsu_dmdraft', '');
-    $('dmInput').hidden = true; $('dmResult').hidden = false; window.scrollTo(0, 0);
-    $('dmResult').innerHTML = '<div class="flow-header"><span class="ttl">꿈풀이</span></div><div class="card dm-loading">' + petSVG('calm', getPet().lv, 'mini') +
-      '<b>우니가 꿈을 읽고 있어요</b><p class="helper">꿈속 상징을 찾아 숫자를 맞추는 중이에요. 잠시만 기다려 주세요.</p><div class="dm-dots"><i></i><i></i><i></i></div></div>' +
+  /* paid=false: 해몽 사전만(무료) · paid=true: 엽전/1회권 차감 후 AI. upgrade: 무료 결과를 같은 id로 번호까지 채울 때 */
+  function dreamRun(text, paid, upgrade){
+    var btn = $('btnDmGo'); if (!upgrade && btn){ if (btn.dataset.busy) return; btn.dataset.busy = '1'; btn.disabled = true; }
+    var cp = paid ? dmCoupon() : null;
+    if (paid){
+      if (cp){ var all = store('unsu_coupons') || []; all.forEach(function(c){ if (c.id === cp.id){ c.used = true; c.usedAt = Date.now(); } }); store('unsu_coupons', all); }
+      else if (!NS) addCoins(-DM.cost, '꿈 번호 받기');
+    }
+    if (!upgrade) store('unsu_dmdraft', '');
+    show('dream'); $('dmInput').hidden = true; $('dmResult').hidden = false; window.scrollTo(0, 0);
+    $('dmResult').innerHTML = '<div class="flow-header"><span class="ttl">' + (paid ? '꿈 번호 받는 중' : '꿈 해몽') + '</span></div><div class="card dm-loading">' + uniImg(paid ? 'u-thinking' : 'u-sleep', 'dm-fig') +
+      '<b>' + (paid ? '우니가 꿈에서 숫자를 찾고 있어요' : '우니가 꿈을 읽고 있어요') + '</b><p class="helper">' + (paid ? '꿈속 상징마다 숫자를 맞추는 중이에요. 잠시만 기다려 주세요.' : '해몽 사전에서 꿈속 상징을 찾는 중이에요.') + '</p><div class="dm-dots"><i></i><i></i><i></i></div></div>' +
       adSlotHTML('꿈 분석 중', 'loading');
-    var ctx = { theme:dmCtx.theme, who:dmCtx.who, name:dmCtx.name }, local = DREAM.analyze(text, ctx), done = false;
+    var ctx = upgrade ? upgrade.ctx : { theme:dmCtx.theme, who:dmCtx.who, name:dmCtx.name }, local = DREAM.analyze(text, ctx), done = false;
     function finish(res){
       if (done) return; done = true;
-      var item = { id:'d' + Date.now().toString(36), at:Date.now(), text:text, ctx:ctx, cat:res.cat, catName:res.catName, title:res.title, summary:res.summary,
-        symbols:(res.symbols || []).map(function(s){ return { word:s.word, meaning:s.meaning, nums:s.nums }; }), picks:res.picks, source:res.source || 'local', paid:cp ? 'coupon' : DM.cost };
-      var list = getDreams(); list.unshift(item); if (list.length > 20) list.length = 20; store('unsu_dreams', list);
+      var item = { id:upgrade ? upgrade.id : 'd' + Date.now().toString(36), at:upgrade ? upgrade.at : Date.now(), text:text, ctx:ctx, cat:res.cat, catName:res.catName, title:res.title, summary:res.summary,
+        symbols:(res.symbols || []).map(function(s){ return { word:s.word, meaning:s.meaning, nums:s.nums }; }), picks:res.picks, source:res.source || 'local', paid:paid ? (cp ? 'coupon' : DM.cost) : 0, free:!paid };
+      var list = getDreams().filter(function(x){ return x.id !== item.id; }); list.unshift(item); if (list.length > 20) list.length = 20; store('unsu_dreams', list);
       renderDreamResult(item, true);
       setTimeout(function(){ bond('dream'); }, 1200);
     }
+    var started = Date.now();
+    if (!paid){ setTimeout(function(){ finish(local); }, 1400); return; }
     var ctl = window.AbortController ? new AbortController() : null;
     var t = setTimeout(function(){ if (ctl) ctl.abort(); finish(local); }, 20000);
-    var started = Date.now();
     fetch('/api/dream', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ text:text, ctx:ctx }), signal:ctl ? ctl.signal : undefined })
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(j){
@@ -1469,6 +1501,12 @@
         setTimeout(function(){ clearTimeout(t); finish(res); }, Math.max(0, 1600 - (Date.now() - started)));
       })
       .catch(function(){ setTimeout(function(){ clearTimeout(t); finish(local); }, Math.max(0, 1600 - (Date.now() - started))); });
+  }
+  /* 무료 해몽 결과에서 '이 꿈으로 번호 받기' */
+  function dreamUpgrade(d){
+    if (isGuest()){ openLoginSheet('꿈 번호 받기는 엽전 ' + DM.cost + '닢이에요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요.'); return; }
+    if (!NS && !dmCoupon() && getCoins() < DM.cost){ dreamShortSheet(); return; }
+    dreamRun(d.text, true, d);
   }
   /* 원문에 상징마다 (번호)를 붙여 보여 준다 — 몽풀식 */
   function dmAnnotate(text, symbols){
@@ -1491,24 +1529,33 @@
     $('dmInput').hidden = true; $('dmResult').hidden = false;
     var related = []; d.symbols.forEach(function(s){ s.nums.forEach(function(n){ if (related.indexOf(n) < 0) related.push(n); }); });
     related.sort(function(a, b){ return a - b; });
-    var h = '<div class="flow-header"><button class="icon-back" id="btnDmRBack" aria-label="꿈 입력으로">‹</button><span class="ttl">꿈풀이 결과</span></div>' +
+    var free = !!d.free;
+    var h = '<div class="flow-header"><button class="icon-back" id="btnDmRBack" aria-label="꿈 입력으로">‹</button><span class="ttl">' + (free ? '무료 꿈 해몽' : '꿈풀이 번호받기') + '</span></div>' +
       '<div class="card dm-res"><div class="dm-tag"><span class="chip">' + esc(d.catName) + '</span><small>' + fmtDate(d.at) + '</small></div>' +
       '<h2 class="dm-title">' + esc(d.title) + '</h2>' +
-      '<div class="dm-quote"><small>내가 꾼 꿈</small><p>' + dmAnnotate(d.text, d.symbols) + '</p></div>' +
+      '<div class="dm-quote"><small>내가 꾼 꿈</small><p>' + (free ? esc(d.text) : dmAnnotate(d.text, d.symbols)) + '</p></div>' +
       '<h4 class="ny-h">어떤 꿈일까요</h4><p class="body-text">' + esc(d.summary) + '</p>' +
-      (d.symbols.length ? '<h4 class="ny-h">꿈속 상징과 숫자 <small>' + d.symbols.length + '개</small></h4><ul class="dm-syms">' + d.symbols.map(function(s){
-        return '<li><div class="dm-sh"><b>' + esc(s.word) + '</b><span class="dm-mini">' + s.nums.map(function(n){ return '<i>' + n + '</i>'; }).join('') + '</span></div><p>' + esc(s.meaning) + '</p></li>';
+      (d.symbols.length ? '<h4 class="ny-h">' + (free ? '꿈속 상징' : '꿈속 상징과 숫자') + ' <small>' + d.symbols.length + '개</small></h4><ul class="dm-syms">' + d.symbols.map(function(s){
+        return '<li><div class="dm-sh"><b>' + esc(s.word) + '</b><span class="dm-mini">' + (free ? '<i class="q">?</i>' : s.nums.map(function(n){ return '<i>' + n + '</i>'; }).join('')) + '</span></div><p>' + esc(s.meaning) + '</p></li>';
       }).join('') + '</ul>' : '') +
-      (related.length ? '<h4 class="ny-h">관련 숫자 <small>상징에서 나온 숫자</small></h4><div class="dm-rel">' + related.map(function(n){ return '<i>' + n + '</i>'; }).join('') + '</div>' : '') +
-      '<h4 class="ny-h">꿈 번호 6개</h4><div class="balls">' + d.picks.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div>' +
+      (free ? ''
+        : (related.length ? '<h4 class="ny-h">관련 숫자 <small>상징에서 나온 숫자</small></h4><div class="dm-rel">' + related.map(function(n){ return '<i>' + n + '</i>'; }).join('') + '</div>' : '') +
+          '<h4 class="ny-h">꿈 번호 6개</h4><div class="balls">' + d.picks.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div>') +
       '<p class="disclaimer">재미로 즐기는 꿈 해몽이며 실제 당첨이나 미래를 보장하지 않습니다.' + (d.source === 'ai' ? ' AI가 우니조아 해몽 사전을 바탕으로 풀었어요.' : ' 우니조아 해몽 사전으로 풀었어요.') + '</p></div>' +
-      '<div class="row"><button class="btn-soft grow" id="btnDmNew">다른 꿈 풀기</button><button class="btn-ghost grow" id="btnDmNum">행운 번호 보기</button></div>' +
+      (free ? '<div class="card dm-up"><div class="dmu-fig">' + uniImg('u-ball') + '</div><div class="dmu-k">이 꿈에 숨은 숫자가 ' + Math.max(6, related.length) + '개 보여요</div>' +
+          '<h3 class="dmu-t">꿈 번호 6개 받아 볼까요?</h3>' +
+          '<div class="balls dmu-balls" aria-hidden="true">' + [0,1,2,3,4,5].map(function(){ return '<div class="ball">?</div>'; }).join('') + '</div>' +
+          '<ul class="dmu-list"><li>AI가 꿈 장면을 다시 읽고 더 자세히 풀어요</li><li>상징마다 숫자를 붙여 드려요</li><li>꿈 번호 6개 · 보관함에 저장</li></ul>' +
+          '<button class="btn-primary btn-block sheen" id="btnDmUp">' + DM_IC + '이 꿈으로 번호받기 · ' + DM.cost + '닢</button>' +
+          '<p class="helper" style="text-align:center;margin-top:8px">' + (isGuest() ? '처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요' : NS ? '예시 모드에서는 엽전 없이 받아 볼 수 있어요' : '내 엽전 ' + getCoins().toLocaleString() + '닢') + '</p></div>' : '') +
+      '<div class="row"><button class="btn-soft grow" id="btnDmNew">다른 꿈 풀기</button><button class="btn-ghost grow" id="btnDmNum">' + (free ? '무료 행운 번호' : '보관함에 저장') + '</button></div>' +
       adSlotHTML('꿈풀이 결과를 다 본 뒤');
     $('dmResult').innerHTML = h;
     window.scrollTo(0, 0);
     $('btnDmRBack').onclick = $('btnDmNew').onclick = function(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); $('dmResult').hidden = true; $('dmInput').hidden = false; window.scrollTo(0, 0); };
-    $('btnDmNum').onclick = function(){ go('num'); };
-    if (fresh) toast(d.paid === 'coupon' ? '꿈풀이 1회권을 사용했어요' : '엽전 ' + DM.cost + '닢을 사용했어요');
+    if (free){ $('btnDmNum').onclick = function(){ go('num'); }; $('btnDmUp').onclick = function(){ dreamUpgrade(d); }; }
+    else $('btnDmNum').onclick = function(){ if (saveToBox({ id:'b' + Date.now().toString(36), d:todayStr(), kind:'꿈 번호', nums:d.picks.slice(), who:d.title })) toast('보관함에 저장했어요'); };
+    if (fresh && !free) toast(d.paid === 'coupon' ? '꿈풀이 1회권을 사용했어요' : NS ? '예시 모드라 엽전 없이 받았어요' : '엽전 ' + DM.cost + '닢을 사용했어요');
   }
 
   /* =========================================================
@@ -1579,10 +1626,21 @@
   function petDone(p){ return p.day === todayStr() ? (p.done || {}) : {}; }
   function getCoupons(){ var c = store('unsu_coupons'); return Array.isArray(c) ? c.filter(function(x){ return x.t === 'dream1' && !x.used && x.exp > Date.now(); }) : []; }
   var petUid = 0;
-  /* 우니 + 조아(친구) 손잡은 일러스트. pose: 'hold' | 'hug' */
-  function duoSVG(pose, cls){
+  /* =========================================================
+     우니·조아 캐릭터 이미지 (2026-11-15 새 아트, src/img/u-*.webp · uj-*.webp)
+     PNG 원본은 로컬 '우니조아 캐릭터/woonijoa-page-assets' — 400px(단독)·640px(둘) webp로 줄여 씀
+     ========================================================= */
+  function uniImg(pose, cls, alt){
+    var duo = pose === 'uj-hug' ? 438 : pose === 'uj-hands' ? 451 : 0;   /* 함수 선언이 위에서 먼저 불려도 되게 상수는 안에 둔다 */
+    return '<img class="uni-png ' + (cls || '') + '" src="img/' + pose + '.webp" width="' + (duo ? 640 : 400) + '" height="' + (duo || 400) + '" alt="' + (alt || '') + '"' + (alt ? '' : ' aria-hidden="true"') + ' decoding="async" draggable="false">';
+  }
+  /* 기분 → 포즈: 졸림·보통·반가움·기쁨 */
+  var MOOD_POSE = { sleepy:'u-sleep', calm:'u-calm', happy:'u-wave', love:'u-happy' };
+  /* 우니 + 조아(친구). pose: 'hold'(손잡기) | 'hug'(안기) */
+  function duoSVG(pose, cls){ return uniImg(pose === 'hug' ? 'uj-hug' : 'uj-hands', 'duo-svg ' + (cls || '')); }
+  function duoSVGVec(pose, cls){
     var hug = pose === 'hug';
-    var a = petSVG('love', 1, ''), b = petSVG(hug ? 'love' : 'happy', 1, '', 'joa');
+    var a = petSVGVec('love', 1, ''), b = petSVGVec(hug ? 'love' : 'happy', 1, '', 'joa');
     var inner = function(svg){ return svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, ''); };
     var dx = hug ? 82 : 96;
     return '<svg class="duo-svg ' + (cls || '') + '" viewBox="0 0 ' + (120 + dx) + ' 124" aria-hidden="true">' +
@@ -1594,11 +1652,13 @@
       '<path class="duo-h" d="M' + ((120 + dx) / 2) + ' 30c-5-8-17-4-13 5l13 11 13-11c4-9-8-13-13-5z" fill="#ff8fb1"/>' +
       '</svg>';
   }
-  /* 홈 2×2 메뉴 타일용 일러스트 */
-  function tileArtSVG(kind){
+  /* 홈 2×2 메뉴 타일 · 상품 카드 · 결제 시트 일러스트 */
+  var TILE_POSE = { dream:'u-sleep', zodiac:'u-zodiac', book:'u-book', ny:'u-newyear', gh:'uj-hands', coin:'u-money', dreamnum:'u-ball' };
+  function tileArtSVG(kind){ return TILE_POSE[kind] === 'uj-hands' ? duoSVG('hold', 'tile-art') : uniImg(TILE_POSE[kind] || 'u-wave', 'tile-art'); }
+  function tileArtSVGVec(kind){
     var inner = function(svg){ return svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, ''); };
-    var pet = function(m, x, y, s){ return '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" viewBox="0 0 120 120" overflow="visible">' + inner(petSVG(m, 1, '')) + '</svg>'; };
-    if (kind === 'gh') return duoSVG('hold', 'tile-art');
+    var pet = function(m, x, y, s){ return '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" viewBox="0 0 120 120" overflow="visible">' + inner(petSVGVec(m, 1, '')) + '</svg>'; };
+    if (kind === 'gh') return duoSVGVec('hold', 'tile-art');
     var h = '<svg class="tile-art" viewBox="0 0 140 120" aria-hidden="true">';
     if (kind === 'dream'){
       h += '<path d="M104 14a16 16 0 1 0 14 24a13 13 0 1 1-14-24z" fill="#ffe7a3"/>' +
@@ -1614,7 +1674,13 @@
     }
     return h + '</svg>';
   }
-  function petSVG(mood, lv, cls, pal){
+  /* 우니 (기분별 PNG). 겉 span에 pet-svg·m-기분 클래스를 그대로 둬서 기존 크기·애니메이션 CSS를 이어 쓴다 */
+  function petSVG(mood, lv, cls){
+    return '<span class="pet-svg ' + (cls || '') + ' m-' + mood + (lv >= 4 ? ' lv-hi' : '') + '" aria-hidden="true"><span class="pbody">' + uniImg(MOOD_POSE[mood] || 'u-calm') + '</span>' +
+      (mood === 'sleepy' ? '<span class="pz"><b>z</b><b>z</b></span>' : '') + '</span>';
+  }
+  /* 벡터 우니 — 공유 카드 이미지(캔버스)처럼 SVG가 꼭 필요한 곳에만 */
+  function petSVGVec(mood, lv, cls, pal){
     var u = mood + (++petUid);
     var C = pal === 'joa' ? { hi:'#fff6ee', mid:'#ffc2a6', lo:'#ff7f8e', glow:'#ff9fa8', foot:'#e8566e', ant:'#ffc9b8' } : { hi:'#eef3ff', mid:'#b9a8ff', lo:'#6a45f0', glow:'#8f74ff', foot:'#5b3be8' };
     var eyes, mouth, extra = '', blush = mood === 'love' ? .7 : mood === 'happy' ? .45 : .28;
@@ -1763,13 +1829,15 @@
     kind = kind || 'feed';
     if (adsOn(kind)) return '<div class="ad-slot ad-live ad-' + kind + '"><span class="ad-badge">AD</span><ins class="adsbygoogle" style="display:block" data-ad-client="' + ADS.client + '" data-ad-slot="' + ADS.slots[kind] + '"' +
       (kind === 'loading' ? ' data-ad-format="rectangle"' : ' data-ad-format="auto" data-full-width-responsive="true"') + '></ins></div>';
+    /* GPT 검토 P0/8: 실서비스(woonijoa.com)에서 광고가 안 붙었으면 자리를 접는다. 배치 확인용 예시는 로컬·미리보기에서만 */
+    if (isHosted() && !/^(localhost|127\.|192\.168\.)/.test(location.hostname)) return '';
     return '<div class="ad-slot ad-' + kind + '" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>' + (kind === 'loading' ? '분석 중 광고 영역' : '네이티브 광고 영역') + '</b><small>' + where + ' · ' + (kind === 'loading' ? '애드센스 승인 후 실제 광고로 바뀌어요' : '콘텐츠 카드와 같은 모양으로 1개만') + '</small></div></div>';
   }
   function renderToday(){
     var body = $('todayBody'), me = getMe();
     if (!me){ renderWelcome(); return; }
     var r = compute(me);
-    if (r.error){ body.innerHTML = '<div class="card"><p class="body-text">대표 사주를 계산할 수 없어요. 사주 목록에서 다른 사주를 대표로 설정해 주세요.</p></div>'; return; }
+    if (r.error){ body.innerHTML = '<div class="card bx-empty">' + uniImg('u-retry') + '<p class="body-text">대표 사주를 계산할 수 없어요. 사주 목록에서 다른 사주를 대표로 설정해 주세요.</p></div>'; return; }
     var now = new Date();
     var att = attend(); justStamped = att.newly;
     if (att.newly && !isGuest()){ var wmsg = pendingWelcome ? '환영해요! 첫 출석 10닢을 받았어요' : att.bonus ? att.streak + '일 연속 출석! 엽전 +40' : '출석 완료 · 엽전 +10'; setTimeout(function(){ toast(wmsg); }, 600); }
@@ -1786,7 +1854,8 @@
       '<h1 class="today-title">' + f.head + '</h1>' +
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
-    h += '<div class="qgrid">' + [['btnQNum','dream','꿈 해몽','간밤 꿈, 우니가 풀어줘요','NEW'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','새해 흐름 미리 보기','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + '</div>';
+    h += peekCardHTML(me, nums, elc);   /* GPT 검토 P1-6: 오늘 한 문장 바로 아래 행운 번호 */
+    h += '<div class="qgrid">' + [['btnQNum','dream','꿈 번호받기','간밤 꿈으로 번호 6개','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + '</div>';
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -1802,7 +1871,6 @@
       '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
     h += deepHTML(me, r);
     h += adSlotHTML('오늘의 결론을 본 뒤');
-    h += peekCardHTML(me, nums, elc);
     var stNow = streakOf(getAtt());
     if (!NS && !store('unsu_auth') && store('unsu_nudge') !== todayStr() && (stNow >= 3 || getCoins() >= 60 || getUnlocks().length))
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
@@ -1811,7 +1879,8 @@
     $('dpNY').onclick = function(){ openNYSheet(me, r); };
     $('dpGh').onclick = function(){ go('gunghap'); };
     $('dpEz').onclick = function(){ go('saju'); };
-    $('dpSet').onclick = function(){ openPaySheet('set', { onPaid:function(){ go('today'); } }); };
+    $('dpSet').onclick = function(){ openCoinSheet(); };
+    $('dpDm').onclick = function(){ openDream(); };
     $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     bindPeek(me, nums);
     renderCoin();
@@ -1928,9 +1997,10 @@
   }
   /* 분야별 운세: 우니 일러스트 (점수 단계 → 우니 표정, 분야 → 옆에 떠 있는 작은 배지) */
   var TIER_MOOD = { gold:'love', violet:'happy', mint:'calm', rose:'sleepy' };
+  var CAT_POSE = { money:'u-money', love:'u-love', career:'u-work', job:'u-book' };
   function uniCatHTML(cat, tier, cls){
     var C = CATS[cat];
-    return '<span class="uni-cat ' + (cls || '') + '" aria-hidden="true">' + petSVG(tier ? TIER_MOOD[tier] : 'calm', 1, '') + '<i class="uc-prop">' + CAT_IC[C.ic] + '</i></span>';
+    return '<span class="uni-cat ' + (cls || '') + '" aria-hidden="true">' + uniImg(CAT_POSE[cat] || 'u-calm') + '</span>';
   }
   function catChipsHTML(f){
     var best = CAT_ORDER.filter(function(k){ return CATS[k].sk; }).sort(function(a, b){ return f.scores[CATS[b].sk] - f.scores[CATS[a].sk]; })[0];
@@ -1952,7 +2022,7 @@
       '<div class="cl-k">' + esc(entry.name) + '님의 오늘</div><h3 id="sheetTitle">' + C.name + '</h3>' +
       (C.sk ? '<div class="cl-score"><b>' + f.scores[C.sk] + '</b>점</div><p class="cl-line">“' + f.lines[C.sk] + '”</p>' : '<p class="cl-line">타고난 사주로 보는 나에게 맞는 일</p>') +
       '<div class="cl-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' +
-      '<ul class="cl-list"><li>오늘 이 분야의 자세한 흐름</li><li>좋은 시간과 조심할 점</li><li>우니가 고른 오늘의 한 가지 행동</li></ul>' +
+      '<ul class="cl-list">' + (C.sk ? '<li>오늘 점수와 한 줄 풀이</li><li>타고난 ' + C.name.replace('운', '') + ' 그릇 (사주 원국)</li><li>올해 이 분야의 흐름</li>' : '<li>잘 맞는 직업 목록</li><li>함께 살리면 좋은 재능</li><li>일간에 맞는 분야와 올해 흐름</li>') + '</ul>' +
       '<button class="btn-primary btn-block" id="clBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : COIN_SVG + '엽전 ' + CAT_COST + '닢으로 열기') + '</button>' +
       '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 바로 받은 엽전으로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (CAT_COST - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 열면 오늘 하루 계속 볼 수 있어요') + '</p></div>');
     $('clBuy').onclick = function(){
@@ -2086,7 +2156,7 @@
   /* =========================================================
      번호 탭 상단: 내 번호
      ========================================================= */
-  var extraLines = [], numTab = 'draw', EXTRA_COST = 100;
+  var extraLines = [], numTab = 'draw', EXTRA_COST = COST.extra;
   /* 뽑기 전에는 번호를 숨긴다 (005). 오늘 한 번 뽑았으면 바로 보여 준다 */
   function revealNums(){
     var el = $('numReveal'); if (!el || !el.hidden) return;
@@ -2237,7 +2307,7 @@
         '<div class="peek-tok" aria-live="polite">' + (opened ? giftTokenHTML(g) : '') + '</div>' +
         '<button type="button" class="peek-btn" id="peekBtn" aria-label="우니를 꾹 눌러 오늘의 선물 받기"' + (opened ? ' disabled' : '') + '>' +
         '<svg class="peek-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54"/></svg>' +
-        '<span class="peek-fig">' + petSVG(opened ? 'love' : 'happy', 2, 'mini') + '</span></button>' +
+        '<span class="peek-fig">' + uniImg(opened ? 'u-gift' : 'u-calm') + '</span></button>' +
       '</div>' +
       '<p class="helper peek-msg">' + (opened ? g.msg : '우니를 <b>꾹</b> 누르고 있으면 오늘의 선물을 하나 꺼내 줘요. 가끔 엽전도 나와요!') + '</p>' +
       '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">행운 번호 뽑으러 가기</button></div>';
@@ -2248,7 +2318,7 @@
     function done(){
       t = null; card.classList.remove('hold'); btn.disabled = true;
       card.querySelector('.peek-tok').innerHTML = giftTokenHTML(g);
-      card.querySelector('.peek-fig').innerHTML = petSVG('love', 2, 'mini');
+      card.querySelector('.peek-fig').innerHTML = uniImg('u-gift');
       card.classList.add('open');
       if (!reduceMotion){ card.classList.add('burst'); setTimeout(function(){ card.classList.remove('burst'); }, 2000); }
       card.querySelector('.peek-msg').innerHTML = '짠! ' + g.msg;
@@ -2256,8 +2326,8 @@
       if (navigator.vibrate) try { navigator.vibrate([12, 40, 24]); } catch (e){}
       markTodo('peek');
     }
-    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); t = setTimeout(done, 750); }
-    function cancel(){ if (t){ clearTimeout(t); t = null; card.classList.remove('hold'); } }
+    function start(e){ if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; if (t) return; e.preventDefault(); if (reduceMotion){ done(); return; } card.classList.add('hold'); card.querySelector('.peek-fig img').src = 'img/u-pressed.webp'; t = setTimeout(done, 750); }
+    function cancel(){ if (t){ clearTimeout(t); t = null; card.classList.remove('hold'); card.querySelector('.peek-fig img').src = 'img/u-calm.webp'; } }
     btn.addEventListener('pointerdown', start); btn.addEventListener('keydown', start);
     ['pointerup','pointerleave','pointercancel','keyup'].forEach(function(ev){ btn.addEventListener(ev, cancel); });
     btn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
@@ -2266,16 +2336,21 @@
     var me = getMe(), box = getBox(), dreams = getDreams(), h = NS ? demoBarHTML() : '';
     h += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">저장한 번호</h2><span class="sec-meta">' + box.length + '줄</span></div>';
-    if (!box.length) h += '<p class="helper">번호 뽑기에서 ‘보관함에 저장’을 누르면 여기에 모여요.</p><button class="btn-primary btn-block" id="bxGoNum" style="margin-top:12px">번호 뽑으러 가기</button>';
+    if (!box.length) h += '<div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 비어 있어요. 번호 뽑기에서 ‘보관함에 저장’을 누르면 여기에 모여요.</p></div><button class="btn-primary btn-block" id="bxGoNum" style="margin-top:12px">번호 뽑으러 가기</button>';
     else h += '<div class="bx-list">' + box.map(function(b){
       return '<div class="bx-row"><div class="bx-meta"><b>' + esc(b.kind) + '</b><small>' + b.d.replace(/-/g, '.') + (b.who ? ' · ' + esc(b.who) : '') + '</small></div>' +
         '<div class="balls sm">' + b.nums.map(function(n){ return '<div class="ball">' + n + '</div>'; }).join('') + '</div>' +
         '<button class="bx-del" data-bx="' + b.id + '" aria-label="이 번호 지우기">✕</button></div>';
     }).join('') + '</div>';
     h += '</div>';
+    /* 열어 둔 리포트 (GPT 검토 P0-5: 산 결과를 다시 찾는 길) */
+    var opened = liveOrders(), nyO = store('unsu_ny_open') || {}, list = getList ? getList() : [];
+    var rep = opened.map(function(o){ return '<button class="row-link" data-rp="' + o.id + '" data-gk="' + esc(o.ghKey || '') + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(o.name) + '<br><span class="helper">' + fmtDate(o.at) + ' · ' + (o.coin ? o.coin + '닢' : '') + '</span></span><span class="chev">›</span></button>'; });
+    Object.keys(nyO).forEach(function(id){ var e = list.filter(function(x){ return x.id === id; })[0]; if (e) rep.push('<button class="row-link" data-rpny="' + id + '"><span class="ic">' + TIP_IC.star + '</span><span>2027 신년운세 전체 · ' + esc(e.name) + '<br><span class="helper">' + fmtDate(nyO[id]) + ' · 광고로 열림</span></span><span class="chev">›</span></button>'); });
+    if (rep.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">열어 둔 리포트</h2><span class="sec-meta">' + rep.length + '개</span></div>' + rep.join('') + '</div>';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">꿈해몽 기록</h2><span class="sec-meta">' + dreams.length + '개</span></div>';
-    if (!dreams.length) h += '<p class="helper">꿈을 풀면 풀이와 번호가 여기에 남아요.</p><button class="btn-soft btn-block" id="bxGoDream" style="margin-top:12px">꿈 해몽 하러 가기</button>';
-    else h += dreams.slice(0, 10).map(function(d){ return '<button class="row-link" data-dm="' + d.id + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(d.title || d.catName) + '<br><span class="helper">' + fmtDate(d.at) + ' · ' + (d.picks || []).join(' · ') + '</span></span><span class="chev">›</span></button>'; }).join('');
+    if (!dreams.length) h += '<div class="bx-empty">' + uniImg('u-sleep') + '<p class="helper">꿈을 풀면 해몽과 꿈 번호가 여기에 남아요.</p></div><button class="btn-soft btn-block" id="bxGoDream" style="margin-top:12px">꿈 해몽 하러 가기</button>';
+    else h += dreams.slice(0, 10).map(function(d){ return '<button class="row-link" data-dm="' + d.id + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(d.title || d.catName) + '<br><span class="helper">' + fmtDate(d.at) + ' · ' + (d.free ? '해몽만 · 번호 받기 전' : (d.picks || []).join(' · ')) + '</span></span><span class="chev">›</span></button>'; }).join('');
     h += '</div>';
     h += '<div class="card"><button class="row-link" id="bxList"><span class="ic">' + FEAT_IC.saju + '</span>저장한 사주 목록<span class="chev">›</span></button>' +
       (me ? '<button class="row-link" id="bxMy"><span class="ic">' + FEAT_IC.today + '</span>내 정보 · 엽전 기록<span class="chev">›</span></button>' : '<button class="row-link" id="bxStart"><span class="ic">' + FEAT_IC.today + '</span>내 사주 등록하기<span class="chev">›</span></button>') + '</div>';
@@ -2288,6 +2363,8 @@
     if ($('bxStart')) $('bxStart').onclick = function(){ startOnboarding('new'); };
     $('bxList').onclick = function(){ renderList(); show('list'); };
     document.querySelectorAll('[data-bx]').forEach(function(b){ b.onclick = function(){ store('unsu_numbox', getBox().filter(function(x){ return x.id !== b.dataset.bx; })); renderBox(); toast('지웠어요'); }; });
+    document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(); if (b.dataset.rp === 'gh') go('gunghap'); else if (me) openResult(me, compute(me), true); }; });
+    document.querySelectorAll('[data-rpny]').forEach(function(b){ b.onclick = function(){ var e = getList().filter(function(x){ return x.id === b.dataset.rpny; })[0]; if (e) openNYSheet(e, compute(e)); }; });
     document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ var d = getDreams().filter(function(x){ return x.id === b.dataset.dm; })[0]; if (d){ show('dream'); renderDreamResult(d, false); } }; });
   }
 
@@ -2421,7 +2498,7 @@
       h += '<div class="card locked"><div class="sec-head"><h2 class="sec-title">상세 궁합 리포트</h2><span class="sec-meta">잠김</span></div>' +
         '<ul class="lock-list">' + ['두 사람의 기질 비교','관계에서 빛나는 점','부딪히기 쉬운 점과 대화 팁','올해 두 사람의 흐름','함께하면 좋은 활동'].map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
-        '<div class="lock-cta"><button class="btn-primary" id="btnGhBuy">990원으로 상세 리포트 열기</button>' +
+        '<div class="lock-cta"><button class="btn-primary" id="btnGhBuy">' + COIN_SVG + '엽전 ' + COST.gh + '닢으로 상세 리포트 열기</button>' +
         '<p class="helper" style="text-align:center">한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.</p></div></div>';
     } else {
       var ia = ILGAN[ra.pillars.day.stem], ib = ILGAN[rb.pillars.day.stem];
@@ -2591,7 +2668,7 @@
     var h = INVITE ? inviteHeroHTML() : '<div class="wel-hero">' +
       '<div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日</div>' +
       '<h1 class="hero-title">내 사주로 뽑는<br>여섯 개의 행운 번호</h1>' +
-      '<div class="wel-fig" id="welFig">' + petSVG('happy', 2, 'fig') + '</div>' +
+      '<div class="wel-fig" id="welFig">' + uniImg('u-ball', '', '행운 번호 공을 든 우니') + '</div>' +
       '<div class="wel-sample" aria-label="예시 번호 카드"><span class="ws-badge">예시</span><div class="ws-top"><b>김운수님의 오늘 번호</b><small>수(水) 기운 · 행운 숫자 1·6</small></div>' +
         '<div class="balls">' + [6,11,16,21,31,41].map(function(n, i){ return '<div class="ball' + (i === 1 || i === 4 ? ' yong el-water' : '') + '">' + n + '</div>'; }).join('') + '</div></div>' +
       '<ol class="wel-steps"><li><b>1</b>생년월일 입력</li><li><b>2</b>번호 뽑기</li><li><b>3</b>보관함에 저장</li></ol>' +
@@ -2609,10 +2686,11 @@
       }).join('') + '</div>' +
       '<button class="row-link" id="btnWelMore"><span class="ic">' + FEAT_IC.saju + '</span><span>띠는 태어난 해 한 글자만 봐요.<br><span class="helper">여덟 글자로 정확하게 보기</span></span><span class="chev">›</span></button></div>';
     h += '<div class="feat">' +
-      '<button id="ftToday"><span class="ic">' + FEAT_IC.star + '</span><b>꿈 해몽</b><small>꿈 이야기로 풀이와 번호 받기</small></button>' +
+      '<button id="ftToday"><span class="ic">' + FEAT_IC.star + '</span><b>꿈 해몽 무료</b><small>해몽은 무료 · 꿈 번호 6개 받기</small></button>' +
       '<button id="ftSaju"><span class="ic">' + FEAT_IC.saju + '</span><b>만세력 풀이</b><small>원국·대운·세운까지 로그인 없이</small></button>' +
       '<button id="ftGh"><span class="ic">' + FEAT_IC.gh + '</span><b>궁합</b><small>두 사람의 일간·일지·오행 비교</small></button>' +
       '<button id="ftZ"><span class="ic">' + FEAT_IC.star + '</span><b>별자리 운세</b><small>12성좌 오늘의 기운과 번호</small></button></div>';
+    h += adSlotHTML('띠별 운세를 본 뒤');
     h += '<p class="disclaimer">운세는 전통 명리 이론을 바탕으로 한 재미용 콘텐츠예요.</p>' + bizFootHTML();
     $('todayBody').innerHTML = h;
     drawOn($('welFig'));
@@ -2992,52 +3070,41 @@
   var PAY_READY = false;
   function product(id){
     return ({
-      ny:{ id:'ny', name:'2027 신년운세 전체', amount:5500, art:'ny', items:['4~12월 월별 흐름','재물·직업·연애·건강 등 2~7장','2027년 행운 포인트'] },
-      gh:{ id:'gh', name:'궁합 상세 리포트', amount:990, art:'gh', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
-      ez:{ id:'ez', name:'쉬운 사주 풀이', amount:990, art:'book', items:['십성으로 보는 나의 성향','띠 이야기','대운 흐름과 올해의 운'] },
-      set:{ id:'set', name:'3종 한 번에', amount:6900, was:7480, art:'ny', items:['2027 신년운세 전체','궁합 상세 리포트 1쌍','쉬운 사주 풀이'] }
+      gh:{ id:'gh', name:'궁합 상세 리포트', coin:COST.gh, art:'gh', keep:'이 두 사람의 리포트는 계속 볼 수 있어요', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
+      ez:{ id:'ez', name:'쉬운 사주 풀이', coin:COST.ez, art:'book', keep:'저장한 모든 사람의 풀이를 계속 볼 수 있어요', items:['십성으로 보는 나의 성향','띠 이야기','대운 흐름과 올해의 운'] }
     })[id];
   }
   function liveOrders(){ return getOrders().filter(function(o){ return o.status !== 'refund'; }); }
   function owns(id){ return liveOrders().some(function(o){ return o.id === id || (o.id === 'set' && (id === 'ny' || id === 'ez')); }); }
-  function setGhCredit(){ return liveOrders().filter(function(o){ return o.id === 'set' && !o.ghKey; })[0] || null; }
   function addOrder(id, extra){
     var P = product(id), o = getOrders();
-    var rec = { id:id, name:P.name, amount:P.amount, at:Date.now(), status:'paid', opened:true };
+    var rec = { id:id, name:P.name, coin:P.coin, at:Date.now(), status:'paid', opened:true };
     Object.keys(extra || {}).forEach(function(k){ if (extra[k] != null) rec[k] = extra[k]; });
     o.unshift(rec); store('unsu_orders', o);
   }
-  /* 공통 결제 시트. opt.onPaid: 결제(또는 예시 모드 열기) 뒤 실행, opt.ghKey: 궁합 쌍 */
+  /* 공통 열기 시트(엽전). opt.onPaid: 연 뒤 실행, opt.ghKey: 궁합 쌍, opt.who: 대상 이름 */
   function openPaySheet(id, opt){
     opt = opt || {};
-    var P = product(id), credit = id === 'gh' && setGhCredit();
+    var P = product(id), guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < P.coin;
     openSheet('<div class="pay-sheet"><div class="pay-hero">' + tileArtSVG(P.art) + '</div>' +
       '<h3 id="sheetTitle">' + P.name + '</h3>' + (opt.who ? '<p class="pay-who">' + opt.who + '</p>' : '') +
       '<ul class="pay-list">' + P.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
-      '<div class="pay-price">' + (P.was ? '<s>' + P.was.toLocaleString() + '원</s>' : '') + '<b>' + P.amount.toLocaleString() + '원</b></div>' +
-      (credit ? '<button class="btn-primary btn-block" id="payCredit">3종 묶음으로 열기 · 추가 결제 없음</button>'
-        : '<button class="btn-primary btn-block" id="payGo">' + P.amount.toLocaleString() + '원 결제하기</button>') +
-      (id !== 'set' && !owns('set') ? '<button type="button" class="pay-up" id="paySet"><span><b>3종 한 번에</b> 신년운세 · 궁합 상세 · 쉬운 풀이</span><span><s>7,480원</s> 6,900원 ›</span></button>' : '') +
-      '<p class="helper pay-note">' + (isGuest() ? '결제는 로그인 후에 할 수 있어요. ' : '') + '열기 전 리포트는 7일 안에 전액 환불돼요.</p></div>');
-    var done = function(){ closeSheet(); setTimeout(function(){ if (opt.onPaid) opt.onPaid(); toast(P.name + ' 열렸어요'); }, 260); };
-    if (credit) $('payCredit').onclick = function(){
-      var o = getOrders();
-      for (var i = 0; i < o.length; i++){ if (o[i].id === 'set' && !o[i].ghKey && o[i].status !== 'refund'){ o[i].ghKey = opt.ghKey; break; } }
-      store('unsu_orders', o); done();
+      '<div class="pay-price">' + COIN_SVG + '<b>' + P.coin.toLocaleString() + '닢</b></div>' +
+      '<button class="btn-primary btn-block" id="payGo">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : '엽전 ' + P.coin.toLocaleString() + '닢으로 열기') + '</button>' +
+      '<p class="helper pay-note">' + (guest ? '처음 로그인하면 받는 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (P.coin - coins).toLocaleString() + '닢 부족해요 · 보유 ' + coins.toLocaleString() + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 한 번 열면 ' + P.keep) + '</p></div>');
+    $('payGo').onclick = function(){
+      if (guest){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. ' + P.name + '은(는) ' + P.coin + '닢이에요.'); return; }
+      if (short){ openCoinSheet(P.name + '을(를) 열려면 엽전이 ' + (P.coin - coins).toLocaleString() + '닢 더 필요해요.'); return; }
+      if (NS) toast('예시 모드라 엽전 없이 열었어요'); else addCoins(-P.coin, P.name);
+      addOrder(id, { ghKey:id === 'gh' ? opt.ghKey : null });
+      closeSheet(); setTimeout(function(){ if (opt.onPaid) opt.onPaid(); toast(P.name + ' 열렸어요'); }, 260);
     };
-    else $('payGo').onclick = function(){
-      if (isGuest()){ openLoginSheet('결제는 로그인 후에 할 수 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢도 드려요.'); return; }
-      if (NS){ addOrder(id, { ghKey:id === 'gh' ? opt.ghKey : null }); toast('예시 모드라 결제 없이 열었어요'); done(); return; }
-      if (!PAY_READY){ toast('결제는 곧 열려요. 토스 결제 연결을 마무리하고 있어요'); return; }
-      /* TODO(토스페이먼츠): 결제위젯 요청 → /api/pay/confirm 서버 승인 → addOrder → done */
-    };
-    if ($('paySet')) $('paySet').onclick = function(){ openPaySheet('set', { onPaid:opt.onPaid, ghKey:opt.ghKey }); };
   }
   function openOrdersSheet(){
     var o = getOrders();
     openSheet('<h3 id="sheetTitle">구매 내역</h3>' +
       (o.length ? '<div class="st-group">' + o.map(function(x){
-        return '<div class="od-row"><div><b>' + esc(x.name) + '</b><small>' + fmtDate(x.at) + ' · ' + (x.status === 'refund' ? '환불 완료' : x.opened ? '열람함' : '결제 완료 · 열기 전') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
+        return '<div class="od-row"><div><b>' + esc(x.name) + '</b><small>' + fmtDate(x.at) + ' · ' + (x.status === 'refund' ? '환불 완료' : x.opened ? '열람함' : '결제 완료 · 열기 전') + '</small></div><span>' + (x.coin ? x.coin.toLocaleString() + '닢' : (x.amount || 0).toLocaleString() + '원') + '</span></div>';
       }).join('') + '</div>'
       : '<div class="empty-box"><b>아직 구매한 리포트가 없어요</b><p class="helper">유료 상품을 결제하면 여기에 보관돼요. 결제 기록은 전자상거래법에 따라 5년 동안 보관해요.</p></div>') +
       '<p class="helper" style="margin-top:12px">열기 전 리포트는 결제일로부터 7일 안에 전액 환불돼요. <button class="link-btn" data-doc="refund">환불 정책</button></p>' +
@@ -3050,7 +3117,8 @@
   ];
   var FAQ = [
     ['태어난 시간을 몰라도 볼 수 있나요?', '네. 시간을 모르면 시주를 빼고 여섯 글자로 풀어요. 정확도는 조금 낮아질 수 있어요.'],
-    ['엽전은 무엇인가요?', '출석, 가입 선물, 광고 보상, 우니 선물로 무료로 모으는 포인트예요. 분야별 운세, 꿈풀이, 번호 한 줄 더 뽑기에 쓰고, 현금으로 바꾸거나 환불할 수는 없어요.'],
+    ['엽전은 무엇인가요?', '우니조아의 유료 콘텐츠를 여는 화폐예요. 충전소에서 충전하거나 출석·가입 선물·광고 보상·우니 선물로 모아요. 꿈풀이 번호받기, 분야별 운세, 궁합 상세, 쉬운 사주 풀이, 번호 한 줄 더에 써요. 충전한 엽전 중 쓰지 않은 것은 7일 안에 환불돼요. 무료로 받은 엽전은 현금으로 바꿀 수 없어요.'],
+    ['신년운세는 유료인가요?', '아니에요. 총평과 1~3월은 바로 무료로 보고, 광고 한 편을 끝까지 보면 4~12월과 2~7장 전체가 무료로 열려요. 한 번 열면 그 사람의 신년운세는 계속 다시 볼 수 있어요.'],
     ['유료 리포트를 환불할 수 있나요?', '열기 전이라면 결제일로부터 7일 안에 전액 환불돼요. 연 뒤에는 디지털 콘텐츠 특성상 청약철회가 제한되고, 계산 오류가 있으면 열람과 관계없이 환불해요.'],
     ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 구매한 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],
     ['꿈풀이에 쓴 엽전을 돌려받을 수 있나요?', '꿈풀이는 누르는 순간 바로 풀이가 만들어지는 디지털 콘텐츠라 엽전을 돌려드리지 않아요. 다만 오류로 결과가 나오지 않았다면 고객센터로 알려 주세요. 확인 후 엽전을 다시 넣어 드려요.'],
@@ -3094,7 +3162,7 @@
   }
   function openLoginSheet(reason){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
-    openSheet('<h3 id="sheetTitle">로그인하고 기록 지키기</h3>' + (reason ? '<p class="body-text" style="margin:-6px 0 14px">' + reason + '</p>' : '') +
+    openSheet('<div class="sheet-fig">' + uniImg('u-wave') + '</div><h3 id="sheetTitle">로그인하고 기록 지키기</h3>' + (reason ? '<p class="body-text" style="margin:-6px 0 14px">' + reason + '</p>' : '') +
       '<ul class="benefits"><li>' + OK_SVG + '<b>처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요</li><li>' + OK_SVG + '기기를 바꿔도 출석·엽전이 그대로예요</li><li>' + OK_SVG + '저장한 사주와 궁합 리포트가 계정에 보관돼요</li></ul>' +
       '<div class="view" style="gap:8px;margin-top:18px"><button class="btn-social k" data-login="kakao">카카오로 계속하기</button><button class="btn-social g" data-login="google">Google로 계속하기</button>' +
       '<button class="text-btn" data-close>나중에 할게요</button><p class="mock-note">포트폴리오 목업이에요 · 실제 계정과 연결되지 않아요</p></div>');
@@ -3271,7 +3339,7 @@
       cv.toBlob(function(b){ if (b) cb(b, URL.createObjectURL(b)); }, 'image/png');
     }
     var go = function(){
-      var img = new Image(), svg = petSVG('love', 2, '').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" ');
+      var img = new Image(), svg = petSVGVec('love', 2, '').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" ');
       img.onload = function(){ draw(img); }; img.onerror = function(){ draw(null); };
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     };
@@ -3281,7 +3349,7 @@
   document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#shNative,#shLink,#shMsg')) markTodo('shared'); });
   function renderShareSheet(){
     var o = shareState, link = currentLink();
-    var h = '<h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
+    var h = '<div class="sheet-fig sm">' + uniImg('u-share') + '</div><h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
       '<div class="sh-cardimg"><img id="shImg" alt="공유할 결과 카드 미리보기"></div>' +
       '<a class="sc-url sh-link" href="' + esc(link) + '" target="_blank" rel="noopener">' + SH_IC.link + esc(shortUrl(link)) + '</a>';
     if (o.inviteEntry){

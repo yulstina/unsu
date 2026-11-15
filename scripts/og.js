@@ -42,11 +42,11 @@ const fs = require('fs');
   const p = await b.newPage({ viewport:{ width:1200, height:630 }, deviceScaleFactor:1 });
   await p.setContent(html); await p.waitForTimeout(300);
   await p.screenshot({ path: ROOT + '/public/og.jpg', type:'jpeg', quality:82 });
-  // icons
-  const svg = fs.readFileSync(ROOT + '/public/icon.svg', 'utf8');
-  for (const [name, size] of [['icon-512', 512], ['icon-192', 192], ['apple-touch-icon', 180]]){
+  // icons — 2026-11-15부터 우니조아 앱 아이콘 PNG(docs/brand/woonijoa-app-icon.png)가 원본
+  const iconSrc = 'data:image/png;base64,' + fs.readFileSync(ROOT + '/docs/brand/woonijoa-app-icon.png').toString('base64');
+  for (const [name, size] of [['icon-512', 512], ['icon-192', 192], ['apple-touch-icon', 180], ['favicon-32', 32]]){
     const q = await b.newPage({ viewport:{ width:size, height:size } });
-    await q.setContent(`<html><body style="margin:0;background:#05060f">${svg.replace('<svg ', `<svg width="${size}" height="${size}" `)}</body></html>`);
+    await q.setContent(`<html><body style="margin:0;background:#05060f"><img src="${iconSrc}" width="${size}" height="${size}" style="display:block"></body></html>`);
     await q.screenshot({ path: ROOT + `/public/icons/${name}.png`, omitBackground:false });
   }
   await b.close();

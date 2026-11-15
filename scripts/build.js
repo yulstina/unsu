@@ -60,7 +60,7 @@ const SITE = 'https://woonijoa.com';
 <meta name="twitter:title" content="우니조아 WooniJoa — 내 사주로 뽑는 여섯 개의 행운 번호">
 <meta name="twitter:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호">
 <meta name="twitter:image" content="${SITE}/og.jpg">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -91,7 +91,7 @@ ${markupMin}
   fs.writeFileSync(path.join(OUT, 'manifest.webmanifest'), JSON.stringify({
     name:'우니조아 WooniJoa — 내 사주로 뽑는 여섯 개의 행운 번호', short_name:'우니조아', lang:'ko', start_url:'/', scope:'/', display:'standalone',
     background_color:'#0d0b1e', theme_color:'#0d0b1e',
-    icons:[{ src:'/icons/icon-192.png', sizes:'192x192', type:'image/png' }, { src:'/icons/icon-512.png', sizes:'512x512', type:'image/png' }, { src:'/icon.svg', sizes:'any', type:'image/svg+xml' }]
+    icons:[{ src:'/icons/icon-192.png', sizes:'192x192', type:'image/png' }, { src:'/icons/icon-512.png', sizes:'512x512', type:'image/png' }]
   }));
   fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
   

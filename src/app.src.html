@@ -82,9 +82,9 @@
   .eyebrow{display:flex;align-items:center;gap:10px;color:var(--text-helper);font-family:var(--font-mono);font-size:calc(11px*var(--fs));letter-spacing:.14em;}
   .eyebrow .line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border-hairline));}
   .eyebrow .line.right{background:linear-gradient(270deg,transparent,var(--border-hairline));}
-  .body-text{font-size:calc(14px*var(--fs));line-height:1.75;color:var(--text-muted);}
+  .body-text{font-size:calc(15px*var(--fs));line-height:1.75;color:var(--text-muted);}
   .body-text strong{color:var(--text-white);font-weight:500;}
-  .helper{font-size:calc(12px*var(--fs));color:var(--text-helper);line-height:1.55;}
+  .helper{font-size:calc(13px*var(--fs));color:var(--text-helper);line-height:1.55;}
   .chip-row{display:flex;gap:6px;flex-wrap:wrap;}
   .chip{background:rgba(214,208,236,.10);color:var(--text-body);font-size:calc(12px*var(--fs));font-weight:500;padding:5px 11px;border-radius:var(--r-badge);box-shadow:inset 0 0 0 1px var(--border-hairline);}
   .disclaimer{font-size:calc(11px*var(--fs));color:var(--text-helper);text-align:center;line-height:1.6;}
@@ -114,7 +114,7 @@
   .hero-copy{display:flex;flex-direction:column;gap:10px;}
   .hero-title{white-space:nowrap;overflow:hidden;font-family:var(--font-display);font-size:min(calc(25px*var(--fs)),calc((100vw - 32px) / 13.5));line-height:1.25;color:var(--text-headline);letter-spacing:-.01em;}
   .hero-fig{position:relative;width:128px;height:128px;}
-  .hero-fig svg{width:100%;height:100%;animation:float 6s ease-in-out infinite;}
+  .hero-fig svg,.hero-fig img{width:100%;height:100%;animation:float 6s ease-in-out infinite;}
   .hero-fig figcaption{position:absolute;bottom:-4px;left:0;right:0;text-align:center;font-family:var(--font-mono);font-size:calc(11px*var(--fs));letter-spacing:.1em;color:var(--text-helper);}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
@@ -510,7 +510,7 @@
   .wel-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding-top:6px;}
   .wel-hero .hero-title{font-size:calc(28px*var(--fs));}
   .wel-fig{width:180px;height:180px;margin:-6px auto -8px;}
-  .wel-fig svg{width:100%;height:100%;animation:float 6s ease-in-out infinite;}
+  .wel-fig svg,.wel-fig img{width:100%;height:100%;animation:float 6s ease-in-out infinite;filter:drop-shadow(0 14px 22px rgba(60,30,140,.35));}
   .wel-cta{display:flex;flex-direction:column;gap:6px;width:100%;}
   .text-btn{background:none;border:none;color:var(--text-muted);font-size:calc(13.5px*var(--fs));padding:10px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(214,208,236,.35);}
   .day-msg{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center;}
@@ -984,7 +984,7 @@
     background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
     box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 18px rgba(0,0,0,.28);
     transform:translateX(calc(var(--ti,0) * 100%));transition:transform .5s var(--ease-spring);}
-  .tab{position:relative;z-index:1;border-radius:999px;padding:7px 2px 6px;gap:2px;font-weight:600;font-size:calc(10.5px*var(--fs));color:rgba(214,226,250,.62);}
+  .tab{position:relative;z-index:1;border-radius:999px;padding:7px 2px 6px;gap:2px;font-weight:600;font-size:calc(12px*var(--fs));color:rgba(214,226,250,.62);}
   .tab svg{width:24px;height:24px;transition:transform .4s var(--ease-spring);}
   .tab.active{background:transparent;color:#fff;}
   .tab.active svg{filter:drop-shadow(0 0 8px rgba(207,198,251,.55));transform:scale(1.06);}
@@ -1006,6 +1006,13 @@
   .pet-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;align-items:center;position:relative;}
   .pet-fig{width:96px;height:96px;padding:0;border:none;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
   .pet-svg{width:100%;height:100%;overflow:visible;display:block;}
+  /* 우니·조아 PNG 공통 (2026-11-15) */
+  .uni-png{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;pointer-events:none;}
+  span.pet-svg{position:relative;}
+  span.pet-svg .pbody{display:block;width:100%;height:100%;transform-origin:50% 92%;}
+  span.pet-svg .pz{position:absolute;right:-2px;top:6%;font:700 calc(11px*var(--fs))/1 var(--font-mono,monospace);color:#d8ecf8;}
+  span.pet-svg .pz b{display:block;animation:petZ 2.6s ease-in-out infinite;} span.pet-svg .pz b+b{margin:-14px 0 0 8px;font-size:.75em;animation-delay:.6s;}
+  span.pet-svg.lv-hi .pbody{filter:drop-shadow(0 0 10px rgba(243,220,160,.45));}
   .pet-svg .pbody{transform-origin:60px 100px;animation:petBob 3.2s ease-in-out infinite;}
   .pet-svg.m-sleepy .pbody{animation-duration:4.6s;}
   .pet-svg.m-love .pbody{animation:petHop 1.6s var(--ease-spring) infinite;}
@@ -1151,11 +1158,11 @@
   .dm-pay{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:calc(13.5px*var(--fs));color:var(--text-body);padding:0 4px;}
   .dm-pay>span{display:inline-flex;align-items:center;gap:6px;} .dm-pay svg{width:16px;height:16px;color:#f0c35b;} .dm-pay b{color:#fff;}
   .dm-pay .pet-ticket.sm{margin:0;width:100%;}
-  #btnDmGo{display:flex;align-items:center;justify-content:center;gap:8px;} #btnDmGo svg{width:18px;height:18px;}
+  #btnDmGo,#btnDmUp{display:flex;align-items:center;justify-content:center;gap:8px;} #btnDmGo svg,#btnDmUp svg{width:18px;height:18px;margin:0;}
   .dm-past{display:grid;gap:8px;} .dm-past button{display:grid;gap:2px;text-align:left;padding:12px 14px;border-radius:14px;border:none;background:rgba(214,208,236,.06);color:#fff;cursor:pointer;font:inherit;}
   .dm-past b{font-size:calc(14.5px*var(--fs));font-weight:600;} .dm-past span{font-size:calc(12.5px*var(--fs));color:var(--text-helper);font-variant-numeric:tabular-nums;}
   .dm-loading{display:grid;justify-items:center;text-align:center;gap:8px;padding:34px 20px;} .dm-loading b{color:#fff;font-size:calc(16px*var(--fs));}
-  .dm-loading .pet-svg,.dm-loading svg:first-child{width:84px;height:84px;}
+  .dm-loading .pet-svg,.dm-loading svg:first-child,.dm-loading .dm-fig{width:96px;height:96px;}
   .dm-dots{display:flex;gap:6px;margin-top:6px;} .dm-dots i{width:7px;height:7px;border-radius:50%;background:var(--violet);animation:dmDot 1.2s infinite ease-in-out;} .dm-dots i:nth-child(2){animation-delay:.15s;} .dm-dots i:nth-child(3){animation-delay:.3s;}
   @keyframes dmDot{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:1;transform:translateY(-4px);}}
   .dm-res{display:grid;gap:4px;}
@@ -1287,7 +1294,7 @@
     .pc-side{display:flex;position:fixed;z-index:2;top:50%;width:min(300px,calc(50% - var(--app-w)/2 - 76px));flex-direction:column;gap:16px;color:var(--text-body);}
     .pc-side.l{right:calc(50% + var(--app-w)/2 + 48px);transform:translateY(-50%);}
     .pc-side.r{left:calc(50% + var(--app-w)/2 + 48px);transform:translateY(-50%);align-items:flex-start;}
-    .pc-woni svg{width:100%;height:100%;display:block;} .pc-woni{width:96px;height:96px;animation:woniFloat 3.6s ease-in-out infinite;}
+    .pc-woni svg,.pc-woni img{width:100%;height:100%;display:block;} .pc-woni{width:96px;height:96px;animation:woniFloat 3.6s ease-in-out infinite;}
     .pc-side h2{font-family:var(--font-display);font-size:30px;line-height:1.28;color:#fff;font-weight:500;letter-spacing:-.01em;}
     .pc-side h2 em{font-style:normal;background:linear-gradient(90deg,#c9b8ff,#f5d48a);-webkit-background-clip:text;background-clip:text;color:transparent;}
     .pc-side p{font-size:14px;color:var(--text-muted);line-height:1.6;}
@@ -1373,10 +1380,12 @@
   .qt-t em{font-style:normal;font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;background:#6a45f0;color:#fff;letter-spacing:.02em;}
   .qt-s{position:relative;font-size:calc(12px*var(--fs));font-weight:500;color:#4d4773;line-height:1.35;}
   .qtile .tile-art{position:relative;align-self:flex-end;width:118px;height:auto;margin:auto -6px -4px 0;}
-  .qtile .duo-svg.tile-art{width:128px;margin-bottom:-2px;}
+  .qtile .duo-svg.tile-art{width:136px;margin-bottom:-2px;}
+  .qtile .uni-png.tile-art{width:104px;height:104px;margin:auto 0 -6px 0;filter:drop-shadow(0 6px 10px rgba(40,10,90,.22));}
+  .qtile .duo-svg.uni-png.tile-art{width:140px;height:auto;}
   .qtile .tile-art .pz,.qtile .tile-art .ph{opacity:.9;}
   .gh-duo{display:flex;flex-direction:column;align-items:center;gap:2px;margin:-2px 0 10px;}
-  .gh-duo .duo-svg{width:170px;height:auto;}
+  .gh-duo .duo-svg{width:200px;height:auto;}
   .gh-duo p{margin:0;font-size:calc(13px*var(--fs));color:var(--text-helper);}
   @media (prefers-reduced-motion:no-preference){ .duo-svg .duo-h{transform-box:fill-box;transform-origin:center;animation:duoBeat 1.6s ease-in-out infinite;} }
   @keyframes duoBeat{0%,100%{transform:scale(1);}15%{transform:scale(1.18);}30%{transform:scale(1);}}
@@ -1415,6 +1424,9 @@
   .cs-badge.sub{position:static;grid-column:1/-1;justify-self:start;margin:-4px 0 -6px;background:rgba(169,150,255,.2);color:#d9d2ff;box-shadow:none;order:-1;}
   .cs-pack:has(.cs-badge.sub){grid-template-columns:40px 1fr auto;}
   .cs-use{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px;}
+  .cs-use div.hot{grid-column:span 2;background:linear-gradient(140deg,rgba(255,214,120,.16),rgba(150,120,255,.14));box-shadow:inset 0 0 0 1px rgba(255,220,140,.35);}
+  .cs-use div.hot span{color:#ffe7a3;font-weight:700;}
+  #csBuy:disabled{opacity:1;background:rgba(255,255,255,.08);color:var(--text-helper);box-shadow:inset 0 0 0 1px rgba(226,220,255,.14);cursor:not-allowed;}
   .cs-use div{display:flex;flex-direction:column;gap:2px;padding:12px 10px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(226,220,255,.08);}
   .cs-use span{font-size:calc(12.5px*var(--fs));color:var(--text-helper);} .cs-use b{font-size:calc(16px*var(--fs));color:#ffe7a3;} .cs-use small{font-size:calc(11px*var(--fs));color:var(--text-helper);opacity:.8;}
   /* 분야별 운세 잠금 */
@@ -1472,9 +1484,9 @@
   .peek-card.open .peek-btn{transform:translateX(-62px);}
   .peek-card.burst .peek-btn{animation:pkHop .8s var(--ease-spring) both;}
   .peek-fig{position:absolute;inset:14px;display:grid;place-items:center;transform-origin:50% 92%;transition:transform .25s var(--ease-ios);}
-  .peek-fig svg{width:100%;height:100%;}
+  .peek-fig svg,.peek-fig img{width:100%;height:100%;}
   .peek-card:not(.open) .peek-fig{animation:pkWiggle 2.8s ease-in-out infinite;}
-  .peek-card.hold .peek-fig{animation:none;transform:scale(1.1,.8);transition:transform .75s cubic-bezier(.3,.7,.4,1);}
+  .peek-card.hold .peek-fig{animation:none;transform:scale(1.04,.94);transition:transform .75s cubic-bezier(.3,.7,.4,1);}
   .peek-card.open .pstar{opacity:0;}
   .peek-ring{position:absolute;inset:0;width:100%;height:100%;transform:scale(.55);opacity:0;}
   .peek-ring circle{fill:none;stroke:#f5d48a;stroke-width:4;stroke-dasharray:6 7;}
@@ -1612,6 +1624,7 @@
   .lt .mini-z svg{background:radial-gradient(circle at 50% 40%,#3a2d86,#1b1440 75%);}
   /* 분야별 운세 · 우니 */
   .uni-cat{position:relative;display:block;width:48px;height:48px;flex:none;}
+  .uni-cat .uni-png{filter:drop-shadow(0 3px 6px rgba(30,10,80,.25));}
   .uni-cat .uc-prop{position:absolute;right:-4px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#fff3cf,#f2c76a);box-shadow:0 2px 6px rgba(40,20,0,.25),inset 0 0 0 1px rgba(255,255,255,.7);color:#6b4300;}
   .uni-cat .uc-prop svg{width:13px;height:13px;}
   .cat-guide{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px rgba(75,59,196,.14);}
@@ -1632,6 +1645,37 @@
   /* 작은 글씨 최소 12.5px, 어두운 면의 보조 글씨는 한 단계 더 밝게 */
   :root{--text-helper:#c9c3e2;--text-muted:#d9d4ee;}
   .sec-meta,.helper,.disclaimer{font-size:max(calc(12.5px*var(--fs)),12.5px);}
+
+  /* ===== 2026-11-15 · 우니조아 캐릭터 PNG 배치 + 엽전/광고 수익 구조 ===== */
+  .sheet-fig{width:104px;height:104px;margin:-6px auto 2px;filter:drop-shadow(0 10px 18px rgba(50,20,120,.35));}
+  .sheet-fig.sm{width:76px;height:76px;}
+  .bx-empty{display:grid;justify-items:center;text-align:center;gap:4px;padding:4px 0 2px;}
+  .bx-empty .uni-png{width:112px;height:112px;}
+  .short-fig{width:96px;height:96px;margin:0 auto 4px;}
+  .pay-price svg{width:22px;height:22px;vertical-align:-4px;margin-right:4px;color:#ffe7a3;}
+  .pay-hero .uni-png.tile-art{width:132px;height:132px;}
+  .ez-art .uni-png.tile-art{width:120px;height:120px;}
+  .db-uni .uni-png.tile-art{width:96px;height:96px;}
+  .db-uni .duo-svg.uni-png{width:118px;height:auto;}
+  .btn-primary svg{vertical-align:-4px;margin-right:6px;}
+  /* 꿈풀이 번호받기 */
+  .dm-offer{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center;margin:14px 0 10px;padding:14px;border-radius:20px;
+    background:linear-gradient(140deg,rgba(255,214,120,.16),rgba(150,120,255,.18));box-shadow:inset 0 0 0 1px rgba(255,220,140,.3);}
+  .dmo-fig{width:84px;height:84px;}
+  .dm-offer b{display:block;color:#ffe7a3;font-size:calc(16px*var(--fs));margin-bottom:4px;}
+  .dm-offer ul{margin:0;padding:0;list-style:none;display:grid;gap:2px;font-size:calc(13px*var(--fs));color:var(--text-muted);}
+  .dm-offer li::before{content:'✦ ';color:#ffd36b;} .dm-offer em{font-style:normal;color:#fff;font-weight:700;}
+  .dm-free{margin-top:8px;}
+  .dm-mini i.q{background:rgba(255,255,255,.08);color:var(--text-helper);}
+  .dm-up{position:relative;text-align:center;overflow:hidden;background:linear-gradient(160deg,rgba(255,214,120,.14),rgba(126,96,240,.22));box-shadow:inset 0 0 0 1px rgba(255,220,140,.32);}
+  .dmu-fig{width:112px;height:112px;margin:0 auto;}
+  .dmu-k{font-size:calc(12.5px*var(--fs));color:#ffd98a;letter-spacing:.02em;}
+  .dmu-t{margin:4px 0 12px;font-size:calc(19px*var(--fs));color:#fff;}
+  .dmu-balls{justify-content:center;filter:blur(.4px);} .dmu-balls .ball{color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+  .dmu-list{list-style:none;margin:14px 0;padding:0;display:grid;gap:4px;font-size:calc(13.5px*var(--fs));color:var(--text-muted);}
+  .dmu-list li::before{content:'✓ ';color:#ffd36b;font-weight:700;}
+  .ny-free{text-align:center;} .ny-free-fig{width:92px;height:92px;margin:-4px auto 0;}
+  @media (prefers-reduced-motion:no-preference){ .dmu-fig,.dmo-fig{animation:float 5s ease-in-out infinite;} }
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -1648,7 +1692,7 @@
 
 <header class="topbar">
   <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="우니조아 홈으로" style="cursor:pointer">
-    <svg class="brand-woni" width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="bwb" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/><path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/><ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/><path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#bwb)"/><ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/><ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><circle cx="46" cy="67" r="4.8" fill="#221a4a"/><circle cx="74" cy="67" r="4.8" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/><path d="M52 77q8 9 16 0z" fill="#3a1d5c"/></svg>
+    <img class="brand-woni" src="img/u-calm.webp" width="30" height="30" alt="" aria-hidden="true" draggable="false">
     <span>Wooni<span class="bp">Joa</span></span>
   </div>
   <div class="top-actions">
@@ -1860,7 +1904,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="intro" id="intro" hidden aria-hidden="true">
   <div class="intro-in">
-    <svg class="intro-logo intro-woni" viewBox="0 0 120 120"><defs><radialGradient id="iwb" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eef3ff"/><stop offset=".45" stop-color="#b9a8ff"/><stop offset="1" stop-color="#6a45f0"/></radialGradient></defs><path d="M60 38c-6 0-8-8-2-16" fill="none" stroke="#c9b9ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="70" cy="18" r="9" fill="#f3dca0" opacity=".25"/><path d="M70 10l2.4 5 5.4.8-3.9 3.8.9 5.4L70 22.5 65.2 25l.9-5.4-3.9-3.8 5.4-.8z" fill="#f3dca0"/><ellipse cx="45" cy="101" rx="9" ry="5" fill="#5b3be8"/><ellipse cx="75" cy="101" rx="9" ry="5" fill="#5b3be8"/><path d="M60 36c22 0 38 15 38 36c0 18-16 30-38 30S22 90 22 72c0-21 16-36 38-36z" fill="url(#iwb)"/><ellipse cx="45" cy="50" rx="11" ry="6" fill="#fff" opacity=".55" transform="rotate(-22 45 50)"/><ellipse cx="37" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><ellipse cx="83" cy="79" rx="6.5" ry="4" fill="#ff8fb1" opacity=".45"/><circle cx="46" cy="67" r="4.8" fill="#221a4a"/><circle cx="74" cy="67" r="4.8" fill="#221a4a"/><circle cx="47.6" cy="65.3" r="1.6" fill="#fff"/><circle cx="75.6" cy="65.3" r="1.6" fill="#fff"/><path d="M52 77q8 9 16 0z" fill="#3a1d5c"/></svg>
+    <img class="intro-logo intro-woni" src="img/u-calm.webp" width="400" height="400" alt="" draggable="false">
     <div class="intro-name"><span>Wooni<span class="bp">Joa</span></span></div>
     <div class="intro-sub" id="introSub">태어난 순간의 하늘로 읽는 오늘</div>
   </div>
@@ -1873,7 +1917,7 @@
   </div>
 </div>
 <div class="adov" id="adOverlay" hidden role="dialog" aria-modal="true" aria-label="광고">
-  <div class="adov-top"><span class="ad-badge">AD</span><span class="adov-note">보상형 광고 자리 · 포트폴리오 목업</span><button class="adov-x" id="adClose" aria-label="광고 닫기">✕</button></div>
+  <div class="adov-top"><span class="ad-badge">AD</span><span class="adov-note">보상형 광고 자리 · 광고 연결 전 미리보기</span><button class="adov-x" id="adClose" aria-label="광고 닫기">✕</button></div>
   <div class="adov-stage">
     <div class="adov-mock"><div class="adov-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(214,206,247,.15)" stroke-width="6"/><circle id="adRing" cx="60" cy="60" r="52" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/></svg><b id="adSec">5</b></div>
       <p>실서비스에서는 이 자리에 광고 SDK의<br>보상형 영상 광고가 재생돼요.</p>
