@@ -42,6 +42,20 @@
     "api/dream.js": {
       "maxDuration": 30,
       "includeFiles": "src/dream.js"
+    },
+    "api/share.js": {
+      "maxDuration": 10,
+      "includeFiles": "{public/index.html,public/js/core.js,public/js/lunar.js}"
+    },
+    "api/og.js": {
+      "maxDuration": 15,
+      "includeFiles": "{public/js/core.js,public/js/lunar.js,api/_assets/**}"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/s/:code",
+      "destination": "/api/share?r=:code"
+    }
+  ]
 }

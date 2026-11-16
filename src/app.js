@@ -126,26 +126,8 @@
   /* =========================================================
      공통 헬퍼
      ========================================================= */
-  function seedHash(str){ var h = 0; for (var i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0; return h >>> 0; }
-  function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  function drawSixFromSeed(seedStr){
-    var rand = mulberry32(seedHash(seedStr));
-    var pool = []; for (var i = 1; i <= 45; i++) pool.push(i);
-    var picked = [];
-    for (var k = 0; k < 6; k++){ var idx = Math.floor(rand()*pool.length); picked.push(pool[idx]); pool.splice(idx, 1); }
-    return picked.sort(function(a,b){ return a-b; });
-  }
-  /* 용신 수(하도수) 가중 번호: 용신 끝자리 번호 3개 + 나머지 3개 */
-  function drawYongNumbers(seedStr, el){
-    var rand = mulberry32(seedHash(seedStr));
-    var digits = EL_TEXT[el].num.map(function(n){ return n % 10; });
-    var yongPool = [], rest = [];
-    for (var i = 1; i <= 45; i++) (digits.indexOf(i % 10) > -1 ? yongPool : rest).push(i);
-    var out = [];
-    for (var a = 0; a < 3; a++){ var ix = Math.floor(rand()*yongPool.length); out.push({ n:yongPool[ix], y:true }); yongPool.splice(ix, 1); }
-    for (var b = 0; b < 3; b++){ var jx = Math.floor(rand()*rest.length); out.push({ n:rest[jx], y:false }); rest.splice(jx, 1); }
-    return out.sort(function(p, q){ return p.n - q.n; });
-  }
+  /* 번호 뽑기 계산은 src/share.js 와 한 벌 — 서버의 링크 미리보기 이미지와 숫자가 같아야 한다 */
+  var seedHash = SHARE.seedHash, mulberry32 = SHARE.mulberry32, drawSixFromSeed = SHARE.drawSix, drawYongNumbers = SHARE.drawYong;
   function revealBalls(container){
     var balls = container.querySelectorAll('.ball');
     if (reduceMotion || !window.gsap){ balls.forEach(function(b){ b.classList.remove('pre'); }); return; }
@@ -187,17 +169,18 @@
      탭 네비게이션
      ========================================================= */
   var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream'), shared:$('v-shared'), box:$('v-box') };
-  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'today', fill:'num', dream:'today', shared:'', box:'box' };
+  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'today', fill:'num', dream:'dream', shared:'', box:'box' };
   var currentTab = 'today', currentView = 'today', lastSajuView = null;
   function show(view, tab){
     Object.keys(VIEWS).forEach(function(k){ VIEWS[k].hidden = k !== view; });
     var viewChanged = view !== shownView; shownView = view;
+    if (typeof SHARED !== 'undefined' && SHARED && SHARED.view && view !== SHARED.view) sharedOff();   /* 공유 화면에서 다른 화면으로 넘어가면 일반 모드로 */
     currentView = view; currentTab = tab !== undefined ? tab : TAB_OF[view];
     document.body.classList.toggle('focus', view === 'onboard');
     if (typeof updateTopbar === 'function') updateTopbar();
     if (view === 'input' || view === 'list' || view === 'result') lastSajuView = view;
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === currentTab); b.setAttribute('aria-current', b.dataset.tab === currentTab ? 'page' : 'false'); });
-    var ti = ['today','num','saju','box'].indexOf(currentTab), lens = document.querySelector('.tab-lens');
+    var ti = ['today','num','saju','dream','box'].indexOf(currentTab), lens = document.querySelector('.tab-lens');
     if (lens){ lens.style.opacity = ti < 0 ? '0' : '1'; if (ti >= 0) lens.style.setProperty('--ti', ti); }
     var segKey = view === 'result' ? 'mine' : view;
     document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });
@@ -264,7 +247,7 @@
     if (pcDone || !pcMQ.matches) return; pcDone = true;
     try { $('pcWoni').innerHTML = uniImg('u-ball', 'fig', '행운 번호 공을 든 우니'); } catch (e){}
     if (!window.QRCode){ var qs = document.querySelector('.pc-side.r'); if (qs) qs.hidden = true; }
-    try { if (window.QRCode) new QRCode($('pcQr'), { text:location.origin + location.pathname, width:232, height:232, colorDark:'#05060f', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); } catch (e){}
+    try { if (window.QRCode) new QRCode($('pcQr'), { text:location.origin + '/', width:232, height:232, colorDark:'#05060f', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); } catch (e){}
   }
   if (pcMQ.addEventListener) pcMQ.addEventListener('change', initPcSide);
   setTimeout(initPcSide, 0);
@@ -2884,15 +2867,15 @@
     var el = document.createElement('div'); el.className = 'gen' + (withAd ? ' has-ad' : ''); el.setAttribute('role', 'status');
     /* 분석 화면도 콘텐츠(여덟 글자·오행 막대)를 함께 보여 준다 — 광고만 있는 화면은 애드센스 정책 위반 소지가 있어서 */
     el.innerHTML = '<div class="gen-main"><div class="gen-fig">' + figSVG(r.animal, MS.EL_KEY[P.day.sEl]) + '<span class="gen-ring"></span></div>' +
-      (o.name ? '<p class="gen-who">' + esc(o.name) + '님의 사주를 분석하고 있어요</p>' : '') + '<div class="hj">' + g + '</div>' +
+      (o.name ? '<p class="gen-who">' + esc(o.name) + '님의 ' + (o.what || '사주를') + ' 분석하고 있어요</p>' : '') + '<div class="hj">' + g + '</div>' +
       '<b id="genStep">' + steps[0] + '</b><div class="gen-bars">' + bars + '</div>' +
       '<div class="gen-prog"><i id="genProg"></i></div><p id="genPct">0%</p></div>' +
       (withAd ? '<div class="gen-ad">' + adSlotHTML('사주 분석 중', 'loading') + '</div>' : '');
     document.body.appendChild(el);
     var s = el.querySelector('svg'); s.classList.add('fig'); if (!reduceMotion) s.classList.add('draw');
     if (reduceMotion){ el.querySelectorAll('u').forEach(function(u){ u.style.width = u.dataset.w + '%'; }); setTimeout(function(){ el.remove(); cb(); }, withAd ? 2400 : 500); return; }
-    var T = withAd ? 3800 : 3200, t0 = Date.now();
-    setTimeout(function(){ el.querySelectorAll('u').forEach(function(u, i){ setTimeout(function(){ u.style.width = u.dataset.w + '%'; }, i * 380); }); }, 900);
+    var T = o.quick ? 1700 : withAd ? 3800 : 3200, t0 = Date.now();
+    setTimeout(function(){ el.querySelectorAll('u').forEach(function(u, i){ setTimeout(function(){ u.style.width = u.dataset.w + '%'; }, i * (o.quick ? 120 : 380)); }); }, o.quick ? 200 : 900);
     (function tick(){
       var k = Math.min(1, (Date.now() - t0) / T);
       $('genProg').style.width = (k * 100) + '%'; $('genPct').textContent = Math.round(k * 100) + '%';
@@ -3230,7 +3213,9 @@
   var APP_URL = 'https://claude.ai/artifact/NNHb2ZK2F9wc6rpagwoEhm';
   function inFrame(){ try { return window.top !== window.self; } catch(e){ return true; } }
   function isHosted(){ return /^https?:$/.test(location.protocol) && !inFrame(); }
-  function shareBase(){ return isHosted() ? location.origin + location.pathname : APP_URL; }
+  var IS_LOCAL = /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname);
+  function basePath(){ return /^\/s\//.test(location.pathname) ? '/' : location.pathname; }   /* /s/코드 로 들어왔어도 앱 주소는 루트 */
+  function shareBase(){ return isHosted() ? location.origin + basePath() : APP_URL; }
   function linkFor(anchor){ return shareBase() + (anchor ? '#' + anchor : ''); }
   function b64u(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function unb64u(s){ s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
@@ -3267,19 +3252,15 @@
     return b64u(['r1', type, String(date).replace(/-/g, ''), String(extra || '').replace(/\|/g, '')].concat(entries.map(encEntry)).join('|'));
   }
   function decodeShare(code){
-    var p = unb64u(code).split('|');
-    if (p[0] !== 'r1' || 'sdngzc'.indexOf(p[1]) < 0 || p[1].length !== 1 || !/^\d{8}$/.test(p[2])) return null;
-    var y = +p[2].slice(0, 4), m = +p[2].slice(4, 6), d = +p[2].slice(6, 8), dt = new Date(y, m - 1, d, 12, 0, 0);
-    if (dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-    var need = p[1] === 'g' ? 2 : p[1] === 'z' ? 0 : 1, ents = [];
-    for (var i = 0; i < need; i++){ var e = decEntry(p.slice(4 + i * EF, 4 + (i + 1) * EF)); if (!e) return null; ents.push(e); }
-    if (p[1] === 'z' && !zByName(p[3].split('~')[0])) return null;
-    if (p[1] === 'c' && !CATS[p[3]]) return null;
-    return { type:p[1], date:dt, dateStr:y + '-' + pad2(m) + '-' + pad2(d), extra:p[3], entries:ents };
+    var S = SHARE.decode(code);
+    if (S && S.type === 'z' && !zByName(S.extra.split('~')[0])) return null;
+    return S;
   }
   function resultLink(type, date, entries, extra){
     var c = encodeShare(type, date, entries, extra);
-    return isHosted() ? shareBase() + '?r=' + c : APP_URL + '#r.' + c;
+    if (!isHosted()) return APP_URL + '#r.' + c;
+    /* 배포 주소: /s/코드 → 서버가 결과 카드 미리보기(og 이미지)를 붙여 준다. 로컬 미리보기(serve)에는 그 경로가 없어 ?r= 로 */
+    return IS_LOCAL ? shareBase() + '?r=' + c : location.origin + '/s/' + c;
   }
   function shortUrl(u){ u = u.replace(/^https?:\/\//, ''); return u.length > 42 ? u.slice(0, 30) + '…' + u.slice(-8) : u; }
 
@@ -3377,14 +3358,9 @@
       document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요'); markTodo('shared');
     };
     $('shNative').onclick = function(){
-      var link = currentLink(), data = { title:o.title, text:o.text + '\n\n' + o.cta + '\n' + link, url:link };
-      if (cardBlob && navigator.canShare){
-        var file = new File([cardBlob], 'woonijoa.png', { type:'image/png' }), fd = { files:[file], title:o.title, text:o.title + '\n' + o.cta + '\n' + link };
-        if (navigator.canShare(fd)){
-          navigator.share(fd).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){ if (err && err.name !== 'AbortError') copyText(fullMsg(), '메시지와 링크를 복사했어요. 카톡에 붙여넣어 주세요'); });
-          return;
-        }
-      }
+      var link = currentLink(), data = { title:o.title, text:o.text + '\n\n' + o.cta, url:link };
+      /* 링크만 보낸다: 카톡·문자에서 링크 미리보기가 결과 카드 이미지로 뜨고, 누르면 결과 화면으로 이어진다.
+         (이미지 파일을 같이 보내면 앱에 따라 링크가 빠져서 카드만 덩그러니 남았다. 이미지는 '이미지 저장'으로 따로) */
       if (navigator.share){
         navigator.share(data).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){
           if (err && err.name === 'AbortError') return;
@@ -3450,12 +3426,29 @@
     var dt = S.date;
     return '<div class="demo-bar shared-bar"><span>' + (who ? '<b>' + esc(who) + '</b>님이 공유한 결과' : '친구가 공유한 결과') + ' · ' + (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일 기준</span><button type="button" data-shared-mine>내 것도 보기</button></div>';
   }
-  function sharedCtaHTML(label, sub){
-    return '<div class="card shared-cta"><p class="helper">' + sub + '</p><button class="btn-primary btn-block" data-shared-mine>' + label + '</button></div>';
+  /* 공유받은 화면: 하단 메뉴 대신 '내 것 보러 가기' 버튼 하나만 고정한다 */
+  var SHARED_CTA = { s:['내 사주 보러 가기', 'saju'], d:['내 오늘 운세 보러 가기', 'today'], n:['내 행운 번호 뽑으러 가기', 'num'], g:['나도 궁합 보러 가기', 'gunghap'], z:['내 운세 보러 가기', 'today'], c:['내 운세 보러 가기', 'today'] };
+  function sharedDock(S){
+    var d = $('sharedDock'), c = SHARED_CTA[S.type];
+    if (!d){ d = document.createElement('div'); d.id = 'sharedDock'; d.className = 'shared-dock'; document.body.appendChild(d); }
+    d.innerHTML = '<div class="shared-dock-in"><p>생년월일만 넣으면 30초 · 가입 없이 바로</p><button type="button" class="btn-primary btn-block sheen" id="btnSharedGo">' + c[0] + '</button></div>';
+    $('btnSharedGo').onclick = function(){ leaveShared(c[1]); };
+    document.body.classList.add('shared-mode');
+  }
+  function sharedOff(){ SHARED = null; document.body.classList.remove('shared-mode'); var d = $('sharedDock'); if (d) d.remove(); try { history.replaceState(null, '', basePath()); } catch(e){} }
+  /* 링크를 열면 잠깐 '분석 중'을 보여 주고 결과로 넘어간다 (짧게, 광고 없이) */
+  function sharedLoading(S, cb){
+    var A = S.entries[0];
+    if (A){ showGen(withDate(S.date, function(){ return compute(A); }), cb, { name:A.name, ad:false, quick:true, what:S.type === 's' ? '사주를' : S.type === 'g' ? '궁합을' : S.type === 'n' ? '행운 번호를' : '운세를' }); return; }
+    var el = document.createElement('div'); el.className = 'gen'; el.setAttribute('role', 'status');
+    el.innerHTML = '<div class="gen-main"><div class="gen-fig">' + uniImg('u-zodiac') + '</div><p class="gen-who">별자리 운세를 불러오고 있어요</p><div class="gen-prog"><i style="width:0;transition:width 1.1s linear"></i></div></div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ var i = el.querySelector('.gen-prog i'); if (i) i.style.width = '100%'; });
+    setTimeout(function(){ el.remove(); cb(); }, reduceMotion ? 400 : 1300);
   }
   function leaveShared(target){
-    SHARED = null;
-    try { history.replaceState(null, '', location.pathname); } catch(e){}
+    sharedOff();
+    try { history.replaceState(null, '', basePath()); } catch(e){}
     if (target === 'gunghap'){ go('gunghap'); return; }
     if (!getMe()){ startOnboarding('new'); return; }
     go(target || 'today');
@@ -3470,6 +3463,7 @@
       withDate(S.date, function(){ openResult(A, r); });
       $('resultBody').insertAdjacentHTML('afterbegin', sharedBarHTML(S, A.name));
       bindSharedCta($('resultBody'), 'saju');
+      S.view = 'result'; sharedDock(S);
       return;
     }
     if (S.type === 'z'){
@@ -3479,6 +3473,7 @@
       var zh = $('zResult').querySelector('.flow-header');
       if (zh) zh.insertAdjacentHTML('afterend', sharedBarHTML(S, '')); else $('zResult').insertAdjacentHTML('afterbegin', sharedBarHTML(S, ''));
       bindSharedCta($('zResult'), 'today');
+      S.view = 'zodiac'; sharedDock(S);
       return;
     }
     var box = $('sharedBody'), h = '', dt = S.date, md = (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일';
@@ -3501,11 +3496,9 @@
         h += '<div class="card ' + elc + '"><div class="sec-head"><h2 class="sec-title">' + md + ' 행운 번호</h2><span class="sec-meta">행운 숫자 ' + f.tip.nums.join('·') + '</span></div>' +
           '<div class="balls">' + nums.map(function(o){ return '<div class="ball' + (o.y ? ' yong ' + elc : '') + '">' + o.n + '</div>'; }).join('') + '</div>' +
           '<p class="disclaimer">재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p></div>';
-        h += sharedCtaHTML(S.type === 'd' ? '내 오늘 운세 보기' : '내 사주로 행운 번호 받기', '생년월일만 넣으면 30초 만에 나만의 운세와 번호가 나와요. 가입은 필요 없어요.');
       } else if (S.type === 'c'){
         $('sharedTtl').textContent = A.name + '님의 ' + CATS[S.extra].name;
         h += sharedBarHTML(S, A.name) + '<div class="card cat-sheet"' + (CATS[S.extra].sk ? ' data-tier="' + tierOf(todayLuck(A, ra).f.scores[CATS[S.extra].sk]) + '"' : '') + '>' + catHTML(A, ra, S.extra) + '</div>';
-        h += sharedCtaHTML('내 ' + CATS[S.extra].name + ' 보기', '생년월일만 넣으면 30초 만에 내 분야별 운세가 나와요. 가입은 필요 없어요.');
       } else if (S.type === 'g'){
         var rb = compute(B), m = DAILY.match(A, ra, B, rb);
         $('sharedTtl').textContent = A.name + ' × ' + B.name + ' 궁합';
@@ -3516,7 +3509,6 @@
           '<div class="card"><div class="sec-head"><h2 class="sec-title">궁합 요약</h2></div><div class="gh-badges">' +
           '<div class="gh-badge"><span class="chip">일간</span><p>' + m.stemTxt.t.replace(/A/g, esc(A.name)).replace(/B/g, esc(B.name)) + '</p></div>' +
           '<div class="gh-badge"><span class="chip">일지</span><p>' + m.dTxt + '</p></div></div></div>';
-        h += sharedCtaHTML('나도 궁합 보기', '두 사람 생년월일만 넣으면 궁합 점수와 풀이가 바로 나와요.');
       }
     });
     h += adSlotHTML('공유받은 결과를 본 뒤');
@@ -3524,6 +3516,7 @@
     if ($('sharedFig')) drawOn($('sharedFig'));
     bindSharedCta(box, S.type === 'g' ? 'gunghap' : S.type === 'n' ? 'num' : 'today');
     show('shared', '');
+    S.view = 'shared'; sharedDock(S);
   }
   $('btnSharedBack').onclick = function(){ leaveShared('today'); };
 
@@ -3532,19 +3525,18 @@
   (function readShared(){
     var code = null;
     try { code = new URLSearchParams(location.search).get('r'); } catch(e){}
+    var pm = /^\/s\/([A-Za-z0-9_-]+)\/?$/.exec(location.pathname);
+    if (!code && pm) code = pm[1];
     var hs = (location.hash || '').replace('#', '');
     if (!code && hs.indexOf('r.') === 0) code = hs.slice(2);
     if (!code) return;
     var S = null; try { S = decodeShare(code); } catch(err){}
-    if (!S){ try { history.replaceState(null, '', location.pathname); } catch(err){} toast('링크가 잘렸거나 올바르지 않아요'); return; }
+    if (!S){ try { history.replaceState(null, '', basePath()); } catch(err){} toast('링크가 잘렸거나 올바르지 않아요'); return; }
     SHARED = S;
     var intro = $('intro'); if (!intro.hidden) intro.hidden = true;
     store('unsu_intro', 1);
     if (NS) exitDemo(true);
-    if (S.type === 's'){
-      var r = withDate(S.date, function(){ return compute(S.entries[0]); });
-      showGen(r, function(){ openShared(S); }, { name:S.entries[0].name });
-    } else openShared(S);
+    sharedLoading(S, function(){ openShared(S); });
   })();
 
   (function readInvite(){
@@ -3556,7 +3548,7 @@
     if (code){
       var e = null; try { e = decodeInvite(code); } catch(err){}
       if (e){ INVITE = e; store('unsu_invite', e); }
-      try { history.replaceState(null, '', location.pathname); } catch(err){}
+      try { history.replaceState(null, '', basePath()); } catch(err){}
     } else {
       var saved = store('unsu_invite'); if (saved && saved.y) INVITE = saved;
     }

@@ -61,7 +61,7 @@
   /* ---------- tab bar ---------- */
   .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
     display:flex;justify-content:center;pointer-events:none;}
-  .tabbar-inner{pointer-events:auto;width:100%;max-width:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;
+  .tabbar-inner{pointer-events:auto;width:100%;max-width:440px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;
     background:rgba(12,14,32,.72);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);
     border-radius:22px;padding:6px;box-shadow:inset 0 0 0 1px var(--border-hairline),0 18px 40px rgba(0,0,0,.55);}
   .tab{background:transparent;border:none;color:var(--text-helper);display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -652,6 +652,16 @@
   .dm-loading + .ad-slot{margin-top:12px;}
   .shared-bar span{min-width:0;}
   .shared-cta{display:grid;gap:12px;text-align:center;}
+  /* 공유 링크로 연 화면: 하단 메뉴를 숨기고 '내 것 보러 가기' 버튼만 고정 */
+  body.shared-mode .tabbar{display:none;}
+  /* 남의 결과에는 저장·복사·재공유 버튼을 숨긴다 → 결과만 보이게 */
+  body.shared-mode #btnSaveResult,body.shared-mode #btnImgRes,body.shared-mode #btnCopyRes,body.shared-mode #btnShareRes{display:none;}
+  .shared-dock{position:fixed;left:0;right:0;bottom:0;z-index:21;display:flex;justify-content:center;padding:0 14px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;}
+  .shared-dock-in{pointer-events:auto;width:100%;max-width:432px;display:grid;gap:8px;padding:12px 14px 14px;border-radius:26px;text-align:center;
+    background:linear-gradient(180deg,rgba(44,36,96,.9),rgba(22,18,52,.94));-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 .5px rgba(226,220,255,.22),0 16px 40px rgba(2,3,14,.55);}
+  .shared-dock-in p{margin:0;font-size:calc(12.5px*var(--fs));color:rgba(226,220,255,.82);}
+  body.shared-mode{padding-bottom:calc(132px + env(safe-area-inset-bottom,0px));}
   @media (max-height:640px){ .gen.has-ad .gen-fig,.gen.has-ad .gen-fig svg{width:96px;height:96px;} .gen.has-ad .gen-bars{display:none;} }
   .gen .hj{font-family:var(--font-hanja);font-size:calc(30px*var(--fs));letter-spacing:.3em;color:var(--icon-accent);}
 
@@ -980,7 +990,7 @@
   .tabbar-inner::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
     background:radial-gradient(120% 140% at 20% -40%,rgba(255,255,255,.18),transparent 45%),radial-gradient(80% 120% at 100% 140%,rgba(150,190,255,.10),transparent 55%);}
   /* 선택 탭 아래로 미끄러지는 렌즈 */
-  .tab-lens{position:absolute;z-index:0;top:5px;bottom:5px;left:5px;width:calc((100% - 10px) / 4);border-radius:999px;pointer-events:none;
+  .tab-lens{position:absolute;z-index:0;top:5px;bottom:5px;left:5px;width:calc((100% - 10px) / 5);border-radius:999px;pointer-events:none;
     background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
     box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 18px rgba(0,0,0,.28);
     transform:translateX(calc(var(--ti,0) * 100%));transition:transform .5s var(--ease-spring);}
@@ -1945,6 +1955,7 @@
     <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>홈</span></button>
     <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2"/></svg><span>번호 뽑기</span></button>
     <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
+    <button class="tab" data-tab="dream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.2A7.8 7.8 0 0 1 9.8 4.5a7.8 7.8 0 1 0 9.7 9.7z"/><path d="M16.2 4.2l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/></svg><span>꿈해몽</span></button>
     <button class="tab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg><span>보관함</span></button>
   </div>
 </nav>
