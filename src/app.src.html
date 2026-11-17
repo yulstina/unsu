@@ -45,7 +45,7 @@
   h1,h2,h3{text-wrap:balance;margin:0;font-weight:500;}
   p{margin:0;}
   button,input{font-family:inherit;}
-  #atmosphere{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--canvas);width:100%;height:100%;}
+  #atmosphere{position:fixed;left:0;top:0;z-index:-1;pointer-events:none;background:var(--canvas);width:100%;height:100vh;height:100lvh;}   /* lvh: 모바일 주소창이 접혀도 크기가 안 바뀐다 */
 
   /* ---------- top ---------- */
   .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding-block:18px 14px;margin-bottom:10px;
@@ -1733,6 +1733,35 @@
   /* 마우스로 넘겨야 하는 가로 목록(대운 등)은 얇은 막대를 남기되 평소엔 거의 안 보이게 */
   @supports not selector(::-webkit-scrollbar){ .scroller,#duScroll{scrollbar-color:transparent transparent;} .scroller:hover,#duScroll:hover{scrollbar-color:var(--sb-thumb-hover) transparent;} }
   .scroller::-webkit-scrollbar-thumb,#duScroll::-webkit-scrollbar-thumb{background-color:transparent;} .scroller:hover::-webkit-scrollbar-thumb,#duScroll:hover::-webkit-scrollbar-thumb{background-color:var(--sb-thumb-hover);}
+
+  /* ================= 손맛 효과 (FX) ================= */
+  .fx-layer{position:fixed;inset:0;z-index:70;pointer-events:none;overflow:hidden;contain:strict;}
+  .fx-layer i{position:absolute;display:block;will-change:transform,opacity;}
+  .fx-dot{border-radius:50%;box-shadow:0 0 6px rgba(255,255,255,.55);}
+  .fx-star{background:radial-gradient(circle,#fff 0 30%,#d9d1ff 70%);clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);}
+  .fx-conf{width:8px;height:12px;border-radius:2px;}
+  .fx-shoot{width:120px;height:2px;border-radius:2px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(214,226,255,.9) 70%,#fff);}
+  .today-fig,.wel-fig,.hero-fig,.pc-woni{transition:transform .5s cubic-bezier(.2,.8,.3,1);will-change:transform;}
+  .fx-seg button b{font-size:calc(15px*var(--fs));}
+  .st-cap small{font-weight:400;opacity:.7;margin-left:6px;}
+  @media (hover:hover) and (pointer:fine){
+    .qtile,.row-link,.card.peek-card{transition:transform .25s var(--ease-spring),box-shadow .25s;}
+    .qtile:hover{transform:translateY(-4px) scale(1.015);}
+    .ball{transition:transform .2s var(--ease-spring);} .ball:hover{transform:translateY(-3px) scale(1.08);}
+    .btn-primary:hover{filter:brightness(1.08);}
+  }
+  .ball{cursor:pointer;-webkit-user-select:none;user-select:none;}
+
+  /* ================= 가볍게(lite) 단계 =================
+     끊김의 주범은 '움직이는 배경 위의 뒤 흐림(backdrop-filter)'. lite 에서는 흐림을 전부 끄고 바탕색을 조금 진하게 해서 같은 인상을 낸다 */
+  html[data-perf="lite"]{--glass-blur:none;--glass-tint:rgba(46,40,88,.66);--glass-tint-strong:rgba(34,29,64,.86);--glass-shadow:0 8px 20px rgba(3,4,16,.32);}
+  html[data-perf="lite"] *,html[data-perf="lite"] *::before,html[data-perf="lite"] *::after{-webkit-backdrop-filter:none !important;backdrop-filter:none !important;}
+  html[data-perf="lite"] .tabbar-inner,html[data-perf="lite"] .shared-dock-in{background:linear-gradient(180deg,rgba(44,36,96,.97),rgba(22,18,52,.98));}
+  html[data-perf="lite"] .sheet,html[data-perf="lite"] .toast{background:rgba(22,20,52,.98);}
+  html[data-perf="lite"] body.scrolled .topbar{background:rgba(13,11,30,.94);}
+  html[data-perf="lite"] .att-strip,html[data-perf="lite"] .seg,html[data-perf="lite"] .pill,html[data-perf="lite"] .ad-slot,html[data-perf="lite"] .nudge{background:rgba(46,40,88,.6);}
+  html[data-perf="lite"] .sheet-backdrop{background:rgba(2,3,10,.74);}
+  html[data-perf="lite"] .today-fig svg,html[data-perf="lite"] .hero-fig svg,html[data-perf="lite"] .hero-fig img,html[data-perf="lite"] .wel-fig svg,html[data-perf="lite"] .wel-fig img{filter:none;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>

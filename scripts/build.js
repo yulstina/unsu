@@ -44,7 +44,7 @@ const SITE = 'https://woonijoa.com';
 <title>우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호</title>
 <meta name="description" content="만세력으로 푸는 사주 원국·대운, 매일 바뀌는 오늘의 운세, 궁합, 행운 번호까지. 생년월일만 입력하면 30초면 시작해요.">
 <meta name="theme-color" content="#0d0b1e">
-<script>try{var f=parseInt(localStorage.getItem('unsu_fs'),10);if(f>=0&&f<=2)document.documentElement.setAttribute('data-fs',f)}catch(e){}</script>
+<script>try{var f=parseInt(localStorage.getItem('unsu_fs'),10);if(f>=0&&f<=2)document.documentElement.setAttribute('data-fs',f);var x=localStorage.getItem('unsu_fx'),a=(localStorage.getItem('unsu_fxauto')||'').split('|');if(x==='lite'||(x!=='full'&&a[0]==='lite'))document.documentElement.setAttribute('data-perf','lite')}catch(e){}</script>
 <link rel="canonical" href="${SITE}/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="우니조아">

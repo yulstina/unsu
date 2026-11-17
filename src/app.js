@@ -2,6 +2,43 @@
   "use strict";
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function $(id){ return document.getElementById(id); }
+  /* =========================================================
+     효과 단계 — full(풍부하게) / lite(가볍게)
+     설정값 unsu_fx: auto | full | lite. auto 는 기기 사양을 보고 시작한 뒤 실제 프레임을 재서, 끊기면 lite 로 내린다.
+     lite: 카드 뒤 흐림(backdrop-filter) 끔 · 배경 오로라 정지 · 입자 수 줄임. 모양은 html[data-perf] 로 CSS 가 바꾼다.
+     ========================================================= */
+  var PERF = (function(){
+    var root = document.documentElement, subs = [], pref = 'auto', tier;
+    function ls(k, v){ try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch(e){} return null; }
+    function weakDevice(){ var n = navigator; return (n.deviceMemory && n.deviceMemory <= 2) || (n.hardwareConcurrency && n.hardwareConcurrency <= 2) || !!(n.connection && n.connection.saveData); }
+    function remembered(){ var a = (ls('unsu_fxauto') || '').split('|'); return a[0] === 'lite' && Date.now() - (+a[1] || 0) < 7 * 864e5; }   /* 일주일 뒤 다시 재 본다 */
+    function resolve(){ return pref === 'full' || pref === 'lite' ? pref : (reduceMotion || weakDevice() || remembered()) ? 'lite' : 'full'; }
+    function apply(){ var t = resolve(); if (t === tier) return; tier = t; root.setAttribute('data-perf', t); subs.forEach(function(fn){ try { fn(t); } catch(e){} }); }
+    var p0 = ls('unsu_fx'); if (p0 === 'full' || p0 === 'lite') pref = p0;
+    apply();
+    /* 실측: 1.5초 구간마다 본다. 화면이 실제로 그려진 횟수가 초당 40번에 못 미치거나 느린 프레임(34ms 초과)이 30%를 넘는 구간이 두 번 이어지면 lite 로 */
+    (function watch(){
+      var last = 0, t0 = 0, n = 0, slow = 0, strikes = 0, until = 0;
+      function f(t){
+        if (pref !== 'auto' || tier !== 'full' || t > until) return;
+        var d = t - last; last = t;
+        if (document.hidden || d > 400){ t0 = t; n = 0; slow = 0; }   /* 탭 전환·멈춤은 세지 않는다 */
+        else { n++; if (d > 34) slow++; }
+        if (t - t0 >= 1500){
+          strikes = (n < 60 || slow / n > .3) ? strikes + 1 : 0; t0 = t; n = 0; slow = 0;
+          if (strikes >= 2){ ls('unsu_fxauto', 'lite|' + Date.now()); apply(); return; }
+        }
+        requestAnimationFrame(f);
+      }
+      setTimeout(function(){ requestAnimationFrame(function(t){ last = t0 = t; until = t + 90000; requestAnimationFrame(f); }); }, 1500);   /* 첫 로딩 직후의 버벅임은 빼고, 1분 30초 동안 잰다 */
+    })();
+    return {
+      lite:function(){ return tier === 'lite'; },
+      pref:function(){ return pref; },
+      on:function(fn){ subs.push(fn); },
+      set:function(v){ pref = v === 'full' || v === 'lite' ? v : 'auto'; ls('unsu_fx', pref === 'auto' ? null : pref); if (pref === 'auto') ls('unsu_fxauto', null); apply(); }
+    };
+  })();
   function pad2(n){ return (n < 10 ? '0' : '') + n; }
   /* 공유 링크로 연 결과는 '공유한 날짜' 기준으로 그린다 — 렌더하는 동안만 VIEW_DATE를 잠깐 바꾼다 */
   var VIEW_DATE = null;
@@ -31,7 +68,7 @@
   var cv = $('atmosphere'), cx = cv.getContext('2d');
   var off = document.createElement('canvas'), ox = off.getContext('2d');
   var W = 0, H = 0, DPR = 1, stars = [];
-  var OS = 6; /* 1/6 해상도로 그린 뒤 업스케일 → 결 없이 부드러운 블러 */
+  var OS = 8; /* 1/8 해상도로 그린 뒤 업스케일 → 결 없이 부드러운 블러 */
   /* 블루·바이올렛 중심 + 청록·연두·분홍을 은은하게 */
   /* 파스텔 + 신비로움: 라벤더 · 페리윙클 · 라일락 핑크 · 민트 · 복숭아 (채도 낮게, 아주 느리게) */
   var RIBBONS = [
@@ -43,20 +80,30 @@
     { c:[244,200,184], y:.42, amp:.07, k:2.3, sp:.00006,  ph:3.4, hgt:.36, a:.09 },
     { c:[214,160,220], y:.28, amp:.08, k:1.4, sp:.000075, ph:6.0, hgt:.38, a:.10 }
   ];
-  function size(){
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
+  function size(force){
+    /* 모바일은 주소창이 접히고 펴질 때마다 resize 가 온다 → 폭이 같고 높이만 조금 바뀐 경우는 다시 만들지 않는다(스크롤 끊김의 원인) */
+    var nw = window.innerWidth, nh = Math.max(window.innerHeight, cv.clientHeight || 0);
+    if (force !== true && nw === W && Math.abs(nh - H) < 180) return false;
+    DPR = Math.min(window.devicePixelRatio || 1, PERF.lite() ? 1 : 1.5);
+    W = nw; H = nh;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     cx.setTransform(DPR, 0, 0, DPR, 0, 0);
     off.width = Math.ceil(W / OS); off.height = Math.ceil(H / OS);
     stars = [];
-    var n = Math.max(90, Math.round(W * H / 5200));
+    var n = Math.min(PERF.lite() ? 110 : 220, Math.max(90, Math.round(W * H / 5200)));
     for (var i = 0; i < n; i++){
       var big = Math.random() < .07;
       stars.push({ x:Math.random()*W, y:Math.random()*H*.92, r:big ? Math.random()*.8 + 1.3 : Math.random()*1.1 + .35,
         b:Math.random()*.45 + .25, s:Math.random()*.0035 + .0012, p:Math.random()*6.28, big:big });
     }
+    return true;
   }
+  /* 리본 세로 그라데이션은 색마다 한 번만 만들어 두고(1×64 띠) 열마다 늘려 찍는다 — 프레임마다 그라데이션 객체 수천 개를 만들던 비용 제거 */
+  var STRIPS = RIBBONS.map(function(r){
+    var c = document.createElement('canvas'); c.width = 1; c.height = 64; var g2 = c.getContext('2d'), g = g2.createLinearGradient(0, 0, 0, 64);
+    g.addColorStop(0, 'rgba(' + r.c + ',0)'); g.addColorStop(.23, 'rgba(' + r.c + ',1)'); g.addColorStop(.56, 'rgba(' + r.c + ',.35)'); g.addColorStop(1, 'rgba(' + r.c + ',0)');
+    g2.fillStyle = g; g2.fillRect(0, 0, 1, 64); return c;
+  });
   function drawOff(t){
     var w = off.width, h = off.height;
     ox.globalCompositeOperation = 'source-over';
@@ -76,16 +123,20 @@
         var edge = Math.sin(u*Math.PI); edge = Math.pow(edge, .55);
         var al = r.a * inten * edge;
         var hh = r.hgt * h * (.8 + .2*Math.sin(u*5 + t*r.sp*2 + ri));
-        var g = ox.createLinearGradient(0, cy - hh*.15, 0, cy + hh);
-        g.addColorStop(0, 'rgba(' + r.c + ',0)');
-        g.addColorStop(.12, 'rgba(' + r.c + ',' + al + ')');
-        g.addColorStop(.5, 'rgba(' + r.c + ',' + (al*.35) + ')');
-        g.addColorStop(1, 'rgba(' + r.c + ',0)');
-        ox.fillStyle = g; ox.fillRect(x, cy - hh*.15, 1, hh*1.15);
+        ox.globalAlpha = Math.max(0, Math.min(1, al)); ox.drawImage(STRIPS[ri], x, cy - hh*.15, 1, hh*1.15);
       }
     });
+    ox.globalAlpha = 1;
   }
+  /* 배경은 화면 전체 + 유리 카드 뒤 흐림까지 다시 그리게 만드는 가장 비싼 층이다.
+     오로라는 아주 느리게 움직이므로 초당 10장이면 충분하고, 스크롤 중에는 쉬고, lite 에서는 한 장만 그려 둔다. */
+  var FRAME_MS = 96, lastDraw = -1e9, lastScroll = -1e9;
+  window.addEventListener('scroll', function(){ lastScroll = performance.now(); }, { passive:true });
   function frame(t){
+    var still = reduceMotion || PERF.lite();
+    if (!still && !document.hidden) raf = requestAnimationFrame(frame); else raf = 0;
+    if (!still && (t - lastDraw < FRAME_MS || t - lastScroll < 160)) return;
+    lastDraw = t;
     cx.globalCompositeOperation = 'source-over';
     var bg = cx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, '#0b0a1a'); bg.addColorStop(.6, '#13112a'); bg.addColorStop(1, '#1e1834');
@@ -93,7 +144,7 @@
     /* aurora */
     drawOff(t);
     cx.globalCompositeOperation = 'lighter';
-    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'low';
     cx.drawImage(off, 0, 0, W, H);
     /* twinkling stars */
     for (var i = 0; i < stars.length; i++){
@@ -112,14 +163,14 @@
       }
     }
     cx.globalCompositeOperation = 'source-over';
-    if (!reduceMotion && !document.hidden) raf = requestAnimationFrame(frame);
-    else raf = 0;
   }
   var raf = 0;
-  size();
-  window.addEventListener('resize', size);
-  document.addEventListener('visibilitychange', function(){ if (!document.hidden && !raf && !reduceMotion) raf = requestAnimationFrame(frame); });
-  if (reduceMotion) frame(8000); else raf = requestAnimationFrame(frame);
+  function kick(){ lastDraw = -1e9; if (reduceMotion || PERF.lite()){ frame(8000); } else if (!raf) raf = requestAnimationFrame(frame); }
+  size(true);
+  window.addEventListener('resize', function(){ if (size()) kick(); });
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) kick(); });
+  PERF.on(function(){ size(true); kick(); });
+  kick();
 
   (function(){ var b = $('brandHome'); function home(){ if (typeof go === 'function'){ go('today'); window.scrollTo(0, 0); } } b.onclick = home; b.onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); home(); } }; })();
 
@@ -276,6 +327,97 @@
       lastY = y; ticking = false;
     }
     window.addEventListener('scroll', function(){ if (!ticking){ ticking = true; requestAnimationFrame(onScroll); } }, { passive:true });
+  })();
+  /* =========================================================
+     손맛 효과 (FX) — 전부 transform·opacity 만 쓰는 짧은 Web Animations. 끝나면 노드를 지운다.
+     - 버튼·공을 누르면 그 자리에서 반짝이가 튄다 / 빈 하늘을 누르면 별 하나가 반짝인다
+     - 공을 누르면 통통 튄다 · 진동(안드로이드) · 추첨 완료 꽃가루 · 별똥별(풍부하게 단계만)
+     - 큰 그림은 마우스(노트북)나 스크롤(모바일)에 살짝 따라 움직인다
+     reduced-motion 이면 전부 끈다. lite 단계에서는 입자 수를 줄이고 별똥별·따라 움직임은 쉰다.
+     ========================================================= */
+  var FX = (function(){
+    var layer = null, live = 0, can = !reduceMotion && !!document.documentElement.animate;
+    function L(){ if (!layer){ layer = document.createElement('div'); layer.className = 'fx-layer'; layer.setAttribute('aria-hidden', 'true'); document.body.appendChild(layer); } return layer; }
+    function vib(p){ try { if (navigator.vibrate && !reduceMotion) navigator.vibrate(p); } catch(e){} }
+    function bit(cls, x, y, frames, ms, delay){
+      if (live > 70) return;
+      var el = document.createElement('i'); el.className = cls; el.style.left = x + 'px'; el.style.top = y + 'px';
+      L().appendChild(el); live++;
+      var a = el.animate(frames, { duration:ms, delay:delay || 0, easing:'cubic-bezier(.2,.8,.3,1)', fill:'both' });
+      a.onfinish = a.oncancel = function(){ el.remove(); live--; };
+      return el;
+    }
+    var COLS = ['#fff', '#f5d48a', '#c9b9ff', '#8fe3d0', '#ff9cc0'];
+    function spark(x, y, n){
+      if (!can) return;
+      n = PERF.lite() ? Math.ceil((n || 7) / 2) : (n || 7);
+      for (var i = 0; i < n; i++){
+        var ang = Math.PI * 2 * (i + Math.random() * .6) / n, d = 30 + Math.random() * 34, sz = 6 + Math.random() * 6;
+        var el = bit('fx-dot', x, y, [
+          { transform:'translate(-50%,-50%) scale(.3)', opacity:1 },
+          { transform:'translate(calc(-50% + ' + (Math.cos(ang) * d).toFixed(1) + 'px),calc(-50% + ' + (Math.sin(ang) * d).toFixed(1) + 'px)) scale(1)', opacity:1, offset:.6 },
+          { transform:'translate(calc(-50% + ' + (Math.cos(ang) * d * 1.25).toFixed(1) + 'px),calc(-50% + ' + (Math.sin(ang) * d * 1.25 + 8).toFixed(1) + 'px)) scale(.2)', opacity:0 }], 640 + Math.random() * 220);
+        if (el){ el.style.width = el.style.height = sz + 'px'; el.style.background = COLS[i % COLS.length]; }
+      }
+    }
+    function star(x, y){
+      if (!can) return;
+      var s = 26 + Math.random() * 18, el = bit('fx-star', x, y, [
+        { transform:'translate(-50%,-50%) scale(0) rotate(0deg)', opacity:0 },
+        { transform:'translate(-50%,-50%) scale(1) rotate(40deg)', opacity:1, offset:.4 },
+        { transform:'translate(-50%,-50%) scale(0) rotate(90deg)', opacity:0 }], 820);
+      if (el) el.style.width = el.style.height = s + 'px';
+    }
+    function confetti(box, n){
+      if (!can || !box) return;
+      var rc = box.getBoundingClientRect(); n = PERF.lite() ? 12 : (n || 30);
+      for (var i = 0; i < n; i++){
+        var x = rc.left + rc.width * (.1 + Math.random() * .8), dx = (Math.random() - .5) * 120, fall = 150 + Math.random() * 170, rot = (Math.random() - .5) * 720;
+        var el = bit('fx-conf', x, rc.top + rc.height * .25, [
+          { transform:'translate(-50%,-50%) translate(0,0) rotate(0deg)', opacity:1 },
+          { transform:'translate(-50%,-50%) translate(' + (dx * .6).toFixed(0) + 'px,-' + (40 + Math.random() * 50).toFixed(0) + 'px) rotate(' + (rot * .4).toFixed(0) + 'deg)', opacity:1, offset:.3 },
+          { transform:'translate(-50%,-50%) translate(' + dx.toFixed(0) + 'px,' + fall.toFixed(0) + 'px) rotate(' + rot.toFixed(0) + 'deg)', opacity:0 }], 1100 + Math.random() * 500, Math.random() * 180);
+        if (el){ el.style.background = COLS[1 + i % 4]; if (i % 3 === 0) el.style.borderRadius = '50%'; }
+      }
+    }
+    function hop(el){ if (can && el && el.animate) el.animate([{ transform:'translateY(0) scale(1)' }, { transform:'translateY(-9px) scale(1.14)', offset:.35 }, { transform:'translateY(0) scale(.96)', offset:.7 }, { transform:'translateY(0) scale(1)' }], { duration:420, easing:'cubic-bezier(.3,1.4,.5,1)' }); }
+
+    /* 누르는 곳마다 반응 */
+    var HOT = 'button,a,.ball,[role="button"],[role="link"],[role="switch"],summary';
+    document.addEventListener('pointerdown', function(e){
+      if (!can || e.button > 0) return;
+      var t = e.target; if (!t || !t.closest || t.closest('.sheet-backdrop,canvas,input,textarea,select')) return;
+      var ball = t.closest('.ball'), hot = t.closest(HOT);
+      if (ball){ hop(ball); spark(e.clientX, e.clientY, 6); vib(6); }
+      else if (hot){ if (hot.disabled) return; spark(e.clientX, e.clientY, hot.classList.contains('btn-primary') ? 9 : 5); if (hot.classList.contains('btn-primary')) vib(8); }
+      else if (!t.closest('.card,.sheet,.tabbar,.topbar,.gen,.adov')) star(e.clientX, e.clientY);
+    }, { passive:true });
+    var brand = $('brandHome'); if (brand) brand.addEventListener('click', function(){ hop(brand.querySelector('img')); });
+
+    /* 큰 그림이 마우스·스크롤을 살짝 따라온다 (풍부하게 단계만). 부모에 CSS 변수만 바꾸고 실제 이동은 transform */
+    var FIGS = '.today-fig,.wel-fig,.hero-fig,.pc-woni', px = 0, py = 0, sy = 0, ptick = false;
+    function par(){
+      ptick = false; if (!can || PERF.lite()) return;
+      var els = document.querySelectorAll(FIGS);
+      for (var i = 0; i < els.length; i++){ if (!els[i].offsetParent) continue; els[i].style.transform = 'translate3d(' + (px * 10).toFixed(1) + 'px,' + (py * 8 + sy).toFixed(1) + 'px,0) rotate(' + (px * 2.5).toFixed(2) + 'deg)'; }
+    }
+    function need(){ if (!ptick){ ptick = true; requestAnimationFrame(par); } }
+    if (window.matchMedia('(hover:hover) and (pointer:fine)').matches)
+      window.addEventListener('pointermove', function(e){ px = e.clientX / window.innerWidth - .5; py = e.clientY / window.innerHeight - .5; need(); }, { passive:true });
+    window.addEventListener('scroll', function(){ var y = window.scrollY || 0; if (y < 700){ sy = Math.min(60, y * .14); need(); } }, { passive:true });
+    PERF.on(function(){ if (PERF.lite()) document.querySelectorAll(FIGS).forEach(function(el){ el.style.transform = ''; }); });
+
+    /* 별똥별: 가끔, 화면 위쪽에 있을 때만 */
+    (function shoot(){
+      setTimeout(function(){
+        if (can && !PERF.lite() && !document.hidden && (window.scrollY || 0) < 260 && !document.body.classList.contains('focus')){
+          var w = window.innerWidth, x = w * (.25 + Math.random() * .7), y = 40 + Math.random() * 160, len = 190 + Math.random() * 120;
+          bit('fx-shoot', x, y, [{ transform:'rotate(152deg) translateX(0) scaleX(.2)', opacity:0 }, { transform:'rotate(152deg) translateX(' + (len * .35).toFixed(0) + 'px) scaleX(1)', opacity:1, offset:.3 }, { transform:'rotate(152deg) translateX(' + len.toFixed(0) + 'px) scaleX(.3)', opacity:0 }], 950);
+        }
+        shoot();
+      }, 6000 + Math.random() * 9000);
+    })();
+    return { spark:spark, star:star, confetti:confetti, hop:hop, vib:vib };
   })();
   document.querySelector('.tabbar').addEventListener('click', function(e){ var b = e.target.closest('.tab'); if (b) go(b.dataset.tab); });
   document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ if (b.dataset.sub === 'mine'){ openMine(); return; } if (b.dataset.sub === 'list') renderList(); show(b.dataset.sub); }); });
@@ -2114,7 +2256,7 @@
   function mountMachine(sets){
     if (machine){ machine.destroy(); machine = null; }
     var cv = $('mcCanvas'); if (!cv || !window.LottoMachine) return;
-    machine = LottoMachine.mount(cv, { reduceMotion:reduceMotion });
+    machine = LottoMachine.mount(cv, { reduceMotion:reduceMotion, onPoke:function(){ FX.vib(5); } });
     var kind = 'today', box = $('mcResult'), btn = $('btnMcDraw');
     document.querySelectorAll('[data-mk]').forEach(function(b){
       b.onclick = function(){
@@ -2128,7 +2270,8 @@
       if (machine.isBusy()) return;
       var nums = sets[kind].slice(); btn.disabled = true; btn.textContent = '우니가 고르는 중…'; box.textContent = '';
       if ($('btnMcSkip')){ $('btnMcSkip').hidden = false; $('btnMcSkip').onclick = function(){ if (machine.skip) machine.skip(); }; }
-      machine.draw(nums, null, function(){
+      machine.draw(nums, function(){ FX.vib(10); }, function(){
+        FX.confetti(document.querySelector('.machine-card'), 34); FX.vib([18, 40, 24]);
         if ($('btnMcSkip')) $('btnMcSkip').hidden = true;
         box.textContent = '뽑힌 번호 ' + nums.slice().sort(function(a, b){ return a - b; }).join(', ');
         btn.disabled = false; btn.textContent = '우니, 다시 뽑아줘!';
@@ -2579,6 +2722,8 @@
         row('stHelp', SET_IC.help, '고객센터', '공지·자주 묻는 질문·문의') +
       '</div>' +
       '<div class="st-group st-fs"><div class="st-cap">글자 크기</div>' + fsSegHTML() + '</div>' +
+      '<div class="st-group st-fs"><div class="st-cap">화면 효과 <small>끊기면 ‘가볍게’로 바꿔 보세요</small></div><div class="fs-seg fx-seg" role="group" aria-label="화면 효과">' +
+        [['auto', '자동', '기기에 맞춤'], ['full', '풍부하게', '유리·오로라'], ['lite', '가볍게', '빠르고 선명']].map(function(o){ return '<button type="button" data-fxv="' + o[0] + '" aria-pressed="' + (PERF.pref() === o[0]) + '"><b>' + o[1] + '</b><span>' + o[2] + '</span></button>'; }).join('') + '</div></div>' +
       '<div class="st-group">' +
         row('stAbout', SET_IC.info, '앱 정보', '우니조아 v1.0') +
       '</div>' +
@@ -2586,6 +2731,7 @@
       bizFootHTML();
     openSheet(h);
     var sb = $('sheetBody'); sb.classList.add('st-sheet'); bindFsSeg(sb);
+    sb.querySelectorAll('[data-fxv]').forEach(function(b){ b.onclick = function(){ PERF.set(b.dataset.fxv); sb.querySelectorAll('[data-fxv]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); }); }; });
     $('stProf').onclick = $('stMy').onclick = $('stCoupons').onclick = function(){ closeSheet(); openMy(); };
     $('stOrders').onclick = openOrdersSheet;
     $('stNotif').onclick = openNotifSheet;

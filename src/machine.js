@@ -190,12 +190,32 @@ var LottoMachine = (function(){
     function frame(now){
       if (dead || !canvas.isConnected){ return; }
       raf = requestAnimationFrame(frame);
-      if (document.hidden) { last = now; return; }
-      var dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
-      /* 비어 있을 땐 30fps */
+      /* 다른 탭을 보고 있거나(숨김) 화면 밖이면 계산도 그리기도 쉰다 — 예전엔 번호 탭을 한 번 열면 계속 돌았다 */
+      if (document.hidden || !canvas.offsetParent || !onScreen){ last = now; return; }
+      /* 가만히 있을 땐 30fps 로 충분 */
+      if (state !== 'spin' && !out.length && !sparks.length && poke <= 0 && (skipTick = !skipTick)) return;
+      var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; poke = Math.max(0, poke - dt);
       physics(dt * .5); physics(dt * .5); step(dt, now); render(now);   /* 빠른 공이 벽을 뚫지 않게 2회로 나눠 계산 */
     }
 
+    var onScreen = true, skipTick = false, poke = 0, io = null;
+    if (window.IntersectionObserver){ io = new IntersectionObserver(function(en){ onScreen = en[en.length - 1].isIntersecting; }); io.observe(canvas); }
+    /* 유리 통을 누르거나 마우스로 훑으면 그 자리의 공이 튕겨 나간다 */
+    function pokeAt(e, power){
+      var rc = canvas.getBoundingClientRect(); if (!rc.width) return;
+      var px = (e.clientX - rc.left) * W / rc.width, py = (e.clientY - rc.top) * H / rc.height;
+      var gx = px - GC.x, gy = py - GC.y; if (gx * gx + gy * gy > GC.r * GC.r) return;
+      for (var i = 0; i < balls.length; i++){
+        var b = balls[i], dx = b.x - px, dy = b.y - py, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < 46){ var k = (1 - d / 46) * power; b.vx += dx / d * k; b.vy += dy / d * k - k * .35; }
+      }
+      poke = 1.2;
+      if (power > 300 && opts.onPoke) opts.onPoke();
+    }
+    if (!reduce){
+      canvas.addEventListener('pointerdown', function(e){ pokeAt(e, 420); });
+      canvas.addEventListener('pointermove', function(e){ if (e.pointerType === 'mouse') pokeAt(e, 60); });
+    }
     function start(){ if (!raf && !reduce) raf = requestAnimationFrame(frame); }
 
     function placeRackFinal(nums){ rack = nums.map(function(n){ return { n:n, c:colorOf(n) }; }); }
@@ -209,7 +229,7 @@ var LottoMachine = (function(){
         if (!raf) raf = requestAnimationFrame(frame);
       },
       reset: function(){ queue = []; out = []; rack = []; sparks = []; state = 'idle'; spin = 0; seedBalls(); done_burst = false; if (reduce) render(performance.now()); },
-      destroy: function(){ dead = true; cancelAnimationFrame(raf); raf = 0; },
+      destroy: function(){ dead = true; cancelAnimationFrame(raf); raf = 0; if (io) io.disconnect(); },
       isBusy: function(){ return state === 'spin'; },
       /* 연출 건너뛰기 (GPT 검토 7장): 남은 공을 한 번에 랙에 놓고 끝낸다 */
       skip: function(){ if (state !== 'spin') return; queue = []; out = []; sparks = []; placeRackFinal(api._all || []); state = 'done'; render(performance.now()); var f = cbDone; cbDone = null; f && f(); }
