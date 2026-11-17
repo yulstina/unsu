@@ -770,7 +770,7 @@
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
         '<div class="lock-cta"><button class="btn-primary" id="btnEzBuy">' + COIN_SVG + '엽전 ' + EZ.coin + '닢으로 풀이 열기</button><p class="helper" style="text-align:center">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
     }
-    h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic" aria-hidden="true">' + TK_IC.open + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
+    h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic uni" aria-hidden="true">' + uniImg('u-calendar') + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
     h += '<div class="card num-cta"><div class="num-cta-q">사주를 다 봤다면,<br><em>내 번호</em>도 궁금하지 않으세요?</div>' +
       '<p class="helper">평생 번호는 사주 원국으로 한 번 정해지고, 오늘의 행운 번호는 오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자(' + EL_TEXT[lEl].num.join('·') + ')로 끝나는 번호 3개를 담아 매일 바뀌어요.</p>' +
       '<button class="btn-primary btn-block sheen" id="btnDraw">내 사주로 행운 번호 뽑기</button>' +
@@ -1983,8 +1983,7 @@
       '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += peekCardHTML(me, nums, elc);   /* GPT 검토 P1-6: 오늘 한 문장 바로 아래 행운 번호 */
-    h += '<div class="qgrid">' + [['btnQNum','dream','꿈 번호받기','간밤 꿈으로 번호 6개','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + '</div>';
-    h += tkBannerHTML();
+    h += '<div class="qgrid">' + [['btnQNum','dream','꿈 번호받기','간밤 꿈으로 번호 6개','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + tkBannerHTML() + '</div>';
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -2279,7 +2278,7 @@
     if (sel && sel.mi !== TK.mi) sel = null;
     var guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < COST.tk;
     var avoid = locked ? [] : M.days.filter(function(o){ return !o.past && o.tier === 'bad'; });
-    var h = '<div class="tk-wrap"><div class="tk-top"><div class="tk-uni">' + uniImg('u-thinking') + '</div><div><small>' + nm + '님 사주로 고르는</small><h3 id="sheetTitle">중요한 날 잡기</h3></div></div>' +
+    var h = '<div class="tk-wrap"><div class="tk-top"><div class="tk-uni">' + uniImg('u-calendar') + '</div><div><small>' + nm + '님 사주로 고르는</small><h3 id="sheetTitle">중요한 날 잡기</h3></div></div>' +
       '<div class="tk-ps" role="tablist" aria-label="무엇을 하는 날인가요">' + TAEKIL.ORDER.map(function(k){ var Q = TAEKIL.PURPOSES[k];
         return '<button type="button" role="tab" data-tkp="' + k + '" aria-selected="' + (k === TK.p) + '">' + TK_IC[k] + '<span>' + Q.name.replace('·', '·<wbr>') + '</span>' + (tkOpen(entry, k) ? '<i class="on" aria-label="열림"></i>' : '') + '</button>'; }).join('') + '</div>' +
       '<p class="tk-sum">앞으로 1년, <b>' + P.short + '</b>에 좋은 날이 <b>' + S.good + '일</b> 있어요.' + (open ? '' : ' 이번 달과 다음 달은 무료로 볼 수 있어요.') + '</p>' +
@@ -2342,7 +2341,7 @@
     };
   }
   function tkBannerHTML(){
-    return '<button type="button" class="tk-bn" id="btnTk"><span class="tk-bn-ic" aria-hidden="true">' + TK_IC.open + '</span><span class="tk-bn-t"><b>중요한 날 잡기 <em>NEW</em></b><small>개업·계약·이사 날짜를 내 사주로</small></span><span class="chev" aria-hidden="true">›</span></button>';
+    return '<button type="button" class="qtile q-tk" id="btnTk"><span class="qt-t">중요한 날 잡기<em>NEW</em></span><span class="qt-s">개업·계약·이사·면접 날짜를<br>내 사주로 골라 드려요</span>' + uniImg('u-calendar', 'tile-art') + '</button>';
   }
 
   /* =========================================================
