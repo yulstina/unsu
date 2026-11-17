@@ -49,7 +49,7 @@
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
   var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1, unsu_consent:1, unsu_notif:1 };
-  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders','unsu_ny_open','unsu_dreams','unsu_dmdraft','unsu_numbox','unsu_drawn','unsu_peek','unsu_shared','unsu_todo','unsu_lifeseen'];
+  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders','unsu_ny_open','unsu_dreams','unsu_dmdraft','unsu_numbox','unsu_drawn','unsu_peek','unsu_shared','unsu_todo','unsu_lifeseen','unsu_tk_open'];
   function nsk(k){ return GLOBAL_KEYS[k] ? k : NS + k; }
   function store(k, v){
     var key = nsk(k);
@@ -770,6 +770,7 @@
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
         '<div class="lock-cta"><button class="btn-primary" id="btnEzBuy">' + COIN_SVG + '엽전 ' + EZ.coin + '닢으로 풀이 열기</button><p class="helper" style="text-align:center">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
     }
+    h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic" aria-hidden="true">' + TK_IC.open + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
     h += '<div class="card num-cta"><div class="num-cta-q">사주를 다 봤다면,<br><em>내 번호</em>도 궁금하지 않으세요?</div>' +
       '<p class="helper">평생 번호는 사주 원국으로 한 번 정해지고, 오늘의 행운 번호는 오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자(' + EL_TEXT[lEl].num.join('·') + ')로 끝나는 번호 3개를 담아 매일 바뀌어요.</p>' +
       '<button class="btn-primary btn-block sheen" id="btnDraw">내 사주로 행운 번호 뽑기</button>' +
@@ -790,6 +791,7 @@
     if (du) $('duScroll').scrollLeft = du.offsetLeft - 60;
     if (!reduceMotion && window.gsap) gsap.from('#resultBody .el-bar .fill', { scaleX:0, duration:.9, ease:'power2.out', stagger:.06, delay:.2 });
 
+    $('btnTkSaju').onclick = function(){ openTaekil(entry, r); };
     $('btnDraw').onclick = function(){
       $('numWrap').hidden = false; this.hidden = true;
       revealBalls($('ballsLife')); setTimeout(function(){ revealBalls($('ballsYong')); }, 450);
@@ -1022,7 +1024,7 @@
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
   /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
      값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
-  var COST = { cat:100, extra:100, dream:200, gh:100, ez:100 };
+  var COST = { cat:100, extra:100, dream:200, gh:100, ez:100, tk:200 };
   var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
@@ -1194,6 +1196,7 @@
       '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
       '<div class="hot"><span>꿈풀이 번호받기</span><b>' + COST.dream + '닢</b><small>꿈 하나 · 번호 6개</small></div>' +
       '<div><span>분야별 운세</span><b>' + COST.cat + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +
+      '<div><span>중요한 날 잡기</span><b>' + COST.tk + '닢</b><small>목적 하나 · 베스트 3일</small></div>' +
       '<div><span>궁합 상세</span><b>' + COST.gh + '닢</b><small>두 사람 · 계속 보기</small></div>' +
       '<div><span>쉬운 사주 풀이</span><b>' + COST.ez + '닢</b><small>저장한 사람 모두</small></div>' +
       '<div><span>번호 한 줄 더</span><b>' + COST.extra + '닢</b><small>하루 3줄까지</small></div></div>' +
@@ -1981,6 +1984,7 @@
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += peekCardHTML(me, nums, elc);   /* GPT 검토 P1-6: 오늘 한 문장 바로 아래 행운 번호 */
     h += '<div class="qgrid">' + [['btnQNum','dream','꿈 번호받기','간밤 꿈으로 번호 6개','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + '</div>';
+    h += tkBannerHTML();
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -2038,6 +2042,7 @@
     $('btnQNum').onclick = function(){ openDream(); };
     $('btnQGh').onclick = function(){ go('gunghap'); };
     $('btnQNY').onclick = function(){ openNYSheet(me, r); };
+    $('btnTk').onclick = function(){ openTaekil(me, r); };
     body.querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ openCat(me, r, b.dataset.cat); }; });
   }
 
@@ -2176,6 +2181,151 @@
         cta:'내 ' + C.name + '도 보기 →', link:resultLink('c', date, [entry], cat), shareEntries:[entry],
         card:C.sk ? { kicker:entry.name + '님의 오늘 ' + C.name, head:'“' + f.lines[C.sk] + '”', rows:[[C.name, f.scores[C.sk]]] } : null });
     };
+  }
+
+  /* =========================================================
+     중요한 날 잡기 (택일) — 2026-11-17 소율 선택: 분야별 운세와 별도 기능
+     - 무료: 30/60일 달력(좋음·보통·피할 날)과 피할 날 이유
+     - 엽전 COST.tk: 베스트 3일 + 이유 + 좋은 시간대 + 캘린더 저장 + 공유, 개업이면 사업운 섹션까지
+     - 사람·목적별로 한 번 열면 계속 볼 수 있다 (unsu_tk_open: { '사람id|목적': 연 시각 })
+     ========================================================= */
+  var TK = { p:'open', days:60, wk:null, sel:null };
+  var TK_IC = {
+    open:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 9.5L5.5 4h13L20 9.5M4 9.5h16M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5.5 12.5V20h13v-7.5M10 20v-4.5h4V20"/></svg>',
+    contract:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h8l4 4V20.5H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h4"/><circle cx="16" cy="18" r="2.2"/></svg>',
+    move:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 11L12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></svg>',
+    exam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 4l9 4.5-9 4.5-9-4.5z"/><path d="M7 10.8V15c0 1.4 2.2 2.8 5 2.8s5-1.4 5-2.8v-4.2M21 8.5v5"/></svg>',
+    love:CAT_IC.heart
+  };
+  var TK_TIER = { good:'좋음', mid:'보통', bad:'피할 날' };
+  var TK_DT = { good:'gold', mid:'violet', bad:'rose' };
+  function tkOpenMap(){ var o = store('unsu_tk_open'); return o && typeof o === 'object' ? o : {}; }
+  function tkOpen(entry, p){ return !!tkOpenMap()[entry.id + '|' + p]; }
+  function setTkOpen(entry, p){ var o = tkOpenMap(); o[entry.id + '|' + p] = Date.now(); store('unsu_tk_open', o); }
+  function tkMD(d){ return (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
+  function tkMDW(d){ return tkMD(d) + ' (' + WD[d.getDay()] + ')'; }
+  function tkCalHTML(S, open){
+    var bestRank = {}; if (open) S.best.forEach(function(b, i){ bestRank[b.key] = i + 1; });
+    var first = S.list[0].date, h = '<div class="tk-cal" role="grid" aria-label="날짜별 길흉 달력"><div class="tk-wd">' + WD.map(function(w, i){ return '<span' + (i === 0 ? ' class="sun"' : i === 6 ? ' class="sat"' : '') + '>' + w + '</span>'; }).join('') + '</div><div class="tk-grid">';
+    for (var i = 0; i < first.getDay(); i++) h += '<span class="tk-pad"></span>';
+    S.list.forEach(function(o, i){
+      var d = o.date, mon = i === 0 || d.getDate() === 1, rk = bestRank[o.key];
+      h += '<button type="button" class="tk-d' + (o.off ? ' off' : '') + (rk ? ' best' : '') + (TK.sel === o.key ? ' sel' : '') + '" data-tk="' + o.key + '"' + (o.off ? '' : ' data-tier="' + TK_DT[o.tier] + '"') +
+        ' aria-label="' + tkMDW(d) + (o.off ? ' 주말' : ' ' + TK_TIER[o.tier]) + (rk ? ' ' + rk + '순위' : '') + '">' +
+        (mon ? '<small>' + (d.getMonth() + 1) + '월</small>' : '') + '<b>' + d.getDate() + '</b>' + (rk ? '<em>' + rk + '</em>' : '') + (o.son && !o.off ? '<i class="son" title="손없는날"></i>' : '') + '</button>';
+    });
+    return h + '</div><div class="tk-legend"><span data-tier="gold"><i></i>좋음</span><span data-tier="violet"><i></i>보통</span><span data-tier="rose"><i></i>피할 날</span>' +
+      (S.list.some(function(o){ return o.off; }) ? '<span class="off"><i></i>주말 제외</span>' : '') + (S.purpose === 'move' ? '<span class="son"><i></i>손없는날</span>' : '') + '</div></div>';
+  }
+  function tkDayHTML(o, open){
+    if (!o) return '<p class="helper tk-hint">날짜를 누르면 그날의 일진과 풀이를 볼 수 있어요.</p>';
+    var h = '<div class="tk-day" data-tier="' + (o.off ? 'violet' : TK_DT[o.tier]) + '"><div class="tk-day-h"><b>' + tkMDW(o.date) + '</b><span>' + o.pillar.name + '(' + o.pillar.hanja + ')일 · ' + o.ten + '의 날</span>' +
+      (o.off ? '<em>주말</em>' : '<em>' + TK_TIER[o.tier] + (open ? ' · ' + o.score + '점' : '') + '</em>') + '</div>';
+    if (o.tier === 'bad' || open){
+      var lines = (open ? o.why.slice(0, 3) : []).map(function(t){ return '<li class="ok">' + t + '</li>'; }).concat(o.warn.slice(0, 2).map(function(t){ return '<li class="ng">' + t + '</li>'; }));
+      if (lines.length) h += '<ul class="tk-why">' + lines.join('') + '</ul>';
+      if (open && o.tier !== 'bad' && !o.off) h += '<p class="tk-hours">좋은 시간 · ' + o.hours.map(function(x){ return '<b>' + x.txt + '</b>'; }).join(' 또는 ') + '</p>';
+    } else h += '<p class="helper">이 날이 왜 ' + TK_TIER[o.tier] + '인지, 몇 시가 좋은지는 전체 보기에서 열려요.</p>';
+    return h + '</div>';
+  }
+  var BIZ_TYPE = {
+    '식상':{ t:'재능을 파는 크리에이터형', d:'내 손과 머리에서 나온 결과물이 곧 상품이에요. 디자인·콘텐츠·강의·제작처럼 실력이 보이는 일에서 단골이 생겨요. 가격은 처음부터 낮추지 말고 포트폴리오로 설득하세요.' },
+    '재성':{ t:'돈 흐름을 읽는 장사꾼형', d:'어디서 돈이 들고 나는지 감이 빨라요. 유통·커머스·중개처럼 거래가 많은 일과 잘 맞고, 숫자를 매주 확인하는 습관이 그대로 매출이 돼요.' },
+    '비겁':{ t:'혼자 판을 짜는 독립형', d:'남 밑보다 내 이름을 걸고 할 때 힘이 나요. 다만 동업이나 지분 나누기는 역할과 돈 규칙을 문서로 먼저 정해 두세요.' },
+    '관성':{ t:'신뢰로 거래하는 체계형', d:'약속과 품질을 지키는 모습이 곧 브랜드예요. B2B·외주·납품처럼 계약 단위로 움직이는 일에서 오래가요.' },
+    '인성':{ t:'전문성으로 버는 자격형', d:'배운 것과 자격이 무기예요. 상담·교육·전문 서비스처럼 신뢰가 쌓일수록 단가가 오르는 일이 잘 맞아요.' }
+  };
+  function tkBizHTML(entry, r){
+    var g = natalGroups(r), keys = Object.keys(g), top = keys.slice().sort(function(a, b){ return g[b] - g[a] || keys.indexOf(a) - keys.indexOf(b); })[0];
+    var B = BIZ_TYPE[top], yG = TEN_GRP[r.seun.tenStem], tips = [];
+    if (!g['재성']) tips.push('원국에 재성(돈의 별)이 드러나 있지 않아요. 매출 통장과 생활비 통장을 나누고, 정산은 날짜를 정해 자동으로 돌리세요.');
+    if (g['비겁'] >= 3) tips.push('비겁이 많아 동업·지인 거래에서 돈이 새기 쉬워요. 처음부터 계약서와 세금계산서로 깔끔하게 남기세요.');
+    if (g['식상'] && g['재성']) tips.push('식상(재능)이 재성(돈)을 받쳐 주는 구조라 실력이 수입으로 이어지는 길이 열려 있어요.');
+    return '<div class="card tk-biz"><div class="sec-head"><h2 class="sec-title">' + esc(entry.name) + '님의 사업운</h2><span class="sec-meta">개업 목적에 포함</span></div>' +
+      '<div class="sub-block"><h4>사업 기질 · ' + B.t + ' <small>' + top + ' ' + g[top] + '개</small></h4><p class="body-text">' + B.d + '</p></div>' +
+      '<div class="sub-block"><h4>' + r.seun.year + '년 사업 흐름 <small>' + r.seun.tenStem + '의 해</small></h4><p class="body-text">' + CAT_YEAR[yG].money + ' ' + CAT_YEAR[yG].career + '</p></div>' +
+      (tips.length ? '<div class="sub-block"><h4>챙겨 두면 좋은 점</h4><p class="body-text">' + tips.join(' ') + '</p></div>' : '') + '</div>';
+  }
+  function tkICS(entry, S){
+    var P = TAEKIL.PURPOSES[S.purpose], stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    function esc2(t){ return String(t).replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n'); }
+    function d8(d){ return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()); }
+    var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//woonijoa//taekil//KO', 'CALSCALE:GREGORIAN'];
+    S.best.forEach(function(b, i){
+      var nx = new Date(b.date.getFullYear(), b.date.getMonth(), b.date.getDate() + 1);
+      L.push('BEGIN:VEVENT', 'UID:' + b.key + '-' + S.purpose + '-' + entry.id + '@woonijoa.com', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + d8(b.date), 'DTEND;VALUE=DATE:' + d8(nx),
+        'SUMMARY:' + esc2('[우니조아] ' + P.short + ' 좋은 날 ' + (i + 1) + '순위'),
+        'DESCRIPTION:' + esc2(b.pillar.name + '일 · ' + b.why.slice(0, 2).join(' / ') + '\n좋은 시간: ' + b.hours.map(function(x){ return x.txt; }).join(' 또는 ')), 'END:VEVENT');
+    });
+    L.push('END:VCALENDAR');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([L.join('\r\n')], { type:'text/calendar;charset=utf-8' }));
+    a.download = 'woonijoa-' + S.purpose + '-days.ics'; document.body.appendChild(a); a.click(); a.remove();
+    toast('캘린더 파일을 저장했어요. 열면 일정에 추가돼요');
+  }
+  function openTaekil(entry, r, p){
+    if (!entry){ startOnboarding('new'); return; }
+    if (p && p !== TK.p){ TK.p = p; TK.wk = null; TK.sel = null; }
+    var keepY = !$('sheetWrap').hidden && $('sheetBody').querySelector('.tk-wrap') ? $('sheet').scrollTop : 0;
+    var P = TAEKIL.PURPOSES[TK.p], wk = TK.wk === null ? P.weekday : TK.wk;
+    var S = TAEKIL.scan(entry, r, TK.p, nowD(), TK.days, wk), open = tkOpen(entry, TK.p), nm = esc(entry.name);
+    var sel = TK.sel ? S.list.filter(function(o){ return o.key === TK.sel; })[0] : null;
+    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < COST.tk;
+    var h = '<div class="tk-wrap"><div class="tk-top"><div class="tk-uni">' + uniImg('u-thinking') + '</div><div><small>' + nm + '님 사주로 고르는</small><h3 id="sheetTitle">중요한 날 잡기</h3></div></div>' +
+      '<div class="tk-ps" role="tablist" aria-label="무엇을 하는 날인가요">' + TAEKIL.ORDER.map(function(k){ var Q = TAEKIL.PURPOSES[k];
+        return '<button type="button" role="tab" data-tkp="' + k + '" aria-selected="' + (k === TK.p) + '">' + TK_IC[k] + '<span>' + Q.name + '</span>' + (tkOpen(entry, k) ? '<i class="on" aria-label="열림"></i>' : '') + '</button>'; }).join('') + '</div>' +
+      '<div class="tk-opts"><div class="seg" role="tablist" aria-label="기간"><button type="button" data-tkd="30" aria-selected="' + (TK.days === 30) + '">30일</button><button type="button" data-tkd="60" aria-selected="' + (TK.days === 60) + '">60일</button></div>' +
+      '<button type="button" class="tk-wk" id="tkWk" aria-pressed="' + wk + '"><span class="ck"></span>평일만</button></div>' +
+      '<p class="tk-sum">앞으로 ' + TK.days + '일 중 <b>' + P.short + '</b>에 좋은 날이 <b>' + S.good + '일</b>, 피할 날이 <b>' + S.avoid.length + '일</b> 있어요.</p>' +
+      tkCalHTML(S, open) + '<div id="tkDay">' + tkDayHTML(sel, open) + '</div>';
+    if (S.avoid.length) h += '<div class="tk-avoid"><h4>피해야 할 날 <small>무료</small></h4><div class="tk-av-list">' + S.avoid.slice(0, 10).map(function(o){ return '<button type="button" data-tk="' + o.key + '">' + tkMDW(o.date) + '</button>'; }).join('') + '</div>' +
+      '<p class="helper">' + nm + '님의 일지 ' + r.pillars.day.bk + '(' + r.pillars.day.bh + ')와 충이 되거나 기운이 가장 약한 날이에요. 큰 결정은 이날만 피해도 반은 성공이에요.</p></div>';
+    if (open){
+      h += '<div class="tk-best"><h4>' + P.short + ' 베스트 3일</h4>' + S.best.map(function(b, i){
+        return '<div class="tk-bc" data-tier="' + (i ? 'violet' : 'gold') + '"><div class="tk-bc-h"><em>' + (i + 1) + '</em><div><b>' + tkMDW(b.date) + '</b><small>' + b.pillar.name + '(' + b.pillar.hanja + ')일 · ' + b.ten + '</small></div><span><b>' + b.score + '</b>점</span></div>' +
+          '<ul class="tk-why">' + b.why.slice(0, 3).map(function(t){ return '<li class="ok">' + t + '</li>'; }).join('') + b.warn.slice(0, 1).map(function(t){ return '<li class="ng">' + t + '</li>'; }).join('') + '</ul>' +
+          '<p class="tk-hours">좋은 시간 · ' + b.hours.map(function(x){ return '<b>' + x.name + '</b> ' + x.txt; }).join(' / ') + '</p></div>';
+      }).join('') + '<div class="row" style="margin-top:4px"><button class="btn-soft grow" id="tkIcs">캘린더에 저장</button><button class="btn-primary grow" id="tkShare">' + SH_IC.send + '공유하기</button></div></div>';
+      if (TK.p === 'open') h += tkBizHTML(entry, r);
+    } else {
+      h += '<div class="tk-lock"><h4>' + P.short + ' 베스트 3일</h4><div class="tk-lock-rows" aria-hidden="true">' + [1, 2, 3].map(function(i){ return '<div><em>' + i + '</em><span>●●월 ●●일 (●)</span><i></i></div>'; }).join('') + '</div>' +
+        '<ul class="lock-list">' + ['베스트 3일과 고른 이유', '그날 좋은 시간대 (시진)', '모든 날짜의 점수와 풀이', '캘린더 저장 · 공유 카드'].concat(TK.p === 'open' ? ['내 사업 기질과 ' + r.seun.year + '년 사업 흐름'] : []).map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
+        '<button class="btn-primary btn-block sheen" id="tkBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : COIN_SVG + '엽전 ' + COST.tk + '닢으로 베스트 날짜 열기') + '</button>' +
+        '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 받은 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (COST.tk - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · ' + nm + '님의 ' + P.short + ' 날짜는 계속 다시 볼 수 있어요') + '</p></div>';
+    }
+    if (TK.p === 'open') h += '<p class="tk-note">홈택스 개업일은 실제로 사업을 시작하는 날로 적어요. 사업자등록은 개업일 전에 미리 하거나, 개업일부터 20일 안에 신청하면 돼요.</p>';
+    h += '<p class="disclaimer">일진과 사주 원국의 관계로 계산한 재미용 풀이예요. 실제 결과를 보장하지 않습니다.</p>' + (open ? adSlotHTML('중요한 날을 본 뒤') : '') + '<button class="text-btn" data-close>닫기</button></div>';
+    openSheet(h);
+    if (keepY) $('sheet').scrollTop = keepY;
+    var body = $('sheetBody');
+    body.querySelectorAll('[data-tkp]').forEach(function(b){ b.onclick = function(){ openTaekil(entry, r, b.dataset.tkp); }; });
+    body.querySelectorAll('[data-tkd]').forEach(function(b){ b.onclick = function(){ TK.days = +b.dataset.tkd; TK.sel = null; openTaekil(entry, r); }; });
+    $('tkWk').onclick = function(){ TK.wk = !wk; openTaekil(entry, r); };
+    body.querySelectorAll('[data-tk]').forEach(function(b){ b.onclick = function(){
+      TK.sel = b.dataset.tk;
+      body.querySelectorAll('.tk-d.sel').forEach(function(x){ x.classList.remove('sel'); });
+      var c = body.querySelector('.tk-d[data-tk="' + TK.sel + '"]'); if (c) c.classList.add('sel');
+      $('tkDay').innerHTML = tkDayHTML(S.list.filter(function(o){ return o.key === TK.sel; })[0], open);
+      if (b.closest('.tk-av-list')) $('tkDay').scrollIntoView({ block:'nearest', behavior:reduceMotion ? 'auto' : 'smooth' });
+    }; });
+    if ($('tkBuy')) $('tkBuy').onclick = function(){
+      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 중요한 날 베스트 3일은 ' + COST.tk + '닢이에요.'); return; }
+      if (short){ openCoinSheet('베스트 날짜를 열려면 엽전이 ' + (COST.tk - coins) + '닢 더 필요해요.'); return; }
+      if (NS) toast('예시 모드라 엽전 없이 열었어요');
+      else addCoins(-COST.tk, '중요한 날 잡기 · ' + P.short);
+      setTkOpen(entry, TK.p); TK.sel = S.best[0] ? S.best[0].key : null; openTaekil(entry, r);
+    };
+    if ($('tkIcs')) $('tkIcs').onclick = function(){ tkICS(entry, S); };
+    if ($('tkShare')) $('tkShare').onclick = function(){
+      var b0 = S.best[0]; if (!b0) return;
+      openShare({ sheetTitle:'좋은 날 공유', title:entry.name + '님의 ' + P.short + ' 좋은 날', desc:'1순위 ' + tkMDW(b0.date) + ' · ' + b0.pillar.name + '일',
+        fig:figSVG(r.animal, ANIMAL_EL[r.animal], 'mini'),
+        text:'[우니조아] ' + entry.name + '님의 ' + P.name + ' 좋은 날\n' + S.best.map(function(b, i){ return (i + 1) + '순위 ' + tkMDW(b.date); }).join('\n'),
+        cta:'내 사주로 좋은 날 찾아보기 →', link:shareBase(),
+        card:{ kicker:entry.name + '님의 ' + P.short + ' 좋은 날', head:tkMDW(b0.date), tag:'1순위 · ' + b0.pillar.name + '일', rows:S.best.map(function(b, i){ return [(i + 1) + '순위 ' + tkMD(b.date), b.score]; }) } });
+    };
+  }
+  function tkBannerHTML(){
+    return '<button type="button" class="tk-bn" id="btnTk"><span class="tk-bn-ic" aria-hidden="true">' + TK_IC.open + '</span><span class="tk-bn-t"><b>중요한 날 잡기 <em>NEW</em></b><small>개업·계약·이사 날짜를 내 사주로</small></span><span class="chev" aria-hidden="true">›</span></button>';
   }
 
   /* =========================================================
@@ -2476,6 +2626,7 @@
     var opened = liveOrders(), nyO = store('unsu_ny_open') || {}, list = getList ? getList() : [];
     var rep = opened.map(function(o){ return '<button class="row-link" data-rp="' + o.id + '" data-gk="' + esc(o.ghKey || '') + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(o.name) + '<br><span class="helper">' + fmtDate(o.at) + ' · ' + (o.coin ? o.coin + '닢' : '') + '</span></span><span class="chev">›</span></button>'; });
     Object.keys(nyO).forEach(function(id){ var e = list.filter(function(x){ return x.id === id; })[0]; if (e) rep.push('<button class="row-link" data-rpny="' + id + '"><span class="ic">' + TIP_IC.star + '</span><span>2027 신년운세 전체 · ' + esc(e.name) + '<br><span class="helper">' + fmtDate(nyO[id]) + ' · 광고로 열림</span></span><span class="chev">›</span></button>'); });
+    Object.keys(tkOpenMap()).forEach(function(k){ var id = k.split('|')[0], pp = k.split('|')[1], e = list.filter(function(x){ return x.id === id; })[0], Q = TAEKIL.PURPOSES[pp]; if (e && Q) rep.push('<button class="row-link" data-rptk="' + esc(k) + '"><span class="ic">' + TK_IC[pp] + '</span><span>중요한 날 잡기 · ' + Q.short + ' · ' + esc(e.name) + '<br><span class="helper">' + fmtDate(tkOpenMap()[k]) + ' · ' + COST.tk + '닢</span></span><span class="chev">›</span></button>'); });
     if (rep.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">열어 둔 리포트</h2><span class="sec-meta">' + rep.length + '개</span></div>' + rep.join('') + '</div>';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">꿈해몽 기록</h2><span class="sec-meta">' + dreams.length + '개</span></div>';
     if (!dreams.length) h += '<div class="bx-empty">' + uniImg('u-sleep') + '<p class="helper">꿈을 풀면 해몽과 꿈 번호가 여기에 남아요.</p></div><button class="btn-soft btn-block" id="bxGoDream" style="margin-top:12px">꿈 해몽 하러 가기</button>';
@@ -2493,6 +2644,7 @@
     $('bxList').onclick = function(){ renderList(); show('list'); };
     document.querySelectorAll('[data-bx]').forEach(function(b){ b.onclick = function(){ store('unsu_numbox', getBox().filter(function(x){ return x.id !== b.dataset.bx; })); renderBox(); toast('지웠어요'); }; });
     document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(); if (b.dataset.rp === 'gh') go('gunghap'); else if (me) openResult(me, compute(me), true); }; });
+    document.querySelectorAll('[data-rptk]').forEach(function(b){ b.onclick = function(){ var k = b.dataset.rptk.split('|'), e = getList().filter(function(x){ return x.id === k[0]; })[0]; if (e) openTaekil(e, compute(e), k[1]); }; });
     document.querySelectorAll('[data-rpny]').forEach(function(b){ b.onclick = function(){ var e = getList().filter(function(x){ return x.id === b.dataset.rpny; })[0]; if (e) openNYSheet(e, compute(e)); }; });
     document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ var d = getDreams().filter(function(x){ return x.id === b.dataset.dm; })[0]; if (d){ show('dream'); renderDreamResult(d, false); } }; });
   }
