@@ -1499,7 +1499,7 @@
       h += me(dmLabel(DM_WHO, dmCtx.who));
       if (dmCtx.who !== 'stranger'){
         h += uni(dmCtx.who === 'celeb' ? '누구였는지 이름을 알려 줄래?' : '뭐라고 부르면 될까?', dmCtx.who === 'celeb' ? '이름을 알면 이름 글자를 물건으로 잘못 읽지 않아. 안 적어도 괜찮아.' : '실명 대신 별명이나 호칭(엄마, 팀장님)으로 적어 줘.');
-        if (!dmCtx.named) return h + '<div class="dmc-name"><input class="text-input" id="dmName" maxlength="12" placeholder="' + (dmCtx.who === 'celeb' ? '예) 차은우' : '예) 엄마, 팀장님') + '" autocomplete="off"><button type="button" class="btn-soft" id="dmNameGo">다음</button></div>';
+        if (!dmCtx.named) return h + '<div class="dmc-name"><input class="text-input" id="dmName" maxlength="12" placeholder="' + (dmCtx.who === 'celeb' ? '예) 유재석' : '예) 엄마, 팀장님') + '" autocomplete="off"><button type="button" class="btn-soft" id="dmNameGo">다음</button></div>';
         h += me(dmCtx.name || '건너뛸게');
       }
     }
