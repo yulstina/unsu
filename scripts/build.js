@@ -10,6 +10,8 @@ const ROOT = path.join(__dirname, '..');
 const r = f => fs.readFileSync(path.join(ROOT, f.startsWith('node_modules') ? f : 'src/' + f), 'utf8');
 const OUT = path.join(ROOT, 'public');
 const SITE = 'https://woonijoa.com';
+/* og.jpg가 바뀌면 주소도 바뀌게(?v=해시): 카톡·SNS가 예전 미리보기를 캐시해 두는 문제 방지 */
+const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 'public', 'og.jpg')));
 
 (async () => {
   ['css', 'js', 'icons', 'img'].forEach(d => fs.mkdirSync(path.join(OUT, d), { recursive: true }));
@@ -52,14 +54,14 @@ const SITE = 'https://woonijoa.com';
 <meta property="og:url" content="${SITE}/">
 <meta property="og:title" content="우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호">
 <meta property="og:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호. 생년월일만 입력하면 바로 시작해요.">
-<meta property="og:image" content="${SITE}/og.jpg">
+<meta property="og:image" content="${OG}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="우니조아 — 별자리와 오로라 위에 떠 있는 로고와 '내 사주로 뽑는 여섯 개의 행운 번호' 문구">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호">
 <meta name="twitter:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호">
-<meta name="twitter:image" content="${SITE}/og.jpg">
+<meta name="twitter:image" content="${OG}">
 <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
