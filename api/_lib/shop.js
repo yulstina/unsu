@@ -15,5 +15,9 @@ const EARN = {
   petgift: { n: 100, max: 1 },   /* 우니의 선물 */
   invite:  { n: 20,  max: 5 }    /* 초대 수락 선물 */
 };
+/* 엽전으로 여는 상품 가격 — src/app.js 의 COST 와 같아야 한다. 서버는 브라우저가 보낸 금액 대신 이 값으로 차감한다 */
+const PRICES = { cat: 100, extra: 100, dream: 200, gh: 100, ez: 100, tk: 500 };
+/* 광고 보상 엽전: 실제 보상형 광고(Google Ad Manager)가 연결되고 서버 확인이 붙기 전까지 꺼 둔다 → Vercel 환경변수 AD_COIN_ON=1 로 켠다 */
+const AD_COIN_ON = process.env.AD_COIN_ON === '1';
 const SPEND_MAX = 5000;
-module.exports = { PACKS, EARN, SPEND_MAX };
+module.exports = { PACKS, EARN, PRICES, AD_COIN_ON, SPEND_MAX };

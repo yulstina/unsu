@@ -12,6 +12,7 @@
 | `KAKAO_ADMIN_KEY` | 앱 키 › Admin 키 (선택) | 탈퇴 시 카카오 연결 끊기 |
 | `TOSS_CLIENT_KEY` | 토스페이먼츠 개발자센터 › API 키 › **API 개별 연동 키** 클라이언트 키 | `test_ck_…` 면 테스트 결제 |
 | `TOSS_SECRET_KEY` | 같은 화면 › 시크릿 키 | `test_sk_…` |
+| `AD_COIN_ON` | (선택) 실제 보상형 광고 + 서버 확인이 붙은 뒤에만 `1` | 비워 두면 “광고 보고 +20닢”이 꺼져요 |
 
 ## 1. Supabase
 1. 새 프로젝트 `woonijoa`, 지역 **Northeast Asia (Seoul)**.
