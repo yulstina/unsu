@@ -32,7 +32,7 @@ const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 
   fs.writeFileSync(path.join(OUT, 'js/lunar.js'), '/*! korean-lunar-calendar v0.4.0 | MIT License | (c) 2022 Jinil Lee */\n' + lunar + '\n');
   const figures = (await minify(r('figures.js') + '\n' + r('render.js') + '\n' + r('machine.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/figures.js'), figures);
-  const core = (await minify(r('engine.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('content.js') + '\n' + r('content_legacy.js') + '\n' + r('daily.js') + '\n' + r('taekil.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('dream.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('share.js').replace(/if \(typeof module[^\n]*\n?/, ''), jsOpts)).code;
+  const core = (await minify(r('engine.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('content.js') + '\n' + r('content_legacy.js') + '\n' + r('daily.js') + '\n' + r('taekil.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('dream.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('share.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('legal.js').replace(/if \(typeof module[^\n]*\n?/, ''), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/core.js'), core);
   const app = (await minify(r('app.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/app.js'), app);
@@ -95,6 +95,32 @@ ${markupMin}
     background_color:'#0d0b1e', theme_color:'#0d0b1e',
     icons:[{ src:'/icons/icon-192.png', sizes:'192x192', type:'image/png' }, { src:'/icons/icon-512.png', sizes:'512x512', type:'image/png' }]
   }));
+  /* 정적 약관 페이지 /terms /privacy /refund — PG·통신판매업 심사, 카카오 콘솔에 넣을 주소. 내용은 src/legal.js 하나에서 */
+  delete require.cache[require.resolve('../src/legal.js')];
+  const LEGAL = require('../src/legal.js');
+  const page = (k, slug) => {
+    const d = LEGAL.DOCS[k];
+    const nav = [['terms', '이용약관'], ['privacy', '개인정보처리방침'], ['refund', '환불 정책']].map(([s, t]) => s === slug ? `<b>${t}</b>` : `<a href="/${s}">${t}</a>`).join(' · ');
+    return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${d.title} — 우니조아</title><link rel="canonical" href="${SITE}/${slug}"><meta name="robots" content="index,follow"><meta name="theme-color" content="#0d0b1e">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{color-scheme:dark}body{margin:0;background:#0d0b1e;color:#c9c6e0;font:15px/1.75 'Pretendard Variable',Pretendard,system-ui,sans-serif;word-break:keep-all}
+main{max-width:720px;margin:0 auto;padding:28px 20px 64px}header a{color:#fff;text-decoration:none;font-weight:700;font-size:17px}
+h1{color:#fff;font-size:24px;margin:22px 0 6px}h4{color:#fff;font-size:16px;margin:26px 0 6px}nav{font-size:14px;color:#8d89ad}nav a{color:#b8b4d8}
+a{color:#b9a8ff}ol,ul{padding-left:20px}li{margin:3px 0}.todo{background:rgba(255,154,138,.14);color:#ffb4a8;border-radius:6px;padding:0 6px;font-size:.92em}
+.doc-date{color:#8d89ad;margin-top:28px}footer{margin-top:40px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1);font-size:12.5px;color:#8d89ad;line-height:1.8}
+</style></head><body><main><header><a href="/">← 우니조아</a></header><h1>${d.title}</h1><nav>${nav}</nav>
+${d.html()}
+<footer>${LEGAL.footer()}</footer></main></body></html>
+`;
+  };
+  for (const [k, slug] of [['terms', 'terms'], ['privacy', 'privacy'], ['refund', 'refund']]){
+    fs.mkdirSync(path.join(OUT, slug), { recursive: true });
+    fs.writeFileSync(path.join(OUT, slug, 'index.html'), page(k, slug));
+  }
   fs.writeFileSync(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\n');
   
   for (const f of fs.readdirSync(OUT, { recursive: true })) {

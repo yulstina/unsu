@@ -1,6 +1,15 @@
 {
   "headers": [
     {
+      "source": "/api/(me|coins|pay|auth)(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
         {
@@ -50,9 +59,33 @@
     "api/og.js": {
       "maxDuration": 15,
       "includeFiles": "{public/js/core.js,public/js/lunar.js,api/_assets/**}"
+    },
+    "api/auth.js": {
+      "maxDuration": 10
+    },
+    "api/me.js": {
+      "maxDuration": 10
+    },
+    "api/coins.js": {
+      "maxDuration": 10
+    },
+    "api/pay.js": {
+      "maxDuration": 10
     }
   },
   "rewrites": [
+    {
+      "source": "/auth/kakao",
+      "destination": "/api/auth?a=kakao"
+    },
+    {
+      "source": "/auth/kakao/callback",
+      "destination": "/api/auth?a=callback"
+    },
+    {
+      "source": "/pay/success",
+      "destination": "/api/pay?a=confirm"
+    },
     {
       "source": "/s/:code",
       "destination": "/api/share?r=:code"
