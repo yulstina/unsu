@@ -38,32 +38,42 @@ var LottoMachine = (function(){
 
     function rackPos(i){ return { x:38 + i * 48.8, y:343 }; }
 
+    /* 추첨 중에는 공이 통 안에서 사방으로 튄다: 약한 중력 + 무작위 방향 킥 + 탄성 벽 반사.
+       (예전엔 기계 전체를 무작위로 떨어서 화면 오류처럼 보였다 → 기계는 가만히, 공만 움직인다) */
     function physics(dt){
-      var lift = spin;
+      var lift = spin, rest = .55 + .4 * lift, maxV = 430;
       for (var i = 0; i < balls.length; i++){
         var b = balls[i];
-        b.vy += 520 * dt * (1 - lift * .85);                         /* 중력 */
-        if (lift > 0){                                                 /* 아래에서 올라오는 바람 */
-          var dx = (b.x - GC.x) / GC.r;
-          b.vy -= (900 * lift * (1 - Math.abs(dx) * .5)) * dt * (b.y > GC.y - 10 ? 1 : .2);
-          b.vx += (Math.random() - .5) * 1600 * lift * dt + (-dx) * 120 * lift * dt;
+        b.vy += 520 * dt * (1 - lift * .92);                          /* 중력: 추첨 중엔 거의 무중력 */
+        if (lift > 0){
+          if (Math.random() < 5 * lift * dt){                          /* 바람에 맞아 아무 방향으로 튕김 */
+            var ka = Math.random() * Math.PI * 2, kv = (200 + Math.random() * 190) * lift;
+            b.vx += Math.cos(ka) * kv; b.vy += Math.sin(ka) * kv;
+          }
+          var rx = b.x - GC.x, ry = b.y - GC.y;                        /* 통 전체가 도는 느낌의 약한 소용돌이 */
+          b.vx += -ry * 1.5 * lift * dt; b.vy += rx * 1.5 * lift * dt;
+          if (b.y > GC.y + GC.r * .45) b.vy -= 900 * lift * dt;        /* 바닥에 깔린 공은 위로 불어 올린다 */
+          var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+          if (sp > maxV){ b.vx *= maxV / sp; b.vy *= maxV / sp; }
         } else if (Math.random() < .02){ b.vx += (Math.random() - .5) * 60; b.vy -= Math.random() * 40; }
         b.x += b.vx * dt; b.y += b.vy * dt;
-        b.vx *= (1 - .6 * dt); b.vy *= (1 - .4 * dt);
+        var damp = lift > 0 ? .12 : .6;
+        b.vx *= (1 - damp * dt); b.vy *= (1 - (lift > 0 ? .12 : .4) * dt);
         var dx2 = b.x - GC.x, dy2 = b.y - GC.y, d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2), lim = GC.r - BALL_R - 2;
         if (d2 > lim){                                                 /* 유리 벽 반사 */
           var nx = dx2 / d2, ny = dy2 / d2, dot = b.vx * nx + b.vy * ny;
-          b.vx -= 1.7 * dot * nx; b.vy -= 1.7 * dot * ny;
+          if (dot > 0){ b.vx -= (1 + rest) * dot * nx; b.vy -= (1 + rest) * dot * ny; }
           b.x = GC.x + nx * lim; b.y = GC.y + ny * lim;
         }
       }
-      for (var p = 0; p < balls.length; p++) for (var q = p + 1; q < balls.length; q++){   /* 공끼리 밀어내기 */
+      var e = .6 + .3 * lift;
+      for (var p = 0; p < balls.length; p++) for (var q = p + 1; q < balls.length; q++){   /* 공끼리 튕기기 */
         var a = balls[p], c = balls[q], ddx = c.x - a.x, ddy = c.y - a.y, dd = ddx * ddx + ddy * ddy, m = BALL_R * 2;
         if (dd < m * m && dd > .01){
           var dist = Math.sqrt(dd), ov = (m - dist) / 2, ux = ddx / dist, uy = ddy / dist;
           a.x -= ux * ov; a.y -= uy * ov; c.x += ux * ov; c.y += uy * ov;
           var rv = (c.vx - a.vx) * ux + (c.vy - a.vy) * uy;
-          if (rv < 0){ a.vx += ux * rv * .6; a.vy += uy * rv * .6; c.vx -= ux * rv * .6; c.vy -= uy * rv * .6; }
+          if (rv < 0){ a.vx += ux * rv * e; a.vy += uy * rv * e; c.vx -= ux * rv * e; c.vy -= uy * rv * e; }
         }
       }
     }
@@ -83,7 +93,7 @@ var LottoMachine = (function(){
     function rr(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
     function render(now){
-      var sx = (Math.random() - .5) * shake, sy = (Math.random() - .5) * shake;
+      var sx = 0, sy = 0;   /* 기계는 흔들지 않는다 */
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
       ctx.save(); ctx.translate(sx, sy);
 
@@ -183,7 +193,7 @@ var LottoMachine = (function(){
       if (document.hidden) { last = now; return; }
       var dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
       /* 비어 있을 땐 30fps */
-      physics(dt); step(dt, now); render(now);
+      physics(dt * .5); physics(dt * .5); step(dt, now); render(now);   /* 빠른 공이 벽을 뚫지 않게 2회로 나눠 계산 */
     }
 
     function start(){ if (!raf && !reduce) raf = requestAnimationFrame(frame); }
