@@ -1115,6 +1115,17 @@
   .st-fs{padding:12px 14px 14px;}
   .st-cap{font-size:calc(13px*var(--fs));color:var(--text-helper);margin-bottom:8px;font-weight:600;}
   .st-sheet .biz-foot{margin-top:4px;}
+  /* 하단 사업자 정보 푸터 */
+  .site-foot{margin:28px 4px 8px;padding:18px 6px 4px;border-top:1px solid rgba(255,255,255,.08);text-align:center;color:var(--text-helper);font-size:calc(11.5px*var(--fs));line-height:1.75;}
+  .site-foot .sf-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 14px;margin-bottom:8px;}
+  .site-foot .sf-links a{color:var(--text-muted);text-decoration:none;font-size:calc(12px*var(--fs));}
+  .site-foot .sf-links a b{color:#fff;font-weight:600;}
+  .site-foot .sf-biz{margin:0;word-break:keep-all;}
+  .site-foot .sf-copy{margin:6px 0 0;opacity:.75;}
+  .site-foot .todo,.doc-sheet .todo{display:inline-block;background:rgba(255,154,138,.12);color:#ffb4a8;border-radius:6px;padding:0 6px;font-size:.95em;}
+  .doc-sheet ol,.doc-sheet ul{padding-left:18px;margin:4px 0;} .doc-sheet .doc-date{margin-top:16px;color:var(--text-helper);}
+  .doc-sheet .doc-link{margin-top:10px;text-align:center;} .doc-sheet .doc-link a{color:var(--text-muted);}
+  .pay-test{display:inline-block;background:rgba(246,205,91,.16);color:#f6cd5b;border-radius:6px;padding:0 6px;margin-right:4px;font-weight:600;}
 
   /* ---------- 출시 필수 화면: 약관 동의 · 알림 설정 · 구매 내역 · 고객센터 ---------- */
   .cs-all,.cs-ck{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;align-items:center;width:100%;border:none;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0;}
@@ -2095,6 +2106,7 @@
     <div id="dmInput" class="view"></div>
     <div id="dmResult" class="view" hidden></div>
   </section>
+  <footer class="site-foot" id="siteFoot"></footer>
 </main>
 
 <nav class="tabbar" aria-label="주요 메뉴">
