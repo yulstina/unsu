@@ -15,15 +15,15 @@ var TAEKIL = (function(){
   function stemHap(a, b){ return a !== b && mod(a - b, 5) === 0 && Math.abs(a - b) === 5; }
 
   var PURPOSES = {
-    open:    { name:'개업·사업자등록', short:'개업', verb:'시작하기', weekday:true,
+    open:    { name:'개업·사업', short:'개업', verb:'시작하기',
                w:{ '비견':-2, '겁재':-10, '식신':12, '상관':6, '편재':14, '정재':12, '편관':-6, '정관':4, '편인':-2, '정인':2 } },
-    contract:{ name:'계약·도장 찍기', short:'계약', verb:'도장 찍기', weekday:true,
+    contract:{ name:'계약·도장', short:'계약', verb:'도장 찍기',
                w:{ '비견':0, '겁재':-10, '식신':4, '상관':-10, '편재':2, '정재':8, '편관':-4, '정관':12, '편인':4, '정인':12 } },
-    move:    { name:'이사·입주', short:'이사', verb:'옮기기', weekday:false,
+    move:    { name:'이사·입주', short:'이사', verb:'옮기기',
                w:{ '비견':0, '겁재':-6, '식신':6, '상관':-4, '편재':2, '정재':6, '편관':-6, '정관':6, '편인':2, '정인':8 } },
-    exam:    { name:'면접·시험', short:'면접', verb:'도전하기', weekday:true,
+    exam:    { name:'면접·시험', short:'면접', verb:'도전하기',
                w:{ '비견':0, '겁재':-2, '식신':2, '상관':-6, '편재':-4, '정재':0, '편관':6, '정관':14, '편인':8, '정인':12 } },
-    love:    { name:'고백·상견례', short:'고백', verb:'마음 전하기', weekday:false,
+    love:    { name:'고백·상견례', short:'고백', verb:'마음 전하기',
                w:{ '비견':-2, '겁재':-8, '식신':8, '상관':0, '편재':4, '정재':6, '편관':2, '정관':6, '편인':-2, '정인':2 } }
   };
   var ORDER = ['open', 'contract', 'move', 'exam', 'love'];
@@ -99,21 +99,30 @@ var TAEKIL = (function(){
   }
   function ymd(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
 
-  /* start부터 days일을 계산. weekdayOnly면 토·일은 off 표시만 하고 순위에서 뺀다 */
-  function scan(entry, r, purpose, start, days, weekdayOnly){
-    var list = [], base = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    for (var i = 0; i < days; i++){
-      var d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
-      var o = scoreDay(entry, r, purpose, d);
-      o.off = !!(weekdayOnly && (d.getDay() === 0 || d.getDay() === 6));
-      list.push(o);
+  /* 이번 달 1일부터 12개월. 오늘 이전 날은 past(점수·순위 제외). 같은 사람·목적은 캐시 */
+  var cache = {};
+  function scanYear(entry, r, purpose, today){
+    var t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    var ck = [entry.name, entry.y, entry.m, entry.d, entry.hour, entry.minute, entry.gender, entry.cal, purpose, ymd(t0)].join('|');
+    if (cache[ck]) return cache[ck];
+    var months = [], all = [];
+    for (var mi = 0; mi < 12; mi++){
+      var y = t0.getFullYear(), m = t0.getMonth() + mi, first = new Date(y, m, 1), last = new Date(y, m + 1, 0).getDate(), days = [];
+      for (var dd = 1; dd <= last; dd++){
+        var d = new Date(first.getFullYear(), first.getMonth(), dd);
+        if (d < t0){ days.push({ date:d, key:ymd(d), past:true }); continue; }
+        var o = scoreDay(entry, r, purpose, d); o.mi = mi; days.push(o); all.push(o);
+      }
+      var live = days.filter(function(o){ return !o.past; });
+      var mb = live.filter(function(o){ return o.tier !== 'bad'; }).sort(function(a, b){ return b.score - a.score || a.date - b.date; })[0] || null;
+      months.push({ y:first.getFullYear(), m:first.getMonth() + 1, days:days, best:mb, good:live.filter(function(o){ return o.tier === 'good'; }).length, bad:live.filter(function(o){ return o.tier === 'bad'; }).length });
     }
-    var pool = list.filter(function(o){ return !o.off && !o.chung; });
-    var best = pool.slice().sort(function(a, b){ return b.score - a.score || a.date - b.date; }).slice(0, 3);
-    var avoid = list.filter(function(o){ return !o.off && o.tier === 'bad'; });
-    return { purpose:purpose, list:list, best:best, avoid:avoid, good:pool.filter(function(o){ return o.tier === 'good'; }).length };
+    var best = all.filter(function(o){ return o.tier !== 'bad'; }).sort(function(a, b){ return b.score - a.score || a.date - b.date; }).slice(0, 5);
+    var res = { purpose:purpose, months:months, best:best, good:all.filter(function(o){ return o.tier === 'good'; }).length, bad:all.filter(function(o){ return o.tier === 'bad'; }).length };
+    cache[ck] = res;
+    return res;
   }
 
-  return { PURPOSES:PURPOSES, ORDER:ORDER, scan:scan, scoreDay:scoreDay, ymd:ymd };
+  return { PURPOSES:PURPOSES, ORDER:ORDER, scanYear:scanYear, scoreDay:scoreDay, ymd:ymd };
 })();
 if (typeof module !== 'undefined') module.exports = TAEKIL;
