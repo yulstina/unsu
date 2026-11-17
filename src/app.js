@@ -640,6 +640,39 @@
     return '<div class="pcol' + (isDay ? ' is-day' : '') + '">' + head + '<div class="ten">' + p.tenStem + '</div>' + tileHTML(p.stem, true, p) + tileHTML(p.br, false, p) + '<div class="ten">' + p.tenBr + '</div></div>';
   }
 
+  /* ---- 신뢰 배지 · 계산 근거: 엔진(src/engine.js)이 실제로 한 계산만 그 사람의 숫자로 보여 준다.
+     '통계로 검증'·'과학적' 같은 말은 쓰지 않는다(검증한 적 없음 → 표시광고법) ---- */
+  var SEAL_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8l2.4 1.7 2.9-.1.9 2.8 2.3 1.8-.9 2.8.9 2.8-2.3 1.8-.9 2.8-2.9-.1L12 21.2l-2.4-1.7-2.9.1-.9-2.8-2.3-1.8.9-2.8-.9-2.8 2.3-1.8.9-2.8 2.9.1z"/><path d="M8.6 12.2l2.3 2.3 4.6-4.8" stroke-linecap="round"/></svg>';
+  var JIE_BY_BR = ['대설','소한','입춘','경칩','청명','입하','망종','소서','입추','백로','한로','입동'];
+  function trustStripHTML(r){
+    var lonOn = r.time && r.input.lonCorr !== false;
+    return '<button type="button" class="trust-strip" id="btnBasis"><span class="tt">' + SEAL_SVG + '천문 계산 만세력으로 세운 명식<span class="more">계산 근거 ›</span></span>' +
+      '<span class="trust-chips"><span>입춘·절기 시각 기준</span>' + (lonOn ? '<span>출생지 경도 보정(서울 기준)</span>' : '') + '<span>서머타임·옛 표준시 반영</span><span>음력: 한국천문연구원 자료</span></span></button>';
+  }
+  function basisHTML(entry, r){
+    var P = r.pillars, t = function(x){ return x.m + '월 ' + x.d + '일 ' + pad2(x.h) + ':' + pad2(x.mi); };
+    var row = function(p, lab, h5, txt){ return '<div class="basis-row"><div class="pl"><b>' + (p ? p.hanja : '—') + '</b><small>' + lab + '</small></div><div><h5>' + h5 + '</h5><p>' + txt + '</p></div></div>'; };
+    var y = r.solar.y, li = MS.jdToKST(MS.findLon(315, MS.jd(y, 2, 4, 0))), before = P.year.stem !== ((y - 4) % 10 + 10) % 10;
+    var h = row(P.year, '연주', '입춘이 지났는지로 해를 정해요', before
+      ? y + '년 입춘 <em>' + t(li) + '</em> 전에 태어나 아직 ' + (y - 1) + '년의 기운, ' + P.year.name + '년이에요. 1월 1일이나 설날이 아니라 입춘이 기준이에요.'
+      : y + '년 입춘 <em>' + t(li) + '</em> 이후에 태어나 ' + P.year.name + '년이에요. 1월 1일이나 설날이 아니라 입춘이 기준이에요.');
+    var mb = P.month.br;
+    h += row(P.month, '월주', '절기가 들어온 시각으로 달을 정해요', JIE_BY_BR[mb] + ' <em>' + t(r.jie.prev) + '</em> 이후, ' + JIE_BY_BR[(mb + 1) % 12] + ' ' + t(r.jie.next) + ' 이전이라 ' + P.month.bk + '월(' + P.month.bh + '月)이에요. 태양의 위치를 직접 계산해 분 단위로 찾아요.' + (r.time ? '' : ' 태어난 시간을 몰라 그날 정오로 셈했어요.'));
+    h += row(P.day, '일주', '날짜는 60갑자를 하루씩 세어요', r.time ? '밤 11시(자시)에 날이 바뀌는 기준으로, 아래에서 고친 시각으로 셈했어요.' : '태어난 날을 기준으로 60갑자를 하루씩 세어 정했어요.');
+    if (r.time && P.hour){
+      var c = r.corr, parts = [];
+      parts.push('시계 시각 <em>' + pad2(r.time.h) + ':' + pad2(r.time.mi) + '</em>');
+      if (c.dst) parts.push('그해 서머타임이라 1시간을 빼고');
+      if (c.corrMin) parts.push((c.zone === 8.5 ? '당시 표준시(동경 127.5°)' : '동경 135° 기준 시각') + '을 서울(127°)의 해 시각으로 <em>' + Math.abs(c.corrMin) + '분</em> ' + (c.corrMin < 0 ? '당겨' : '늦춰'));
+      else if (r.input.lonCorr === false) parts.push('(경도 보정은 꺼 두셨어요)');
+      h += row(P.hour, '시주', '태어난 곳의 해 시각으로 고쳐요', parts.join(', ') + ' <em>' + pad2(c.lmH) + ':' + pad2(c.lmMi) + '</em>, ' + P.hour.bk + '시(' + P.hour.bh + '時)예요.' + (c.dst ? '' : ' 그해는 서머타임이 없었어요.'));
+    } else h += row(null, '시주', '태어난 시간을 몰라요', '시주 없이 여섯 글자로 풀었어요. 시간을 알면 상세 설정에서 넣어 주세요.');
+    var pct = Math.round(r.ratio * 100);
+    return '<div class="card basis-card" id="basisCard"><div class="sec-head"><h2 class="sec-title">이 명식은 이렇게 세웠어요</h2><span class="sec-meta">계산 근거</span></div>' +
+      '<div class="basis">' + h + '</div>' +
+      '<div class="basis-src"><b>그다음 풀이는</b> 일간과 다른 글자의 관계(십성), 오행 분포와 일간의 힘(' + r.strength + ' ' + pct + '%), 억부로 고른 용신(' + MS.EL_H[r.yong] + ') 같은 명리학의 해석 규칙을 쉬운 말로 옮긴 거예요. 과학적으로 증명된 예측이 아니라 전통 해석이라는 점은 알고 봐 주세요.</div>' +
+      '<p class="basis-foot">절기 시각: 태양 황경 계산(오차 ±1분 내외) · 음력 변환: 한국천문연구원 자료 · 표준시: 1954~61년 동경 127.5°, 서머타임 시행 연도 반영</p></div>';
+  }
   function zoneHTML(key, t, d){ return '<div class="zone" data-zone="' + key + '"><b>' + t + '</b><span>' + d + '</span></div>'; }
   function openResult(entry, r, asTab){
     setTimeout(function(){ bond('saju'); }, 900);
@@ -667,6 +700,7 @@
       '<div class="poster-sub">' + P.year.name + '년생 · ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주</div>' +
       '<div class="poster-meta">양력 ' + solarStr + ' ' + timeStr + '<br>음력 ' + lunarStr + (corrStr ? ' · ' + corrStr : '') + '</div>' +
       '</div></div>';
+    h += trustStripHTML(r);
     h += '<button class="btn-primary btn-block" id="btnImgRes" style="margin:-4px 0 4px">정리된 결과 이미지로 저장·공유</button>';
 
     h += zoneHTML('me', '나', '타고난 나의 모습');
@@ -687,6 +721,7 @@
     h += '<div class="prow-label">지장간 支藏干</div>' + order.map(function(k){ return '<div class="pcell">' + (P[k] ? '<span class="jj">' + P[k].jijang + '</span>' : '—') + '</div>'; }).join('');
     h += '<div class="prow-label">12운성 十二運星</div>' + order.map(function(k){ return '<div class="pcell">' + (P[k] ? P[k].stage : '—') + '</div>'; }).join('');
     h += '</div><p class="table-note">가운데 일주의 윗글자(일간 <b style="color:#fff">' + P.day.sh + '</b>)가 나 자신이에요. 나머지 글자의 이름(비견·정재 등)은 일간과의 관계를 뜻해요.</p></div>';
+    h += basisHTML(entry, r);
 
     /* --- 오행 --- */
     var maxC = Math.max.apply(null, r.cnt);
@@ -797,6 +832,7 @@
       revealBalls($('ballsLife')); setTimeout(function(){ revealBalls($('ballsYong')); }, 450);
     };
     $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
+    if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
     $('btnCopyRes').onclick = function(){ copyText(summaryText(), '결과를 복사했어요'); };
     $('btnShareRes').onclick = function(){
       var ig0 = ILGAN[P.day.stem];
@@ -1024,7 +1060,7 @@
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
   /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
      값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
-  var COST = { cat:100, extra:100, dream:200, gh:100, ez:100, tk:500 };
+  var COST = { cat:100, extra:100, dream:200, gh:100, ez:100, tk:500 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
   var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
@@ -1033,7 +1069,9 @@
      서버 계정 (카카오 로그인 · 엽전 원장 · 결제) — api/me.js · api/coins.js · api/pay.js
      서버 환경변수가 없으면(로컬 미리보기·설정 전) 예전처럼 이 기기 안에서만 동작한다.
      ========================================================= */
-  var SRV = { cfg:null, orders:[], applying:false, pushT:0 };
+  var SRV = { cfg:null, orders:[], applying:false, pushT:0, split:null, spending:false };
+  /* 광고 보상 엽전은 실제 보상형 광고 + 서버 확인이 붙을 때까지 숨긴다(서버 AD_COIN_ON). 예시 모드는 연출만 보여 준다 */
+  function adCoinOn(){ return NS || !!(SRV.cfg && SRV.cfg.adCoin); }
   function srvOn(){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && SRV.cfg.login.kakao); }
   function srvUser(){ var a = store('unsu_auth'); return !NS && !!(a && a.srv); }
   function api(path, opt){
@@ -1053,7 +1091,10 @@
     if (why === '초대 수락 선물') return 'invite';
     return null;   /* 가입 선물·충전은 서버가 직접 넣는다 */
   }
-  function setSrvCoins(bal){ if (typeof bal !== 'number') return; var key = nsk('unsu_coin'); MEM[key] = bal; try { localStorage.setItem(key, JSON.stringify(bal)); } catch(e){} renderCoin(); }
+  function setSrvCoins(x){
+    var bal = x;
+    if (x && typeof x === 'object'){ if (typeof x.free === 'number') SRV.split = { free:x.free, paid:x.paid || 0 }; bal = x.bal; }
+    if (typeof bal !== 'number') return; var key = nsk('unsu_coin'); MEM[key] = bal; try { localStorage.setItem(key, JSON.stringify(bal)); } catch(e){} renderCoin(); }
   function pushSnapshot(now){
     clearTimeout(SRV.pushT);
     return new Promise(function(ok){
@@ -1078,7 +1119,7 @@
       if (useServer){ DATA_KEYS.forEach(function(k){ if (k === 'unsu_coin' || k === 'unsu_coinlog') return; var v = snap[k]; var key = nsk(k); if (v === null || v === undefined){ delete MEM[key]; try { localStorage.removeItem(key); } catch(e){} } else store(k, v); }); try { localStorage.setItem('unsu_syncat', JSON.stringify(u.snapshotAt)); } catch(e){} }
       store('unsu_coinlog', u.ledger || []);
       store('unsu_gift', 1);
-      setSrvCoins(u.coins.bal);
+      setSrvCoins(u.coins);
       SRV.orders = u.orders || [];
       if (u.consent && !getConsent()) store('unsu_consent', u.consent);
     } finally { SRV.applying = false; }
@@ -1142,18 +1183,47 @@
     if (isGuest()) return;   /* 로그인하지 않으면 엽전을 쌓지 않는다 */
     if (srvUser()){   /* 실제 계정: 화면은 바로 바꾸고, 서버가 정한 잔액으로 맞춘다(하루 한도·잔액 검사는 서버가 한다) */
       var kind = coinKind(n, why);
-      if (!kind) return;
+      if (!kind || kind === 'spend') return;   /* 사용은 spendCoins 로만(서버가 가격 확인) */
       api('/api/coins', { method:'POST', body:{ kind:kind, n:n, why:why, key:Date.now().toString(36) + Math.random().toString(36).slice(2, 8) } }).then(function(r){
-        if (typeof r.bal === 'number') setSrvCoins(r.bal);
+        if (typeof r.bal === 'number') setSrvCoins(r);
         if (!r.ok && r.err === 'limit' && n > 0) toast('오늘은 이미 받았어요');
       }).catch(function(){});
     }
     store('unsu_coin', Math.max(0, getCoins() + n));
-    var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
-    log.unshift({ t:Date.now(), n:n, why:why }); if (log.length > 30) log.length = 30;
-    store('unsu_coinlog', log);
+    logCoin(n, why);
     renderCoin(true);
     if (n > 0) setTimeout(function(){ coinBurst(n, why); }, 250);
+  }
+  function logCoin(n, why){
+    var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
+    log.unshift({ t:Date.now(), n:n, why:why }); if (log.length > 50) log.length = 50;
+    store('unsu_coinlog', log);
+  }
+  /* 엽전으로 열기. 로그인 계정이면 서버가 가격표로 확인·차감한 뒤에만 onOk 로 연다.
+     item: '상품:대상' — 서버 구매 기록 키. 같은 item 은 한 번만 차감된다(새로고침·기기 변경 후 다시 눌러도 이중 차감 없음) */
+  function spendCoins(cost, why, item, onOk){
+    if (NS){ toast('예시 모드라 엽전 없이 열었어요'); onOk(); return; }
+    if (!srvUser()){ addCoins(-cost, why); onOk(); return; }
+    if (SRV.spending) return;
+    SRV.spending = true;
+    api('/api/coins', { method:'POST', body:{ kind:'spend', n:-cost, why:why, item:item } }).then(function(r){
+      SRV.spending = false;
+      if (r.ok){
+        setSrvCoins(r);
+        if (!r.dup){ logCoin(-cost, why); renderCoin(true); }
+        onOk(); return;
+      }
+      if (typeof r.bal === 'number') setSrvCoins(r);
+      if (r.err === 'short') openCoinSheet('엽전이 ' + Math.max(1, cost - getCoins()).toLocaleString() + '닢 더 필요해요.');
+      else if (r.err === 'login') toast('로그인이 풀렸어요. 다시 로그인해 주세요');
+      else if (r.err === 'price') toast('가격 정보가 바뀌었어요. 새로고침한 뒤 다시 열어 주세요');
+      else toast('엽전을 쓰지 못했어요. 잠시 뒤 다시 시도해 주세요');
+    }, function(){ SRV.spending = false; toast('연결이 불안정해요. 잠시 뒤 다시 시도해 주세요'); });
+  }
+  /* 충전한(유료) 엽전 / 받은(무료) 엽전. 기기 저장 모드에서는 충전이 없으니 전부 받은 엽전 */
+  function coinSplit(){
+    if (srvUser() && SRV.split) return SRV.split;
+    return { paid:0, free:getCoins() };
   }
 
   /* ---- 엽전 획득 연출: 금빛 엽전이 튀어 올라 상단 엽전 칸으로 날아간다 ---- */
@@ -1289,13 +1359,21 @@
     { id:'p5000', n:5000, b:1000, p:44000, tag:'최대 혜택' }
   ];
   var coinPick = 'p1000';
+  /* 충전한 엽전(환불 대상) / 받은 엽전(가입·출석 선물) 나눠 보기 — 환불 정책과 같은 말로 */
+  function coinSplitHTML(){
+    var c = coinSplit();
+    return '<div class="cs-split"><div><small>충전한 엽전</small><b>' + c.paid.toLocaleString() + '닢</b><p>환불 대상 · 충전일부터 5년</p></div>' +
+      '<div><small>받은 엽전</small><b>' + c.free.toLocaleString() + '닢</b><p>가입·출석 선물 · 먼저 써요</p></div></div>' +
+      '<p class="cs-split-note">1닢은 약 10원이에요(충전 패키지 기준). 쓸 때는 받은 엽전부터 빠지고, 남은 충전 엽전은 <button class="link-btn" data-doc="refund">환불 정책</button>에 따라 돌려받을 수 있어요. <button class="link-btn" id="csLogLink">사용 내역</button></p>';
+  }
   function openCoinSheet(reason){
-    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·광고로 더 모으고, 분야별 운세·꿈 해몽·번호 한 줄 더에 쓸 수 있어요.'); return; }
+    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·우니 꾹 뽑기로 더 모으고, 분야별 운세·꿈 해몽·번호 한 줄 더에 쓸 수 있어요.'); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
     var won = function(n){ return n.toLocaleString() + '원'; };
     var h = '<div class="sheet-fig">' + uniImg('u-money') + '</div><div class="cs-head"><h3 id="sheetTitle">엽전 충전소</h3><div class="cs-bal">' + COIN_SVG + '<span>내 엽전</span><b>' + getCoins().toLocaleString() + '닢</b></div></div>' +
       (typeof reason === 'string' ? '<p class="cs-reason">' + reason + '</p>' : '') +
+      coinSplitHTML() +
       '<div class="cs-packs" role="radiogroup" aria-label="엽전 패키지">' + COIN_PACKS.map(function(k){
         return '<button type="button" role="radio" class="cs-pack' + (k.hot ? ' hot' : '') + (k.id === coinPick ? ' on' : '') + '" data-pack="' + k.id + '" aria-checked="' + (k.id === coinPick) + '">' +
           (k.hot ? '<span class="cs-badge">추천</span>' : k.tag ? '<span class="cs-badge sub">' + k.tag + '</span>' : '') +
@@ -1315,11 +1393,14 @@
       '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
       '<div class="earn-row"><div><div class="t">7일 연속 보너스 +30</div><div class="s">' + (left === 7 ? '이번 주기 보너스를 받았어요' : '앞으로 ' + left + '일 더 출석하면 받아요') + '</div></div><button class="btn-ghost" id="csCal" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">캘린더</button></div>' +
       '<div class="earn-row"><div><div class="t">우니 꾹 뽑기 +' + GIFT_COIN + '</div><div class="s">매일 한 번, 가끔 엽전이 나와요</div></div><button class="btn-ghost" id="csPeek" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))">하러 가기</button></div>' +
-      '<div class="earn-row"><div><div class="t">광고 보고 +' + AD_REWARD + '</div><div class="s">하루 ' + AD_LIMIT + '번 · 오늘 ' + used + '/' + AD_LIMIT + '</div></div><button class="btn-soft" id="csAd" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))"' + (used >= AD_LIMIT ? ' disabled' : '') + '>' + (used >= AD_LIMIT ? '내일 다시' : '광고 보기') + '</button></div>' +
+      (!adCoinOn() ? '' : '<div class="earn-row"><div><div class="t">광고 보고 +' + AD_REWARD + '</div><div class="s">하루 ' + AD_LIMIT + '번 · 오늘 ' + used + '/' + AD_LIMIT + '</div></div><button class="btn-soft" id="csAd" style="padding:9px 14px;font-size:calc(12.5px*var(--fs))"' + (used >= AD_LIMIT ? ' disabled' : '') + '>' + (used >= AD_LIMIT ? '내일 다시' : '광고 보기') + '</button></div>') +
       '</div><div class="eyebrow"><span class="line"></span>최근 내역<span class="line right"></span></div><div class="ledger">' +
-      (log.length ? log.slice(0, 8).map(function(x){ var d = new Date(x.t); return '<div><span>' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + esc(x.why) + '</span><b class="' + (x.n < 0 ? 'minus' : '') + '">' + (x.n > 0 ? '+' : '') + x.n + '</b></div>'; }).join('') : '<div><span>아직 내역이 없어요</span></div>') +
-      '</div><button class="btn-ghost btn-block" data-close>닫기</button>';
+      (log.length ? log.map(function(x, i){ var d = new Date(x.t); return '<div' + (i >= 8 ? ' class="more" hidden' : '') + '><span>' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + esc(x.why) + (x.p ? ' <small class="lg-paid">충전 ' + (x.p > 0 ? '+' : '') + x.p + '</small>' : '') + '</span><b class="' + (x.n < 0 ? 'minus' : '') + '">' + (x.n > 0 ? '+' : '') + x.n + '</b></div>'; }).join('') : '<div><span>아직 내역이 없어요</span></div>') +
+      '</div>' + (log.length > 8 ? '<button class="text-btn" id="csLogMore" style="margin-top:4px">사용 내역 전체 보기 (' + log.length + '건)</button>' : '') +
+      '<button class="btn-ghost btn-block" data-close>닫기</button>';
     openSheet(h);
+    if ($('csLogMore')) $('csLogMore').onclick = function(){ $('sheetBody').querySelectorAll('.ledger .more').forEach(function(x){ x.hidden = false; }); this.remove(); };
+    if ($('csLogLink')) $('csLogLink').onclick = function(){ var l = $('sheetBody').querySelector('.ledger'); if ($('csLogMore')) $('csLogMore').click(); if (l) l.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
     var setBuy = function(){ var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0]; $('csBuy').disabled = !payReady() && !NS; $('csBuy').innerHTML = (payReady() || NS) ? (k.n + k.b).toLocaleString() + '닢 · ' + won(k.p) + ' 충전하기' : '결제 준비 중 · ' + (k.n + k.b).toLocaleString() + '닢 ' + won(k.p); };
     setBuy();
     $('sheetBody').querySelectorAll('[data-pack]').forEach(function(btn){
@@ -1335,7 +1416,7 @@
       if (!payReady()) return;
       startCharge(k, this);
     };
-    $('csAd').onclick = function(){
+    if ($('csAd')) $('csAd').onclick = function(){
       if (adCount() >= AD_LIMIT) return;
       closeSheet();
       playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); toast('엽전 +' + AD_REWARD + '닢을 받았어요'); openCoinSheet(); });
@@ -1695,25 +1776,30 @@
     dreamRun(text, true);
   }
   function dreamShortSheet(){
-    var left = AD_LIMIT - adCount();
+    var left = adCoinOn() ? AD_LIMIT - adCount() : 0, adOn = adCoinOn();
     openSheet('<div class="short-fig">' + uniImg('u-money') + '</div><h3 id="sheetTitle">엽전이 조금 모자라요</h3><p class="body-text">꿈 번호 받기에는 엽전 ' + DM.cost + '닢이 필요해요. 지금 ' + getCoins().toLocaleString() + '닢이 있어요.</p>' +
       '<ul class="dm-tips">' +
-        '<li><b>광고 보고 모으기</b><span>한 편에 ' + AD_REWARD + '닢 · 오늘 ' + Math.max(0, left) + '번 남음</span></li>' +
+        (adOn ? '<li><b>광고 보고 모으기</b><span>한 편에 ' + AD_REWARD + '닢 · 오늘 ' + Math.max(0, left) + '번 남음</span></li>' : '') +
         '<li><b>매일 출석</b><span>하루 10닢 · 7일 연속이면 +30닢</span></li>' +
         '<li><b>우니와 교감</b><span>게이지를 채우면 꿈풀이 1회권</span></li></ul>' +
       '<button class="btn-primary btn-block" id="btnDmCharge">엽전 충전소 가기</button>' +
-      '<button class="btn-ghost btn-block" id="btnDmAd" style="margin-top:8px"' + (left > 0 ? '' : ' disabled') + '>' + (left > 0 ? AD_PLAY_SVG + '광고 보고 엽전 ' + AD_REWARD + '닢 받기' : '오늘 광고 보상을 모두 받았어요') + '</button>' +
+      (adOn ? '<button class="btn-ghost btn-block" id="btnDmAd" style="margin-top:8px"' + (left > 0 ? '' : ' disabled') + '>' + (left > 0 ? AD_PLAY_SVG + '광고 보고 엽전 ' + AD_REWARD + '닢 받기' : '오늘 광고 보상을 모두 받았어요') + '</button>' : '') +
       '<button class="text-btn" data-close>닫기</button>');
     $('btnDmCharge').onclick = function(){ openCoinSheet('꿈 번호 받기에 엽전이 ' + (DM.cost - getCoins()) + '닢 더 필요해요.'); };
     if (left > 0) $('btnDmAd').onclick = function(){ closeSheet(); playAd(function(){ useAd(); addCoins(AD_REWARD, '광고 보상'); renderDreamInput(); }); };
   }
   /* paid=false: 해몽 사전만(무료) · paid=true: 엽전/1회권 차감 후 AI. upgrade: 무료 결과를 같은 id로 번호까지 채울 때 */
-  function dreamRun(text, paid, upgrade){
+  function dreamRun(text, paid, upgrade, charged){
+    /* 로그인 계정: 서버가 엽전을 먼저 확인·차감한 뒤에 풀이를 시작한다 */
+    if (paid && !charged && !NS && srvUser() && !dmCoupon()){
+      spendCoins(DM.cost, '꿈 번호 받기', 'dream:' + Date.now().toString(36), function(){ dreamRun(text, paid, upgrade, true); });
+      return;
+    }
     var btn = $('btnDmGo'); if (!upgrade && btn){ if (btn.dataset.busy) return; btn.dataset.busy = '1'; btn.disabled = true; }
     var cp = paid ? dmCoupon() : null;
     if (paid){
       if (cp){ var all = store('unsu_coupons') || []; all.forEach(function(c){ if (c.id === cp.id){ c.used = true; c.usedAt = Date.now(); } }); store('unsu_coupons', all); }
-      else if (!NS) addCoins(-DM.cost, '꿈 번호 받기');
+      else if (!NS && !charged) addCoins(-DM.cost, '꿈 번호 받기');
     }
     if (!upgrade) store('unsu_dmdraft', '');
     show('dream'); $('dmInput').hidden = true; $('dmResult').hidden = false; window.scrollTo(0, 0);
@@ -2249,9 +2335,7 @@
     $('clBuy').onclick = function(){
       if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 분야별 운세는 분야당 ' + CAT_COST + '닢이에요.'); return; }
       if (short){ openCoinSheet('분야별 운세를 열려면 엽전이 ' + (CAT_COST - coins) + '닢 더 필요해요.'); return; }
-      if (NS) toast('예시 모드라 엽전 없이 열었어요');
-      else addCoins(-CAT_COST, C.name + ' 열기');
-      setCatPaid(cat); openCat(entry, r, cat);
+      spendCoins(CAT_COST, C.name + ' 열기', 'cat:' + (entry.id || '') + ':' + cat + ':' + todayStr(), function(){ setCatPaid(cat); openCat(entry, r, cat); });
     };
   }
   function openCat(entry, r, cat){
@@ -2416,11 +2500,11 @@
     if ($('tkBuy')) $('tkBuy').onclick = function(){
       if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 중요한 날 1년 전체 보기는 ' + COST.tk + '닢이에요.'); return; }
       if (short){ openCoinSheet('1년 전체를 열려면 엽전이 ' + (COST.tk - coins) + '닢 더 필요해요.'); return; }
-      if (NS) toast('예시 모드라 엽전 없이 열었어요');
-      else addCoins(-COST.tk, '중요한 날 잡기 · ' + P.short);
-      setTkOpen(entry, TK.p);
-      var b0 = S.best[0]; if (b0){ TK.mi = b0.mi; TK.sel = b0.key; }
-      openTaekil(entry, r);
+      spendCoins(COST.tk, '중요한 날 잡기 · ' + P.short, 'tk:' + (entry.id || '') + ':' + TK.p, function(){
+        setTkOpen(entry, TK.p);
+        var b0 = S.best[0]; if (b0){ TK.mi = b0.mi; TK.sel = b0.key; }
+        openTaekil(entry, r);
+      });
     };
     if ($('tkIcs')) $('tkIcs').onclick = function(){ tkICS(entry, S); };
     if ($('tkShare')) $('tkShare').onclick = function(){
@@ -2490,7 +2574,7 @@
       var rk = lottoRank(life);
       h += '<div class="divider"></div><div class="num-set"><div class="lab">내 평생 번호와 맞춰 보기 <small>' + rk.hit + '개 일치' + (rk.bonus ? ' + 보너스' : '') + '</small></div>' +
         '<div class="balls">' + life.map(function(n){ var on = L.nums.indexOf(n) > -1, bo = n === L.bonus; return '<div class="ball' + (on ? ' lt ' + ltColor(n) : bo ? ' lt-bo' : ' lt-miss') + '">' + n + '</div>'; }).join('') + '</div>' +
-        '<p class="helper" style="text-align:center">' + (rk.rank === '낙첨' ? (rk.hit ? rk.hit + '개가 맞았어요. 이번 주엔 오늘의 행운 번호로 도전해 보세요.' : '이번엔 맞은 번호가 없어요. 운은 다음 주에 모아 둘게요.') : '<b style="color:#fff">' + rk.rank + ' 번호였어요!</b> 평생 번호의 힘이 통했네요.') + '</p></div>';
+        '<p class="helper" style="text-align:center">' + (rk.rank === '낙첨' ? (rk.hit ? rk.hit + '개가 맞았어요. 오늘의 번호도 보관함에 저장해 두면 토요일에 자동으로 맞춰 봐요.' : '이번엔 맞은 번호가 없어요. 운은 다음 주에 모아 둘게요.') : '<b style="color:#fff">' + rk.rank + ' 번호와 같아요!</b> 재미로 맞춰 본 결과예요.') + '</p></div>';
     } else {
       h += '<p class="helper">내 사주를 등록하면 평생 번호가 몇 개 맞았는지 매주 맞춰 볼 수 있어요.</p>';
     }
@@ -2607,10 +2691,11 @@
     $('btnExtra').onclick = function(){
       if (isGuest()){ openLoginSheet('한 줄 더 뽑기는 엽전 ' + EXTRA_COST + '닢이 들어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요.'); return; }
       if (getCoins() < EXTRA_COST){ toast('엽전이 ' + (EXTRA_COST - getCoins()) + '닢 모자라요. 출석으로 모아 보세요'); return; }
-      addCoins(-EXTRA_COST, '번호 한 줄 더');
-      var line = drawSixFromSeed(iso + '|' + tKey + '|' + todayStr() + '|extra' + extra.lines.length);
-      extra.lines.push(line); store('unsu_extra', extra);
-      renderNumToday(); toast('번호 한 줄을 더 뽑았어요');
+      spendCoins(EXTRA_COST, '번호 한 줄 더', 'extra:' + (me.id || '') + ':' + todayStr() + ':' + extra.lines.length, function(){
+        var line = drawSixFromSeed(iso + '|' + tKey + '|' + todayStr() + '|extra' + extra.lines.length);
+        extra.lines.push(line); store('unsu_extra', extra);
+        renderNumToday(); toast('번호 한 줄을 더 뽑았어요');
+      });
     };
     document.querySelectorAll('#lifeBalls .foil').forEach(function(b){
       b.onclick = function(){
@@ -2719,9 +2804,59 @@
     ['pointerup','pointerleave','pointercancel','keyup'].forEach(function(ev){ btn.addEventListener(ev, cancel); });
     btn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
   }
+  /* ---- 보관함 당첨 확인: 저장한 번호를 '저장한 뒤 첫 토요일 추첨' 결과와 맞춰 본다 (동행복권 발표 번호, /api/lotto?no=회차) ---- */
+  var LT_FIRST = Date.UTC(2002, 11, 7, 11, 45), LT_WEEK = 7 * 864e5, LT_ASKED = {};
+  function roundAfter(ms){ return Math.floor((ms - LT_FIRST) / LT_WEEK) + 2; }
+  function roundTime(no){ return LT_FIRST + (no - 1) * LT_WEEK; }
+  function boxTime(b){
+    var t = parseInt(String(b.id || '').slice(1), 36);
+    if (t > 1e12 && t < 4e12) return t;
+    var p = String(b.d || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12).getTime();
+  }
+  function drawCache(){ try { var c = JSON.parse(localStorage.getItem('unsu_draws') || '{}'); return c && typeof c === 'object' ? c : {}; } catch(e){ return {}; } }
+  function getDraw(no){ if (LOTTO_LATEST.no === no && LOTTO_LATEST.live !== false) return LOTTO_LATEST; return drawCache()[no] || null; }
+  function rankWith(nums, D){
+    var hit = nums.filter(function(n){ return D.nums.indexOf(n) > -1; }).length, bonus = nums.indexOf(D.bonus) > -1;
+    return { hit:hit, rank:hit === 6 ? '1등' : hit === 5 && bonus ? '2등' : hit === 5 ? '3등' : hit === 4 ? '4등' : hit === 3 ? '5등' : '' };
+  }
+  function fetchDraws(nos){
+    if (!/^https?:$/.test(location.protocol) || !window.fetch) return;
+    nos = nos.filter(function(no){ return !LT_ASKED[no]; }).slice(0, 4);
+    if (!nos.length) return;
+    Promise.all(nos.map(function(no){
+      LT_ASKED[no] = 1;
+      return fetch('/api/lotto?no=' + no, { headers:{ Accept:'application/json' } }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+        if (!d || +d.no !== no || !Array.isArray(d.nums) || d.nums.length !== 6) return false;
+        var c = drawCache(); c[no] = { no:no, date:d.date, nums:d.nums.map(Number), bonus:+d.bonus };
+        var keys = Object.keys(c).sort(function(a, b){ return b - a; }); keys.slice(30).forEach(function(k){ delete c[k]; });
+        try { localStorage.setItem('unsu_draws', JSON.stringify(c)); } catch(e){}
+        return true;
+      }).catch(function(){ return false; });
+    })).then(function(a){ if (a.some(Boolean) && $('winChk')) renderBox(); });
+  }
+  function winCheckHTML(box){
+    var rows = box.slice(0, 6), need = [], now = Date.now();
+    if (!rows.length) return '';
+    var md = function(t){ var d = new Date(t); return (d.getMonth() + 1) + '.' + d.getDate(); };
+    var h = rows.map(function(b){
+      var no = roundAfter(boxTime(b)), D = getDraw(no), at = roundTime(no), res, cls = '';
+      if (D){
+        var k = rankWith(b.nums, D);
+        res = k.rank ? k.rank + '<small>' + k.hit + '개 일치</small>' : k.hit ? k.hit + '개 일치' : '일치 없음'; cls = k.rank ? 'win' : 'miss';
+      } else if (now < at + 30 * 60000){ res = md(at) + ' 발표 뒤'; cls = 'wait'; }
+      else { res = '결과 확인 중'; cls = 'wait'; need.push(no); }
+      return '<div class="wc-row"><div class="wc-meta"><b>' + b.d.slice(5).replace('-', '.') + '</b>' + esc(b.kind) + '</div>' +
+        '<div class="wc-balls">' + b.nums.map(function(n){ return '<i' + (D && D.nums.indexOf(n) > -1 ? ' class="hit"' : D && n === D.bonus ? ' class="bo"' : '') + '>' + n + '</i>'; }).join('') + '</div>' +
+        '<span class="wc-res ' + cls + '">' + res + '</span></div>';
+    }).join('');
+    if (need.length) setTimeout(function(){ fetchDraws(need); }, 0);
+    return '<div class="card wc-card" id="winChk"><div class="sec-head"><h2 class="sec-title">내 번호 당첨 확인</h2><span class="sec-meta">저장 뒤 첫 추첨</span></div>' + h +
+      '<p class="helper wc-note">저장한 번호를 그다음 토요일 추첨 결과와 자동으로 맞춰 봐요. 동행복권 발표 번호 기준이에요. 번호 추천은 재미 요소이고 당첨 확률을 높이지 않아요.</p></div>';
+  }
   function renderBox(){
     var me = getMe(), box = getBox(), dreams = getDreams(), h = NS ? demoBarHTML() : '';
     h += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
+    h += winCheckHTML(box);
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">저장한 번호</h2><span class="sec-meta">' + box.length + '줄</span></div>';
     if (!box.length) h += '<div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 비어 있어요. 번호 뽑기에서 ‘보관함에 저장’을 누르면 여기에 모여요.</p></div><button class="btn-primary btn-block" id="bxGoNum" style="margin-top:12px">번호 뽑으러 가기</button>';
     else h += '<div class="bx-list">' + box.map(function(b){
@@ -3487,9 +3622,10 @@
     $('payGo').onclick = function(){
       if (guest){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. ' + P.name + '은(는) ' + P.coin + '닢이에요.'); return; }
       if (short){ openCoinSheet(P.name + '을(를) 열려면 엽전이 ' + (P.coin - coins).toLocaleString() + '닢 더 필요해요.'); return; }
-      if (NS) toast('예시 모드라 엽전 없이 열었어요'); else addCoins(-P.coin, P.name);
-      addOrder(id, { ghKey:id === 'gh' ? opt.ghKey : null });
-      closeSheet(); setTimeout(function(){ if (opt.onPaid) opt.onPaid(); toast(P.name + ' 열렸어요'); }, 260);
+      spendCoins(P.coin, P.name, id === 'gh' ? 'gh:' + String(opt.ghKey || '').replace(/\s+/g, '') : id, function(){
+        addOrder(id, { ghKey:id === 'gh' ? opt.ghKey : null });
+        closeSheet(); setTimeout(function(){ if (opt.onPaid) opt.onPaid(); toast(P.name + ' 열렸어요'); }, 260);
+      });
     };
   }
   function openOrdersSheet(){
@@ -3514,7 +3650,7 @@
   ];
   var FAQ = [
     ['태어난 시간을 몰라도 볼 수 있나요?', '네. 시간을 모르면 시주를 빼고 여섯 글자로 풀어요. 정확도는 조금 낮아질 수 있어요.'],
-    ['엽전은 무엇인가요?', '우니조아의 유료 콘텐츠를 여는 화폐예요. 충전소에서 충전하거나 출석·가입 선물·광고 보상·우니 선물로 모아요. 꿈풀이 번호받기, 분야별 운세, 궁합 상세, 쉬운 사주 풀이, 번호 한 줄 더에 써요. 쓸 때는 무료로 받은 엽전부터 먼저 써요. 무료로 받은 엽전은 현금으로 바꿀 수 없어요.'],
+    ['엽전은 무엇인가요?', '우니조아의 유료 콘텐츠를 여는 화폐예요. 충전소에서 충전하거나 출석·가입 선물·우니 선물로 모아요. 꿈풀이 번호받기, 분야별 운세, 궁합 상세, 쉬운 사주 풀이, 번호 한 줄 더에 써요. 쓸 때는 무료로 받은 엽전부터 먼저 써요. 무료로 받은 엽전은 현금으로 바꿀 수 없어요.'],
     ['신년운세는 유료인가요?', '아니에요. 총평과 1~3월은 바로 무료로 보고, 광고 한 편을 끝까지 보면 4~12월과 2~7장 전체가 무료로 열려요. 한 번 열면 그 사람의 신년운세는 계속 다시 볼 수 있어요.'],
     ['충전한 엽전을 환불할 수 있나요?', '충전 후 7일 안에 엽전을 한 번도 쓰지 않았다면 전액 환불돼요. 일부를 썼거나 7일이 지났다면 남은 유료 엽전만큼 환불 정책에 따라 돌려드려요. 엽전으로 연 콘텐츠는 바로 제공되는 디지털 콘텐츠라 연 뒤에는 환불이 제한되고, 오류가 있으면 엽전을 다시 넣어 드려요.'],
     ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 구매한 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],

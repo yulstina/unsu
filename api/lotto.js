@@ -63,13 +63,16 @@ async function fromOld(round) {
 module.exports = async (req, res) => {
   const want = expectedRound();
   const errors = [];
-  // 토요일 추첨 직후엔 아직 집계 전일 수 있어 직전 회차까지 시도
-  for (const round of [want, want - 1]) {
+  /* ?no=회차 : 보관함 당첨 확인용 지난 회차. 발표된 결과는 바뀌지 않으니 오래 캐시한다 */
+  const ask = req.query && req.query.no ? Number(req.query.no) : 0;
+  if (ask && !(Number.isInteger(ask) && ask >= 1 && ask <= want)) return res.status(400).json({ error: 'bad_round', expected: want });
+  const rounds = ask ? [ask] : [want, want - 1];   // 토요일 추첨 직후엔 아직 집계 전일 수 있어 직전 회차까지 시도
+  for (const round of rounds) {
     for (const src of [fromNew, fromOld]) {
       try {
         const d = await src(round);
-        if (valid(d)) {
-          res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
+        if (valid(d) && (!ask || d.no === ask)) {
+          res.setHeader('Cache-Control', ask && ask < want ? 'public, s-maxage=2592000, immutable' : 'public, s-maxage=1800, stale-while-revalidate=86400');
           res.setHeader('Access-Control-Allow-Origin', '*');
           return res.status(200).json({ ...d, source: src === fromNew ? 'dhlottery' : 'dhlottery-legacy', fetchedAt: new Date().toISOString() });
         }

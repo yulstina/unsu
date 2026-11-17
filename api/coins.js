@@ -1,9 +1,12 @@
-/* POST /api/coins  { kind, n, why, key }
-   - 적립(kind ∈ EARN): 서버가 정한 양만, 하루 한도 안에서
-   - 사용(kind = 'spend', n < 0): 잔액이 있으면 차감 (무료 엽전부터)
-   key 는 같은 동작이 두 번 전송돼도 한 번만 반영되도록 브라우저가 만든 값 */
+/* POST /api/coins  { kind, n, why, key, item }
+   - 적립(kind ∈ EARN): 서버가 정한 양만, 하루 한도 안에서. 광고 보상(ad)은 AD_COIN_ON 일 때만
+   - 사용(kind = 'spend', item = '상품:대상'): 서버 가격표(PRICES)로 차감 (무료 엽전부터).
+     item 이 구매 기록 키가 된다 → 같은 상품을 두 번 보내도 한 번만 차감되고 원장에 무엇을 샀는지 남는다.
+     브라우저가 보낸 n 이 서버 가격과 다르면(옛 화면·조작) 차감하지 않고 'price' 로 돌려보낸다
+   key 는 같은 적립이 두 번 전송돼도 한 번만 반영되도록 브라우저가 만든 값 */
 const S = require('./_lib/srv');
-const { EARN, SPEND_MAX } = require('./_lib/shop');
+const { EARN, PRICES, AD_COIN_ON, SPEND_MAX } = require('./_lib/shop');
+const ITEM_RE = /^([a-z]+):?([^\s]{0,100})$/;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST' || !S.sameOrigin(req)) return S.send(res, 405, { ok: false });
@@ -11,16 +14,21 @@ module.exports = async (req, res) => {
   const b = await S.body(req);
   const kind = String(b.kind || ''), why = String(b.why || '').slice(0, 60) || null;
   const key = b.key ? String(b.key).slice(0, 80) : null;
-  let args;
+  let args, ikey = key ? kind + ':' + key : null;
   if (kind === 'spend'){
-    const n = Math.round(Number(b.n));
-    if (!(n < 0 && -n <= SPEND_MAX)) return S.send(res, 400, { ok: false, err: 'amount' });
-    args = { p_delta: n, p_daily_max: null };
+    const m = ITEM_RE.exec(String(b.item || ''));
+    const price = m && PRICES[m[1]];
+    if (!price || price > SPEND_MAX) return S.send(res, 400, { ok: false, err: 'item' });
+    if (b.n !== undefined && Math.round(Number(b.n)) !== -price) return S.send(res, 409, { ok: false, err: 'price', price });
+    args = { p_delta: -price, p_daily_max: null };
+    ikey = 'spend:' + m[0];
+  } else if (kind === 'ad' && !AD_COIN_ON){
+    return S.send(res, 403, { ok: false, err: 'ad_off' });
   } else if (EARN[kind]){
     args = { p_delta: EARN[kind].n, p_daily_max: EARN[kind].max };
   } else return S.send(res, 400, { ok: false, err: 'kind' });
   try {
-    const r = await S.rpc('coin_apply', Object.assign({ p_user: uid, p_kind: kind, p_why: why, p_key: key ? kind + ':' + key : null, p_day: S.kstDay(), p_paid: 0 }, args));
+    const r = await S.rpc('coin_apply', Object.assign({ p_user: uid, p_kind: kind, p_why: why, p_key: ikey, p_day: S.kstDay(), p_paid: 0 }, args));
     return S.send(res, r.ok ? 200 : 409, r);
   } catch (e) { console.error('coins', e.message); return S.send(res, 500, { ok: false, err: 'server' }); }
 };
