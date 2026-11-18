@@ -12,6 +12,7 @@ const E = process.env;
 const CONF = {
   db: !!(E.SUPABASE_URL && E.SUPABASE_SERVICE_KEY && E.SESSION_SECRET),
   get kakao(){ return this.db && !!E.KAKAO_REST_KEY; },
+  get google(){ return this.db && !!(E.GOOGLE_CLIENT_ID && E.GOOGLE_CLIENT_SECRET); },
   get toss(){ return this.db && !!(E.TOSS_CLIENT_KEY && E.TOSS_SECRET_KEY); }
 };
 

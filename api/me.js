@@ -13,7 +13,7 @@ function cfg(){
   const ck = process.env.TOSS_CLIENT_KEY || '';
   return {
     on: S.CONF.db,
-    login: { kakao: S.CONF.kakao },
+    login: { kakao: S.CONF.kakao, google: S.CONF.google },
     pay: { on: S.CONF.toss, clientKey: S.CONF.toss ? ck : null, test: /^test_/.test(ck) },
     packs: PACKS,
     passes: PASSES, passDreamMax: PASS_DREAM_MAX,
@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET'){
       if (!uid) return S.send(res, 200, { cfg: c, user: null });
-      const u = await S.one('users?id=eq.' + uid + '&deleted_at=is.null&select=nick,consent,snapshot,snapshot_at,coin_free,coin_paid,created_at');
+      const u = await S.one('users?id=eq.' + uid + '&deleted_at=is.null&select=provider,nick,consent,snapshot,snapshot_at,coin_free,coin_paid,created_at');
       if (!u){ S.clearSession(req, res); return S.send(res, 200, { cfg: c, user: null }); }
       const [led, ord, pu] = await Promise.all([
         S.db('coin_ledger?user_id=eq.' + uid + '&select=delta,delta_paid,kind,why,created_at&order=created_at.desc&limit=50'),
@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
         passUntil(uid)
       ]);
       return S.send(res, 200, { cfg: c, user: {
-        nick: u.nick, created: u.created_at, consent: u.consent,
+        provider: u.provider, nick: u.nick, created: u.created_at, consent: u.consent,
         snapshot: u.snapshot, snapshotAt: u.snapshot_at ? Date.parse(u.snapshot_at) : 0,
         coins: { free: u.coin_free, paid: u.coin_paid, bal: u.coin_free + u.coin_paid },
         ledger: led.map(x => ({ t: Date.parse(x.created_at), n: x.delta, p: x.delta_paid || 0, k: x.kind, why: x.why || '' })),
@@ -63,14 +63,14 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'DELETE'){
       if (!b.confirm) return S.send(res, 400, { ok: false });
-      const u = await S.one('users?id=eq.' + uid + '&select=provider_id');
+      const u = await S.one('users?id=eq.' + uid + '&select=provider,provider_id');
       if (!u) return S.send(res, 200, { ok: true });
       const pid = u.provider_id;
       await S.db('users?id=eq.' + uid, { method: 'PATCH', prefer: 'return=minimal', body: {
         provider_id: 'deleted:' + S.sha(pid), nick: null, consent: null, snapshot: null, snapshot_at: null, coin_free: 0, coin_paid: 0, deleted_at: new Date().toISOString()
       } });
       await S.db('coin_ledger?user_id=eq.' + uid + '&kind=not.in.(charge,refund)', { method: 'DELETE', prefer: 'return=minimal' });
-      if (process.env.KAKAO_ADMIN_KEY && /^\d+$/.test(pid)){
+      if (u.provider === 'kakao' && process.env.KAKAO_ADMIN_KEY && /^\d+$/.test(pid)){
         try { await fetch('https://kapi.kakao.com/v1/user/unlink', { method: 'POST', headers: { Authorization: 'KakaoAK ' + process.env.KAKAO_ADMIN_KEY, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'target_id_type=user_id&target_id=' + pid }); } catch (e) { console.error('unlink', e.message); }
       }
       S.clearSession(req, res);
