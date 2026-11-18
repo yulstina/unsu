@@ -22,6 +22,6 @@ const AD_COIN_ON = process.env.AD_COIN_ON === '1';
 /* 우니 패스: 원화 바로 결제하는 기간권. 기간 동안 엽전 콘텐츠를 엽전 없이 열고 광고를 숨긴다(자동 결제 아님).
    AI 를 쓰는 꿈 번호만 하루 PASS_DREAM_MAX 번까지. 가격은 src/app.js PASS 와 같이 바꾼다 */
 const PASSES = { pass30: { days: 30, p: 12900, name: '우니 패스 30일' } };
-const PASS_DREAM_MAX = 3;
+const PASS_DREAM_MAX = 1;
 const SPEND_MAX = 5000;
 module.exports = { PACKS, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };
