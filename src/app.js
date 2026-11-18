@@ -1071,8 +1071,8 @@
      ========================================================= */
   var SRV = { cfg:null, orders:[], applying:false, pushT:0, split:null, spending:false, passUntil:0 };
   /* 우니 패스 (2026-11-18 소율 요청): 원화 바로 결제 기간권. 기간 동안 엽전 콘텐츠를 엽전 없이 열고 광고를 숨긴다.
-     서버 기준값 api/_lib/shop.js PASSES 와 같게. 꿈 번호(AI)만 하루 3번 */
-  var PASS = { id:'pass30', days:30, p:12900, name:'우니 패스 30일', dream:3 };
+     서버 기준값 api/_lib/shop.js PASSES 와 같게. 꿈 번호(AI)만 하루 1번 */
+  var PASS = { id:'pass30', days:30, p:12900, name:'우니 패스 30일', dream:1 };
   function passActive(){ return !NS && srvUser() && SRV.passUntil > Date.now(); }
   function passEndStr(){ var d = new Date(SRV.passUntil); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
   /* 광고 보상 엽전은 실제 보상형 광고 + 서버 확인이 붙을 때까지 숨긴다(서버 AD_COIN_ON). 예시 모드는 연출만 보여 준다 */
