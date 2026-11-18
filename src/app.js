@@ -1172,6 +1172,7 @@
         var fromServer = applySrvUser(r.user, !!lp);
         updateSegCount(); updateTopbar();
         if (lp) toast(q['new'] ? PROV[lp] + '로 가입했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : fromServer ? '다시 오셨네요! 계정의 기록을 불러왔어요' : PROV[lp] + ' 계정으로 로그인했어요');
+        if (lp && q['new']) setTimeout(function(){ coinBurst(SIGNUP_COINS, '가입 환영 선물'); }, 500);   /* 처음 가입하면 엽전이 뾰롱 */
         if (q.pay === 'ok') toast(q.pass ? '우니 패스가 시작됐어요 · ' + passEndStr() + '까지 전부 열려요' : '엽전 ' + (+q.n || 0).toLocaleString() + '닢을 충전했어요');
         if (fromServer || q.login) { if (currentView === 'today' || !currentView) renderToday(); }
         if (back === 'coin' || q.pay) setTimeout(function(){ openCoinSheet(q.pay === 'fail' ? '결제가 완료되지 않았어요' + (q.code && q.code !== 'PAY_PROCESS_CANCELED' && q.code !== 'USER_CANCEL' ? ' (' + q.code + ')' : '') + '. 다시 시도해 주세요.' : undefined); }, 400);
