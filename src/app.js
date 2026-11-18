@@ -2767,9 +2767,17 @@
   function todoCardHTML(){
     var n = TODOS.filter(function(t){ return todoDone(t[0]); }).length;
     return '<div class="card lt todo-card" id="todoCard"><div class="sec-head"><h2 class="sec-title">오늘 하면 좋은 것</h2><span class="todo-n' + (n === 3 ? ' all' : '') + '">' + n + '/3</span></div>' +
-      '<ul class="todo-list">' + TODOS.map(function(t){ var d = todoDone(t[0]); return '<li class="' + (d ? 'done' : '') + '"><i aria-hidden="true">' + (d ? OK_SVG : '') + '</i><span>' + t[1] + '</span></li>'; }).join('') + '</ul>' +
+      '<ul class="todo-list">' + TODOS.map(function(t){ var d = todoDone(t[0]); return '<li class="' + (d ? 'done' : '') + '"><button type="button" class="todo-go" data-todo="' + t[0] + '"><i aria-hidden="true">' + (d ? OK_SVG : '') + '</i><span>' + t[1] + '</span></button></li>'; }).join('') + '</ul>' +
       '<p class="helper">' + (n === 3 ? '오늘 몫을 다 했어요. 내일 또 만나요' : '세 개를 다 하면 엽전 ' + TODO_COINS + '닢을 드려요' + (isGuest() ? ' (로그인 필요)' : '')) + '</p></div>';
   }
+  /* 할 일을 누르면 그 기능으로 이동 */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.todo-go'); if (!b) return;
+    var k = b.dataset.todo;
+    if (k === 'peek'){ var pc = $('peekCard'); if (pc){ pc.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' }); pc.classList.remove('todo-hint'); void pc.offsetWidth; pc.classList.add('todo-hint'); } }
+    else if (k === 'drawn'){ go('num'); window.scrollTo(0, 0); }
+    else if (k === 'shared'){ var sb = $('btnTodayShare'); if (sb){ sb.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' }); setTimeout(function(){ sb.click(); }, reduceMotion ? 0 : 350); } }
+  });
   /* ---- 우니 꾹 누르기: 길게 누르면 오늘 번호 1개 공개 (005) ---- */
   /* ---- 우니 꾹 뽑기: 하루 한 번, 꾹 누르면 오늘의 선물 하나 (색·아이템·시간·한마디, 가끔 엽전) ---- */
   var GIFT_COLORS = [['연보라','#b9a8ff'],['살구','#ffb38a'],['민트','#8fe3d0'],['하늘','#9fc8ff'],['레몬','#ffe27a'],['로즈','#ff9aa5'],['크림','#fff1cf']];
