@@ -3649,8 +3649,8 @@
       passLinkHTML() + '<button class="btn-primary btn-block" id="payGo">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : passActive() ? '우니 패스로 열기' : '엽전 ' + P.coin.toLocaleString() + '닢으로 열기') + '</button>' +
       '<p class="helper pay-note">' + (guest ? '처음 로그인하면 받는 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (P.coin - coins).toLocaleString() + '닢 부족해요 · 보유 ' + coins.toLocaleString() + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 한 번 열면 ' + P.keep) + '</p><p class="helper pay-note" style="margin-top:2px">연 리포트는 보관함 › 열어 둔 리포트에서 다시 열 수 있어요. ' + (isGuest() || NS ? '' : '지금은 이 기기에 보관되고, 계정 연동이 열리면 기기를 바꿔도 이어져요.') + '</p></div>');
     $('payGo').onclick = function(){
-      if (guest){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. ' + P.name + '은(는) ' + P.coin + '닢이에요.'); return; }
-      if (short){ openCoinSheet(P.name + '을(를) 열려면 엽전이 ' + (P.coin - coins).toLocaleString() + '닢 더 필요해요.'); return; }
+      if (guest){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. ' + topic(P.name) + ' ' + P.coin + '닢이에요.'); return; }
+      if (short){ openCoinSheet(objJosa(P.name) + ' 열려면 엽전이 ' + (P.coin - coins).toLocaleString() + '닢 더 필요해요.'); return; }
       spendCoins(P.coin, P.name, id === 'gh' ? 'gh:' + String(opt.ghKey || '').replace(/\s+/g, '') : id, function(){
         addOrder(id, { ghKey:id === 'gh' ? opt.ghKey : null });
         closeSheet(); setTimeout(function(){ if (opt.onPaid) opt.onPaid(); toast(P.name + ' 열렸어요'); }, 260);
@@ -3731,10 +3731,13 @@
       closeSheet(); updateSegCount(); updateTopbar(); go('today'); toast('탈퇴했어요. 그동안 우니조아와 함께해 주셔서 고마워요');
     };
   }
+  function objJosa(w){ var c = String(w).charCodeAt(String(w).length - 1); return w + ((c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? '을' : '를'); }
+  /* 받침에 따라 은/는 */
+  function topic(w){ var c = String(w).charCodeAt(String(w).length - 1); return w + ((c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? '은' : '는'); }
   function openLoginSheet(reason){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
     openSheet('<div class="sheet-fig">' + uniImg('u-wave') + '</div><h3 id="sheetTitle">로그인하고 기록 지키기</h3>' + (reason ? '<p class="body-text" style="margin:-6px 0 14px">' + reason + '</p>' : '') +
-      '<ul class="benefits"><li>' + OK_SVG + '<b>처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요</li><li>' + OK_SVG + '기기를 바꿔도 출석·엽전이 그대로예요</li><li>' + OK_SVG + '저장한 사주와 궁합 리포트가 계정에 보관돼요</li></ul>' +
+      '<ul class="benefits"><li>' + OK_SVG + '<span><b>처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요</span></li><li>' + OK_SVG + '<span>기기를 바꿔도 출석·엽전이 그대로예요</span></li><li>' + OK_SVG + '<span>저장한 사주와 궁합 리포트가 계정에 보관돼요</span></li></ul>' +
       '<div class="view" style="gap:8px;margin-top:18px">' + loginBtnsHTML() +
       '<button class="text-btn" data-close>나중에 할게요</button>' + (srvOn() ? '' : '<p class="mock-note">미리보기 모드예요 · 이 브라우저 안에서만 로그인한 것처럼 동작해요</p>') + '</div>');
     $('sheetBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ if (!getConsent() || !getConsent().terms){ openConsentSheet(b.dataset.login); return; } doLogin(b.dataset.login, b); }; });
