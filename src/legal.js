@@ -8,12 +8,12 @@ var LEGAL = (function(){
   var BIZ = {
     service: '우니조아',
     name: '실로(SYLO)',           /* 상호 (사업자등록증과 같게) */
-    owner: '',                    /* 대표자 실명 */
+    owner: '홍소율',                    /* 대표자 실명 */
     regNo: '471-06-03822',        /* 사업자등록번호 */
     mailOrderNo: '',              /* 통신판매업 신고번호 제0000-지역-0000호 */
-    addr: '',                     /* 사업장 주소 (등록증 주소) */
-    email: '',                    /* 고객센터·개인정보 보호책임자 메일 */
-    tel: '',                      /* 고객센터 전화 (전자상거래법상 표시 필요) */
+    addr: '경기도 김포시 고촌읍 상미1로7',                     /* 사업장 주소 (등록증 주소) */
+    email: 'sylostudio.official@gmail.com',                    /* 고객센터·개인정보 보호책임자 메일 */
+    tel: '010-7475-5393',                      /* 고객센터 전화 (전자상거래법상 표시 필요) */
     site: 'https://woonijoa.com',
     hosting: 'Vercel Inc.',
     effective: '2026-12-14'       /* 약관·방침 시행일 */
