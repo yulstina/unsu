@@ -4,7 +4,7 @@
    실패·취소는 failUrl(/?pay=fail)로 바로 돌아온다. */
 const crypto = require('crypto');
 const S = require('./_lib/srv');
-const { PACKS } = require('./_lib/shop');
+const { PACKS, PASSES } = require('./_lib/shop');
 
 module.exports = async (req, res) => {
   const a = (req.query && req.query.a) || '';
@@ -24,19 +24,24 @@ async function order(req, res){
   if (!S.CONF.toss) return S.send(res, 503, { ok: false, err: 'off' });
   const uid = S.sessionUid(req); if (!uid) return S.send(res, 401, { ok: false, err: 'login' });
   const b = await S.body(req);
-  const P = PACKS[b.pack]; if (!P) return S.send(res, 400, { ok: false, err: 'pack' });
+  const P = PACKS[b.pack], Q = PASSES[b.pack];
+  if (!P && !Q) return S.send(res, 400, { ok: false, err: 'pack' });
   const id = 'wj' + Date.now().toString(36) + crypto.randomBytes(6).toString('hex');
-  await S.db('orders', { method: 'POST', prefer: 'return=minimal', body: { order_id: id, user_id: uid, pack: b.pack, coins: P.n, bonus: P.b, amount: P.p } });
-  return S.send(res, 200, { ok: true, orderId: id, amount: P.p, orderName: '우니조아 엽전 ' + (P.n + P.b).toLocaleString('ko-KR') + '닢', customerKey: 'wj_' + S.sha(uid).slice(0, 32) });
+  await S.db('orders', { method: 'POST', prefer: 'return=minimal', body: P
+    ? { order_id: id, user_id: uid, pack: b.pack, coins: P.n, bonus: P.b, amount: P.p }
+    : { order_id: id, user_id: uid, pack: b.pack, coins: 0, bonus: 0, amount: Q.p } });
+  const name = P ? '우니조아 엽전 ' + (P.n + P.b).toLocaleString('ko-KR') + '닢' : '우니조아 ' + Q.name;
+  return S.send(res, 200, { ok: true, orderId: id, amount: P ? P.p : Q.p, orderName: name, customerKey: 'wj_' + S.sha(uid).slice(0, 32) });
 }
 
 async function confirm(req, res){
   const q = req.query || {};
   const paymentKey = String(q.paymentKey || ''), orderId = String(q.orderId || ''), amount = Number(q.amount);
   if (!paymentKey || !/^wj[a-z0-9]+$/.test(orderId)) return S.redirect(res, '/?pay=fail&code=BAD_REQUEST');
-  const o = await S.one('orders?order_id=eq.' + orderId + '&select=order_id,user_id,coins,bonus,amount,status');
+  const o = await S.one('orders?order_id=eq.' + orderId + '&select=order_id,user_id,pack,coins,bonus,amount,status');
   if (!o) return S.redirect(res, '/?pay=fail&code=NO_ORDER');
-  const done = () => S.redirect(res, '/?pay=ok&n=' + (o.coins + o.bonus));
+  const pass = PASSES[o.pack];
+  const done = () => S.redirect(res, pass ? '/?pay=ok&pass=' + o.pack : '/?pay=ok&n=' + (o.coins + o.bonus));
   if (o.status === 'paid') return done();                                   /* 새로고침 등으로 두 번 온 경우 */
   if (o.status !== 'ready') return S.redirect(res, '/?pay=fail&code=ORDER_' + o.status.toUpperCase());
   if (amount !== o.amount) return S.redirect(res, '/?pay=fail&code=AMOUNT_MISMATCH');   /* 금액 위·변조 차단 */
@@ -58,6 +63,7 @@ async function confirm(req, res){
     status: 'paid', payment_key: paymentKey, method: p.method || null, receipt_url: (p.receipt && p.receipt.url) || null,
     approved_at: p.approvedAt || new Date().toISOString(), raw: { mId: p.mId, method: p.method, totalAmount: p.totalAmount, card: p.card ? { company: p.card.issuerCode, type: p.card.cardType } : null }
   } });
-  if (o.user_id) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: o.coins + o.bonus, p_kind: 'charge', p_why: '엽전 충전 ' + (o.coins + o.bonus).toLocaleString('ko-KR') + '닢', p_key: 'charge:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: o.coins });
+  if (o.user_id && pass) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'pass', p_why: pass.name + ' 시작', p_key: 'pass:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
+  else if (o.user_id) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: o.coins + o.bonus, p_kind: 'charge', p_why: '엽전 충전 ' + (o.coins + o.bonus).toLocaleString('ko-KR') + '닢', p_key: 'charge:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: o.coins });
   return done();
 }

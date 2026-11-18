@@ -19,5 +19,9 @@ const EARN = {
 const PRICES = { cat: 100, extra: 100, dream: 200, gh: 100, ez: 100, tk: 500 };
 /* 광고 보상 엽전: 실제 보상형 광고(Google Ad Manager)가 연결되고 서버 확인이 붙기 전까지 꺼 둔다 → Vercel 환경변수 AD_COIN_ON=1 로 켠다 */
 const AD_COIN_ON = process.env.AD_COIN_ON === '1';
+/* 우니 패스: 원화 바로 결제하는 기간권. 기간 동안 엽전 콘텐츠를 엽전 없이 열고 광고를 숨긴다(자동 결제 아님).
+   AI 를 쓰는 꿈 번호만 하루 PASS_DREAM_MAX 번까지. 가격은 src/app.js PASS 와 같이 바꾼다 */
+const PASSES = { pass30: { days: 30, p: 12900, name: '우니 패스 30일' } };
+const PASS_DREAM_MAX = 3;
 const SPEND_MAX = 5000;
-module.exports = { PACKS, EARN, PRICES, AD_COIN_ON, SPEND_MAX };
+module.exports = { PACKS, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };

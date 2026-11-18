@@ -5,7 +5,8 @@
      브라우저가 보낸 n 이 서버 가격과 다르면(옛 화면·조작) 차감하지 않고 'price' 로 돌려보낸다
    key 는 같은 적립이 두 번 전송돼도 한 번만 반영되도록 브라우저가 만든 값 */
 const S = require('./_lib/srv');
-const { EARN, PRICES, AD_COIN_ON, SPEND_MAX } = require('./_lib/shop');
+const { EARN, PRICES, AD_COIN_ON, PASS_DREAM_MAX, SPEND_MAX } = require('./_lib/shop');
+const { passUntil } = require('./_lib/pass');
 const ITEM_RE = /^([a-z]+):?([^\s]{0,100})$/;
 
 module.exports = async (req, res) => {
@@ -22,6 +23,15 @@ module.exports = async (req, res) => {
     if (b.n !== undefined && Math.round(Number(b.n)) !== -price) return S.send(res, 409, { ok: false, err: 'price', price });
     args = { p_delta: -price, p_daily_max: null };
     ikey = 'spend:' + m[0];
+    /* 우니 패스 기간: 엽전 대신 0닢으로 기록만 남긴다(구매 기록·중복 방지는 그대로). 꿈 번호는 하루 한도, 넘으면 엽전으로 */
+    try {
+      if (await passUntil(uid) > Date.now()){
+        const dream = m[1] === 'dream';
+        const r = await S.rpc('coin_apply', { p_user: uid, p_delta: 0, p_kind: dream ? 'pass_dream' : 'pass_use', p_why: why, p_key: ikey, p_day: S.kstDay(), p_daily_max: dream ? PASS_DREAM_MAX : null, p_paid: 0 });
+        if (r.ok) return S.send(res, 200, Object.assign(r, { pass: true }));
+        if (r.err !== 'limit') return S.send(res, 409, r);
+      }
+    } catch (e) { console.error('coins pass', e.message); }
   } else if (kind === 'ad' && !AD_COIN_ON){
     return S.send(res, 403, { ok: false, err: 'ad_off' });
   } else if (EARN[kind]){

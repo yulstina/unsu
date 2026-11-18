@@ -4,7 +4,8 @@
    POST    { consent }    약관·마케팅 동의 기록
    DELETE  { confirm:1 }  회원 탈퇴 */
 const S = require('./_lib/srv');
-const { PACKS, AD_COIN_ON } = require('./_lib/shop');
+const { PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX } = require('./_lib/shop');
+const { passUntil } = require('./_lib/pass');
 
 const SERVER_KEYS = ['unsu_coin', 'unsu_coinlog'];   /* 서버가 기준인 값 — 스냅샷에 저장하지 않는다 */
 
@@ -15,6 +16,7 @@ function cfg(){
     login: { kakao: S.CONF.kakao },
     pay: { on: S.CONF.toss, clientKey: S.CONF.toss ? ck : null, test: /^test_/.test(ck) },
     packs: PACKS,
+    passes: PASSES, passDreamMax: PASS_DREAM_MAX,
     adCoin: AD_COIN_ON
   };
 }
@@ -27,16 +29,17 @@ module.exports = async (req, res) => {
       if (!uid) return S.send(res, 200, { cfg: c, user: null });
       const u = await S.one('users?id=eq.' + uid + '&deleted_at=is.null&select=nick,consent,snapshot,snapshot_at,coin_free,coin_paid,created_at');
       if (!u){ S.clearSession(req, res); return S.send(res, 200, { cfg: c, user: null }); }
-      const [led, ord] = await Promise.all([
+      const [led, ord, pu] = await Promise.all([
         S.db('coin_ledger?user_id=eq.' + uid + '&select=delta,delta_paid,kind,why,created_at&order=created_at.desc&limit=50'),
-        S.db('orders?user_id=eq.' + uid + '&status=neq.ready&select=order_id,pack,coins,bonus,amount,status,method,receipt_url,approved_at,refunded_at,created_at&order=created_at.desc&limit=50')
+        S.db('orders?user_id=eq.' + uid + '&status=neq.ready&select=order_id,pack,coins,bonus,amount,status,method,receipt_url,approved_at,refunded_at,created_at&order=created_at.desc&limit=50'),
+        passUntil(uid)
       ]);
       return S.send(res, 200, { cfg: c, user: {
         nick: u.nick, created: u.created_at, consent: u.consent,
         snapshot: u.snapshot, snapshotAt: u.snapshot_at ? Date.parse(u.snapshot_at) : 0,
         coins: { free: u.coin_free, paid: u.coin_paid, bal: u.coin_free + u.coin_paid },
         ledger: led.map(x => ({ t: Date.parse(x.created_at), n: x.delta, p: x.delta_paid || 0, k: x.kind, why: x.why || '' })),
-        orders: ord, customerKey: 'wj_' + S.sha(uid).slice(0, 32)
+        orders: ord, passUntil: pu, customerKey: 'wj_' + S.sha(uid).slice(0, 32)
       } });
     }
     if (!uid) return S.send(res, 401, { ok: false, err: 'login' });
