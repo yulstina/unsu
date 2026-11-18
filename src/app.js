@@ -1069,7 +1069,12 @@
      서버 계정 (카카오 로그인 · 엽전 원장 · 결제) — api/me.js · api/coins.js · api/pay.js
      서버 환경변수가 없으면(로컬 미리보기·설정 전) 예전처럼 이 기기 안에서만 동작한다.
      ========================================================= */
-  var SRV = { cfg:null, orders:[], applying:false, pushT:0, split:null, spending:false };
+  var SRV = { cfg:null, orders:[], applying:false, pushT:0, split:null, spending:false, passUntil:0 };
+  /* 우니 패스 (2026-11-18 소율 요청): 원화 바로 결제 기간권. 기간 동안 엽전 콘텐츠를 엽전 없이 열고 광고를 숨긴다.
+     서버 기준값 api/_lib/shop.js PASSES 와 같게. 꿈 번호(AI)만 하루 3번 */
+  var PASS = { id:'pass30', days:30, p:12900, name:'우니 패스 30일', dream:3 };
+  function passActive(){ return !NS && srvUser() && SRV.passUntil > Date.now(); }
+  function passEndStr(){ var d = new Date(SRV.passUntil); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
   /* 광고 보상 엽전은 실제 보상형 광고 + 서버 확인이 붙을 때까지 숨긴다(서버 AD_COIN_ON). 예시 모드는 연출만 보여 준다 */
   function adCoinOn(){ return NS || !!(SRV.cfg && SRV.cfg.adCoin); }
   function srvOn(){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && SRV.cfg.login.kakao); }
@@ -1121,6 +1126,9 @@
       store('unsu_gift', 1);
       setSrvCoins(u.coins);
       SRV.orders = u.orders || [];
+      SRV.passUntil = +u.passUntil || 0;
+      if (SRV.cfg && SRV.cfg.passes && SRV.cfg.passes[PASS.id]){ PASS.p = SRV.cfg.passes[PASS.id].p; PASS.days = SRV.cfg.passes[PASS.id].days; }
+      if (SRV.cfg && SRV.cfg.passDreamMax) PASS.dream = SRV.cfg.passDreamMax;
       if (u.consent && !getConsent()) store('unsu_consent', u.consent);
     } finally { SRV.applying = false; }
     if (!useServer) pushSnapshot();
@@ -1161,7 +1169,7 @@
         var fromServer = applySrvUser(r.user, q.login === 'kakao');
         updateSegCount(); updateTopbar();
         if (q.login === 'kakao') toast(q['new'] ? '카카오로 가입했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : fromServer ? '다시 오셨네요! 계정의 기록을 불러왔어요' : '카카오 계정으로 로그인했어요');
-        if (q.pay === 'ok') toast('엽전 ' + (+q.n || 0).toLocaleString() + '닢을 충전했어요');
+        if (q.pay === 'ok') toast(q.pass ? '우니 패스가 시작됐어요 · ' + passEndStr() + '까지 전부 열려요' : '엽전 ' + (+q.n || 0).toLocaleString() + '닢을 충전했어요');
         if (fromServer || q.login) { if (currentView === 'today' || !currentView) renderToday(); }
         if (back === 'coin' || q.pay) setTimeout(function(){ openCoinSheet(q.pay === 'fail' ? '결제가 완료되지 않았어요' + (q.code && q.code !== 'PAY_PROCESS_CANCELED' && q.code !== 'USER_CANCEL' ? ' (' + q.code + ')' : '') + '. 다시 시도해 주세요.' : undefined); }, 400);
         else if (back && back !== 'today' && q.login) go(back === 'my' ? 'today' : back);
@@ -1210,7 +1218,8 @@
       SRV.spending = false;
       if (r.ok){
         setSrvCoins(r);
-        if (!r.dup){ logCoin(-cost, why); renderCoin(true); }
+        if (r.pass){ if (!r.dup) logCoin(0, why + ' · 패스'); }
+        else if (!r.dup){ logCoin(-cost, why); renderCoin(true); }
         onOk(); return;
       }
       if (typeof r.bal === 'number') setSrvCoins(r);
@@ -1319,6 +1328,9 @@
   })();
   $('sheetBackdrop').onclick = closeSheet;
   $('sheet').addEventListener('click', function(e){ if (e.target.closest('[data-close]')) closeSheet(); });
+  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('[data-pass]')) openCoinSheet(); });
+  /* 잠금 화면마다 한 줄: 엽전 대신 우니 패스로 전부 열기 */
+  function passLinkHTML(){ return passActive() || isGuest() || NS ? '' : '<button type="button" class="pass-link" data-pass>광고 없이 전부 열기 · ' + PASS.name + ' ' + PASS.p.toLocaleString() + '원 ›</button>'; }
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ closeSheet(); } });
 
   /* ---- 보상형 광고: 끝까지 봐야 보상 ----
@@ -1366,6 +1378,16 @@
       '<div><small>받은 엽전</small><b>' + c.free.toLocaleString() + '닢</b><p>가입·출석 선물 · 먼저 써요</p></div></div>' +
       '<p class="cs-split-note">1닢은 약 10원이에요(충전 패키지 기준). 쓸 때는 받은 엽전부터 빠지고, 남은 충전 엽전은 <button class="link-btn" data-doc="refund">환불 정책</button>에 따라 돌려받을 수 있어요. <button class="link-btn" id="csLogLink">사용 내역</button></p>';
   }
+  /* 우니 패스 카드 — 충전소 맨 위. 원화로 바로 결제(엽전 충전을 거치지 않음) */
+  function passCardHTML(){
+    if (passActive()) return '<div class="pass-card on"><div class="pc-top"><span class="pc-badge">이용 중</span><b>' + PASS.name + '</b></div>' +
+      '<p class="pc-sub">' + passEndStr() + '까지 엽전 없이 전부 열고, 광고 없이 봐요.</p></div>';
+    var full = COST.cat * 4 + COST.extra * 3 + COST.dream + COST.gh + COST.ez + COST.tk;
+    return '<div class="pass-card"><div class="pc-top"><span class="pc-badge">광고 없이 전체</span><b>' + PASS.name + '</b><span class="pc-price">' + PASS.p.toLocaleString() + '원</span></div>' +
+      '<ul class="pc-list"><li>분야별 운세·번호 한 줄 더·궁합 상세·쉬운 풀이·중요한 날 잡기를 엽전 없이</li><li>꿈 번호받기 하루 ' + PASS.dream + '번</li><li>신년운세 전체와 결과 화면, 광고 없이</li></ul>' +
+      '<p class="pc-sub">한 번씩 다 열면 ' + full.toLocaleString() + '닢(약 ' + (Math.round(full * 9 / 100) * 100).toLocaleString() + '원)이에요. 자동 결제 없이 ' + PASS.days + '일만 써요.</p>' +
+      '<button class="btn-primary btn-block" id="csPass"' + (payReady() || NS ? '' : ' disabled') + '>' + (payReady() ? PASS.p.toLocaleString() + '원 결제하고 바로 쓰기' : NS ? '예시 모드에서는 결제할 수 없어요' : '결제 준비 중') + '</button></div>';
+  }
   function openCoinSheet(reason){
     if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·우니 꾹 뽑기로 더 모으고, 분야별 운세·꿈 해몽·번호 한 줄 더에 쓸 수 있어요.'); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
@@ -1373,7 +1395,8 @@
     var won = function(n){ return n.toLocaleString() + '원'; };
     var h = '<div class="sheet-fig">' + uniImg('u-money') + '</div><div class="cs-head"><h3 id="sheetTitle">엽전 충전소</h3><div class="cs-bal">' + COIN_SVG + '<span>내 엽전</span><b>' + getCoins().toLocaleString() + '닢</b></div></div>' +
       (typeof reason === 'string' ? '<p class="cs-reason">' + reason + '</p>' : '') +
-      coinSplitHTML() +
+      coinSplitHTML() + passCardHTML() +
+      '<div class="eyebrow"><span class="line"></span>엽전 충전<span class="line right"></span></div>' +
       '<div class="cs-packs" role="radiogroup" aria-label="엽전 패키지">' + COIN_PACKS.map(function(k){
         return '<button type="button" role="radio" class="cs-pack' + (k.hot ? ' hot' : '') + (k.id === coinPick ? ' on' : '') + '" data-pack="' + k.id + '" aria-checked="' + (k.id === coinPick) + '">' +
           (k.hot ? '<span class="cs-badge">추천</span>' : k.tag ? '<span class="cs-badge sub">' + k.tag + '</span>' : '') +
@@ -1399,6 +1422,7 @@
       '</div>' + (log.length > 8 ? '<button class="text-btn" id="csLogMore" style="margin-top:4px">사용 내역 전체 보기 (' + log.length + '건)</button>' : '') +
       '<button class="btn-ghost btn-block" data-close>닫기</button>';
     openSheet(h);
+    if ($('csPass')) $('csPass').onclick = function(){ if (NS){ toast('예시 모드에서는 결제할 수 없어요'); return; } if (!payReady()) return; startCharge({ id:PASS.id }, this); };
     if ($('csLogMore')) $('csLogMore').onclick = function(){ $('sheetBody').querySelectorAll('.ledger .more').forEach(function(x){ x.hidden = false; }); this.remove(); };
     if ($('csLogLink')) $('csLogLink').onclick = function(){ var l = $('sheetBody').querySelector('.ledger'); if ($('csLogMore')) $('csLogMore').click(); if (l) l.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
     var setBuy = function(){ var k = COIN_PACKS.filter(function(x){ return x.id === coinPick; })[0]; $('csBuy').disabled = !payReady() && !NS; $('csBuy').innerHTML = (payReady() || NS) ? (k.n + k.b).toLocaleString() + '닢 · ' + won(k.p) + ' 충전하기' : '결제 준비 중 · ' + (k.n + k.b).toLocaleString() + '닢 ' + won(k.p); };
@@ -1645,7 +1669,7 @@
       (open ? nyFullHTML(me, r, sc) + adSlotHTML('신년운세를 다 본 뒤')
         : '<h4 class="ny-h">전체 보기에서 열려요 <small>2~7장</small></h4><ul class="ny-chaps">' + chap + '</ul>' +
           '<div class="ny-free"><div class="ny-free-fig">' + uniImg('u-newyear') + '</div><b>광고 한 편 보면 전체가 무료로 열려요</b><p class="helper">4~12월 흐름과 2~7장(재물·직업·연애·건강·행운 처방·월별 번호)이 모두 열리고, ' + esc(me.name) + '님 신년운세는 계속 다시 볼 수 있어요.</p>' +
-          '<button class="btn-primary btn-block sheen" id="btnNYBuy">' + AD_PLAY_SVG + '광고 보고 전체 무료로 보기</button></div>') +
+          passLinkHTML() + '<button class="btn-primary btn-block sheen" id="btnNYBuy">' + AD_PLAY_SVG + '광고 보고 전체 무료로 보기</button></div>') +
       '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button>');
     if (!open) $('btnNYBuy').onclick = function(){
       closeSheet();
@@ -1653,7 +1677,7 @@
     };
   }
   /* 신년운세 전체 = 광고 시청(사람별, 한 번 열면 계속). 예시 모드도 광고 연출은 보여 준다 */
-  function nyOpen(me){ var o = store('unsu_ny_open'); return !!(o && typeof o === 'object' && me && o[me.id]); }
+  function nyOpen(me){ var o = store('unsu_ny_open'); return !!(o && typeof o === 'object' && me && o[me.id]) || passActive(); }
   function setNyOpen(me){ var o = store('unsu_ny_open'); if (!o || typeof o !== 'object') o = {}; o[me.id] = Date.now(); store('unsu_ny_open', o);
   }
 
@@ -1766,7 +1790,7 @@
     if (!paid){ dreamRun(text, false); return; }
     if (isGuest()){ openLoginSheet('꿈 번호 받기는 로그인하고 엽전으로 볼 수 있어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 꿈풀이 ' + Math.floor(SIGNUP_COINS / DM.cost) + '번을 볼 수 있는 만큼이에요.'); return; }
     var cp = dmCoupon();
-    if (!cp && getCoins() < DM.cost){ dreamShortSheet(); return; }
+    if (!cp && !passActive() && getCoins() < DM.cost){ dreamShortSheet(); return; }
     if (!dmCtx.who && !DREAM.find(DREAM.maskName(text, dmCtx.name)).length && text.length < 40){
       openSheet('<h3 id="sheetTitle">꿈속 장면을 조금 더 적어 볼까요?</h3><p class="body-text">지금 글에서는 풀이할 상징이 잘 보이지 않아요. 등장한 동물·사람·물건이나 꿈속 기분을 한두 줄 더 적으면 훨씬 자세히 풀려요.</p>' +
         '<button class="btn-primary btn-block" data-close>더 적을게요</button><button class="text-btn" id="btnDmAnyway">이대로 풀기 · ' + (cp ? '1회권 사용' : DM.cost + '닢') + '</button>');
@@ -1830,7 +1854,7 @@
   /* 무료 해몽 결과에서 '이 꿈으로 번호 받기' */
   function dreamUpgrade(d){
     if (isGuest()){ openLoginSheet('꿈 번호 받기는 엽전 ' + DM.cost + '닢이에요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요.'); return; }
-    if (!NS && !dmCoupon() && getCoins() < DM.cost){ dreamShortSheet(); return; }
+    if (!NS && !dmCoupon() && !passActive() && getCoins() < DM.cost){ dreamShortSheet(); return; }
     dreamRun(d.text, true, d);
   }
   /* 원문에 상징마다 (번호)를 붙여 보여 준다 — 몽풀식 */
@@ -2133,6 +2157,7 @@
   })();
   function adSlotHTML(where, kind){
     kind = kind || 'feed';
+    if (passActive()) return '';   /* 우니 패스: 광고 없음 */
     if (adsOn(kind)) return '<div class="ad-slot ad-live ad-' + kind + '"><span class="ad-badge">AD</span><ins class="adsbygoogle" style="display:block" data-ad-client="' + ADS.client + '" data-ad-slot="' + ADS.slots[kind] + '"' +
       (kind === 'loading' ? ' data-ad-format="rectangle"' : ' data-ad-format="auto" data-full-width-responsive="true"') + '></ins></div>';
     /* GPT 검토 P0/8: 실서비스(woonijoa.com)에서 광고가 안 붙었으면 자리를 접는다. 배치 확인용 예시는 로컬·미리보기에서만 */
@@ -2324,13 +2349,13 @@
   function setCatPaid(cat){ var c = store('unsu_catpaid'); if (!c || c.d !== todayStr()) c = { d:todayStr(), c:{} }; c.c[cat] = 1; store('unsu_catpaid', c); }
   function openCatLock(entry, r, cat){
     var C = CATS[cat], f = todayLuck(entry, r).f, t = C.sk ? tierOf(f.scores[C.sk]) : '';
-    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < CAT_COST;
+    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && !passActive() && coins < CAT_COST;
     openSheet('<div class="cat-lock"' + (t ? ' data-tier="' + t + '"' : '') + '>' + uniCatHTML(cat, t, 'cl-uni') +
       '<div class="cl-k">' + esc(entry.name) + '님의 오늘</div><h3 id="sheetTitle">' + C.name + '</h3>' +
       (C.sk ? '<div class="cl-score"><b>' + f.scores[C.sk] + '</b>점</div><p class="cl-line">“' + f.lines[C.sk] + '”</p>' : '<p class="cl-line">타고난 사주로 보는 나에게 맞는 일</p>') +
       '<div class="cl-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' +
       '<ul class="cl-list">' + (C.sk ? '<li>오늘 점수와 한 줄 풀이</li><li>타고난 ' + C.name.replace('운', '') + ' 그릇 (사주 원국)</li><li>올해 이 분야의 흐름</li>' : '<li>잘 맞는 직업 목록</li><li>함께 살리면 좋은 재능</li><li>일간에 맞는 분야와 올해 흐름</li>') + '</ul>' +
-      '<button class="btn-primary btn-block" id="clBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : COIN_SVG + '엽전 ' + CAT_COST + '닢으로 열기') + '</button>' +
+      passLinkHTML() + '<button class="btn-primary btn-block" id="clBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : (passActive() ? '우니 패스로 열기' : COIN_SVG + '엽전 ' + CAT_COST + '닢으로 열기')) + '</button>' +
       '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 바로 받은 엽전으로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (CAT_COST - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 열면 오늘 하루 계속 볼 수 있어요') + '</p></div>');
     $('clBuy').onclick = function(){
       if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 분야별 운세는 분야당 ' + CAT_COST + '닢이에요.'); return; }
@@ -2452,7 +2477,7 @@
     var M = S.months[TK.mi], locked = !open && TK.mi >= TK_FREE_M;
     var sel = null; if (TK.sel) S.months.forEach(function(mm){ mm.days.forEach(function(o){ if (o.key === TK.sel && !o.past) sel = o; }); });
     if (sel && sel.mi !== TK.mi) sel = null;
-    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < COST.tk;
+    var guest = isGuest(), coins = getCoins(), short = !guest && !NS && !passActive() && coins < COST.tk;
     var avoid = locked ? [] : M.days.filter(function(o){ return !o.past && o.tier === 'bad'; });
     var h = '<div class="tk-wrap"><div class="tk-top"><div class="tk-uni">' + uniImg('u-calendar') + '</div><div><small>' + nm + '님 사주로 고르는</small><h3 id="sheetTitle">중요한 날 잡기</h3></div></div>' +
       '<div class="tk-ps" role="tablist" aria-label="무엇을 하는 날인가요">' + TAEKIL.ORDER.map(function(k){ var Q = TAEKIL.PURPOSES[k];
@@ -2476,7 +2501,7 @@
     } else {
       h += '<div class="tk-lock"><h4>1년 전체 보기 <small>' + P.short + '</small></h4><div class="tk-lock-rows" aria-hidden="true">' + [1, 2, 3].map(function(i){ return '<div><em>' + i + '</em><span>●●●●. ●●월 ●●일</span><i></i></div>'; }).join('') + '</div>' +
         '<ul class="lock-list">' + ['12개월 달력 전체의 좋은 날·피할 날', '1년 중 베스트 5일과 고른 이유', '달마다 가장 좋은 날', '그날 좋은 시간대 (시진)', '캘린더 저장 · 공유 카드'].concat(TK.p === 'open' ? ['내 사업 기질과 ' + r.seun.year + '년 사업 흐름'] : []).map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
-        '<button class="btn-primary btn-block sheen" id="tkBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : COIN_SVG + '엽전 ' + COST.tk + '닢으로 1년 전체 열기') + '</button>' +
+        passLinkHTML() + '<button class="btn-primary btn-block sheen" id="tkBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : (passActive() ? '우니 패스로 1년 전체 열기' : COIN_SVG + '엽전 ' + COST.tk + '닢으로 1년 전체 열기')) + '</button>' +
         '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 받은 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (COST.tk - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · ' + nm + '님의 ' + P.short + ' 달력은 계속 다시 볼 수 있어요') + '</p></div>';
     }
     if (TK.p === 'open') h += '<p class="tk-note">홈택스 개업일은 실제로 사업을 시작하는 날로 적어요. 사업자등록은 개업일 전에 미리 하거나, 개업일부터 20일 안에 신청하면 돼요.</p>';
@@ -2690,7 +2715,7 @@
     mountMachine({ today:yong.map(function(o){ return o.n; }), life:life });
     $('btnExtra').onclick = function(){
       if (isGuest()){ openLoginSheet('한 줄 더 뽑기는 엽전 ' + EXTRA_COST + '닢이 들어요. 처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요.'); return; }
-      if (getCoins() < EXTRA_COST){ toast('엽전이 ' + (EXTRA_COST - getCoins()) + '닢 모자라요. 출석으로 모아 보세요'); return; }
+      if (!passActive() && getCoins() < EXTRA_COST){ toast('엽전이 ' + (EXTRA_COST - getCoins()) + '닢 모자라요. 출석으로 모아 보세요'); return; }
       spendCoins(EXTRA_COST, '번호 한 줄 더', 'extra:' + (me.id || '') + ':' + todayStr() + ':' + extra.lines.length, function(){
         var line = drawSixFromSeed(iso + '|' + tKey + '|' + todayStr() + '|extra' + extra.lines.length);
         extra.lines.push(line); store('unsu_extra', extra);
@@ -3022,7 +3047,7 @@
       h += '<div class="card locked"><div class="sec-head"><h2 class="sec-title">상세 궁합 리포트</h2><span class="sec-meta">잠김</span></div>' +
         '<ul class="lock-list">' + ['두 사람의 기질 비교','관계에서 빛나는 점','부딪히기 쉬운 점과 대화 팁','올해 두 사람의 흐름','함께하면 좋은 활동'].map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
-        '<div class="lock-cta"><button class="btn-primary" id="btnGhBuy">' + COIN_SVG + '엽전 ' + COST.gh + '닢으로 상세 리포트 열기</button>' +
+        '<div class="lock-cta"><button class="btn-primary" id="btnGhBuy">' + (passActive() ? '우니 패스로 상세 리포트 열기' : COIN_SVG + '엽전 ' + COST.gh + '닢으로 상세 리포트 열기') + '</button>' +
         '<p class="helper" style="text-align:center">한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.</p></div></div>';
     } else {
       var ia = ILGAN[ra.pillars.day.stem], ib = ILGAN[rb.pillars.day.stem];
@@ -3612,12 +3637,12 @@
   /* 공통 열기 시트(엽전). opt.onPaid: 연 뒤 실행, opt.ghKey: 궁합 쌍, opt.who: 대상 이름 */
   function openPaySheet(id, opt){
     opt = opt || {};
-    var P = product(id), guest = isGuest(), coins = getCoins(), short = !guest && !NS && coins < P.coin;
+    var P = product(id), guest = isGuest(), coins = getCoins(), short = !guest && !NS && !passActive() && coins < P.coin;
     openSheet('<div class="pay-sheet"><div class="pay-hero">' + tileArtSVG(P.art) + '</div>' +
       '<h3 id="sheetTitle">' + P.name + '</h3>' + (opt.who ? '<p class="pay-who">' + opt.who + '</p>' : '') +
       '<ul class="pay-list">' + P.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
       '<div class="pay-price">' + COIN_SVG + '<b>' + P.coin.toLocaleString() + '닢</b></div>' +
-      '<button class="btn-primary btn-block" id="payGo">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : '엽전 ' + P.coin.toLocaleString() + '닢으로 열기') + '</button>' +
+      passLinkHTML() + '<button class="btn-primary btn-block" id="payGo">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : passActive() ? '우니 패스로 열기' : '엽전 ' + P.coin.toLocaleString() + '닢으로 열기') + '</button>' +
       '<p class="helper pay-note">' + (guest ? '처음 로그인하면 받는 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (P.coin - coins).toLocaleString() + '닢 부족해요 · 보유 ' + coins.toLocaleString() + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 한 번 열면 ' + P.keep) + '</p><p class="helper pay-note" style="margin-top:2px">연 리포트는 보관함 › 열어 둔 리포트에서 다시 열 수 있어요. ' + (isGuest() || NS ? '' : '지금은 이 기기에 보관되고, 계정 연동이 열리면 기기를 바꿔도 이어져요.') + '</p></div>');
     $('payGo').onclick = function(){
       if (guest){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. ' + P.name + '은(는) ' + P.coin + '닢이에요.'); return; }
@@ -3632,8 +3657,8 @@
     var o = getOrders(), ch = srvUser() ? SRV.orders : [];
     var ST = { paid:'결제 완료', refunded:'환불 완료', canceled:'취소됨', failed:'결제 실패' };
     openSheet('<h3 id="sheetTitle">구매 내역</h3>' +
-      (ch.length ? '<div class="st-cap">엽전 충전</div><div class="st-group">' + ch.map(function(x){
-        return '<div class="od-row"><div><b>엽전 ' + (x.coins + x.bonus).toLocaleString() + '닢</b><small>' + fmtDate(Date.parse(x.approved_at || x.created_at)) + ' · ' + (ST[x.status] || x.status) +
+      (ch.length ? '<div class="st-cap">결제</div><div class="st-group">' + ch.map(function(x){
+        return '<div class="od-row"><div><b>' + (/^pass/.test(x.pack || '') ? PASS.name : '엽전 ' + (x.coins + x.bonus).toLocaleString() + '닢') + '</b><small>' + fmtDate(Date.parse(x.approved_at || x.created_at)) + ' · ' + (ST[x.status] || x.status) +
           (x.receipt_url ? ' · <a href="' + esc(x.receipt_url) + '" target="_blank" rel="noopener">영수증</a>' : '') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
       }).join('') + '</div><div class="st-cap" style="margin-top:14px">엽전으로 연 콘텐츠</div>' : '') +
       (o.length ? '<div class="st-group">' + o.map(function(x){
