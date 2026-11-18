@@ -10,9 +10,17 @@
 | `KAKAO_REST_KEY` | 카카오 디벨로퍼스 › 내 애플리케이션 › 앱 키 › REST API 키 | |
 | `KAKAO_CLIENT_SECRET` | 카카오 로그인 › 보안 › Client Secret (켰을 때만) | 권장 |
 | `KAKAO_ADMIN_KEY` | 앱 키 › Admin 키 (선택) | 탈퇴 시 카카오 연결 끊기 |
+| `GOOGLE_CLIENT_ID` | Google Cloud › API 및 서비스 › 사용자 인증 정보 › OAuth 클라이언트 ID | 구글 로그인 |
+| `GOOGLE_CLIENT_SECRET` | 같은 화면 › 클라이언트 보안 비밀 | **서버 전용** |
 | `TOSS_CLIENT_KEY` | 토스페이먼츠 개발자센터 › API 키 › **API 개별 연동 키** 클라이언트 키 | `test_ck_…` 면 테스트 결제 |
 | `TOSS_SECRET_KEY` | 같은 화면 › 시크릿 키 | `test_sk_…` |
 | `AD_COIN_ON` | (선택) 실제 보상형 광고 + 서버 확인이 붙은 뒤에만 `1` | 비워 두면 “광고 보고 +20닢”이 꺼져요 |
+
+## 구글 로그인 (선택, 카카오와 함께 보인다)
+1. console.cloud.google.com › 새 프로젝트 `woonijoa`.
+2. API 및 서비스 › OAuth 동의 화면: 앱 이름 우니조아, 지원 이메일, 승인된 도메인 `woonijoa.com`. 범위는 기본(`openid`, `profile`)만. **게시 상태를 "프로덕션"으로** 바꿔야 누구나 로그인할 수 있다(기본 범위만이라 심사 불필요).
+3. 사용자 인증 정보 › OAuth 클라이언트 ID 만들기 › 웹 애플리케이션 › 승인된 리디렉션 URI `https://woonijoa.com/auth/google/callback`.
+4. 나온 클라이언트 ID/보안 비밀을 Vercel 환경변수에 넣고 재배포.
 
 ## 1. Supabase
 1. 새 프로젝트 `woonijoa`, 지역 **Northeast Asia (Seoul)**.

@@ -1077,7 +1077,8 @@
   function passEndStr(){ var d = new Date(SRV.passUntil); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
   /* 광고 보상 엽전은 실제 보상형 광고 + 서버 확인이 붙을 때까지 숨긴다(서버 AD_COIN_ON). 예시 모드는 연출만 보여 준다 */
   function adCoinOn(){ return NS || !!(SRV.cfg && SRV.cfg.adCoin); }
-  function srvOn(){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && SRV.cfg.login.kakao); }
+  function srvOn(){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && (SRV.cfg.login.kakao || SRV.cfg.login.google)); }
+  function srvLogin(p){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && SRV.cfg.login[p]); }
   function srvUser(){ var a = store('unsu_auth'); return !NS && !!(a && a.srv); }
   function api(path, opt){
     opt = opt || {};
@@ -1112,13 +1113,14 @@
   }
   function pushConsent(){ var c = getConsent(); if (c) api('/api/me', { method:'POST', body:{ consent:c } }).catch(function(){}); }
   function loginBtnsHTML(){
-    return '<button class="btn-social k" data-login="kakao">카카오로 계속하기</button>' + (srvOn() ? '' : '<button class="btn-social g" data-login="google">Google로 계속하기</button>');
+    var on = srvOn();   /* 서버 로그인이 켜졌으면 실제로 연결된 것만 보여 준다 */
+    return (!on || srvLogin('kakao') ? '<button class="btn-social k" data-login="kakao">카카오로 계속하기</button>' : '') + (!on || srvLogin('google') ? '<button class="btn-social g" data-login="google">Google로 계속하기</button>' : '');
   }
   /* 서버 회원 정보를 이 기기에 반영 */
   function applySrvUser(u, justLoggedIn){
     SRV.applying = true;
     try {
-      store('unsu_auth', { provider:'kakao', nick:(getMe() && getMe().name) || u.nick || '우니조아 사용자', at:Date.now(), srv:true });
+      store('unsu_auth', { provider:u.provider || 'kakao', nick:(getMe() && getMe().name) || u.nick || '우니조아 사용자', at:Date.now(), srv:true });
       var localAt = 0; try { localAt = JSON.parse(localStorage.getItem('unsu_syncat')) || 0; } catch(e){}
       var snap = u.snapshot, useServer = snap && snap.unsu_me && (!getMe() || (!justLoggedIn && u.snapshotAt > localAt));
       if (useServer){ DATA_KEYS.forEach(function(k){ if (k === 'unsu_coin' || k === 'unsu_coinlog') return; var v = snap[k]; var key = nsk(k); if (v === null || v === undefined){ delete MEM[key]; try { localStorage.removeItem(key); } catch(e){} } else store(k, v); }); try { localStorage.setItem('unsu_syncat', JSON.stringify(u.snapshotAt)); } catch(e){} }
@@ -1166,9 +1168,10 @@
       SRV.cfg = r.cfg;
       var a = store('unsu_auth');
       if (r.user){
-        var fromServer = applySrvUser(r.user, q.login === 'kakao');
+        var lp = (q.login === 'kakao' || q.login === 'google') ? q.login : '';
+        var fromServer = applySrvUser(r.user, !!lp);
         updateSegCount(); updateTopbar();
-        if (q.login === 'kakao') toast(q['new'] ? '카카오로 가입했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : fromServer ? '다시 오셨네요! 계정의 기록을 불러왔어요' : '카카오 계정으로 로그인했어요');
+        if (lp) toast(q['new'] ? PROV[lp] + '로 가입했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : fromServer ? '다시 오셨네요! 계정의 기록을 불러왔어요' : PROV[lp] + ' 계정으로 로그인했어요');
         if (q.pay === 'ok') toast(q.pass ? '우니 패스가 시작됐어요 · ' + passEndStr() + '까지 전부 열려요' : '엽전 ' + (+q.n || 0).toLocaleString() + '닢을 충전했어요');
         if (fromServer || q.login) { if (currentView === 'today' || !currentView) renderToday(); }
         if (back === 'coin' || q.pay) setTimeout(function(){ openCoinSheet(q.pay === 'fail' ? '결제가 완료되지 않았어요' + (q.code && q.code !== 'PAY_PROCESS_CANCELED' && q.code !== 'USER_CANCEL' ? ' (' + q.code + ')' : '') + '. 다시 시도해 주세요.' : undefined); }, 400);
@@ -1176,7 +1179,7 @@
       } else {
         if (a && a.srv){ store('unsu_auth', null); clearData(); updateSegCount(); updateTopbar(); renderToday(); toast('로그인이 만료됐어요. 다시 로그인하면 기록이 돌아와요'); }
         else if (a && !a.srv){ store('unsu_auth', null); store('unsu_account', null); updateTopbar(); }   /* 미리보기 시절 가짜 로그인 정리 — 기기 데이터는 그대로 */
-        if (q.login === 'cancel') toast('카카오 로그인을 취소했어요');
+        if (q.login === 'cancel') toast('로그인을 취소했어요');
         else if (q.login === 'error') toast('로그인 중 문제가 생겼어요. 다시 시도해 주세요');
       }
     }).catch(function(){});
@@ -3737,10 +3740,10 @@
   }
   function doLogin(provider, btn){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
-    if (srvOn()){   /* 실제 카카오 로그인: 카카오 동의 화면 → /auth/kakao/callback → /?login=kakao 로 돌아온다 */
-      if (btn){ btn.disabled = true; btn.textContent = '카카오로 이동 중…'; }
+    if (srvOn()){   /* 실제 로그인: 동의 화면 → /auth/<provider>/callback → /?login=<provider> 로 돌아온다 */
+      if (btn){ btn.disabled = true; btn.textContent = PROV[provider] + '로 이동 중…'; }
       try { sessionStorage.setItem('wj_back', currentTab || 'today'); } catch(e){}
-      location.href = '/auth/kakao';
+      location.href = '/auth/' + (provider === 'google' ? 'google' : 'kakao');
       return;
     }
     if (btn){ btn.disabled = true; btn.textContent = '연결 중…'; }
