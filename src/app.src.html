@@ -1568,6 +1568,12 @@
   .todo-n{font-weight:700;color:#f5d48a;font-size:calc(14px*var(--fs));}
   .todo-list{list-style:none;margin:4px 0 8px;padding:0;display:flex;flex-direction:column;gap:8px;}
   .todo-list li{display:flex;align-items:center;gap:10px;color:#e3e8fb;font-size:calc(14px*var(--fs));}
+  .todo-go{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;cursor:pointer;padding:4px 0;border-radius:10px;-webkit-tap-highlight-color:transparent;}
+  .todo-go:active{opacity:.7;}
+  .todo-go:focus-visible{outline:2px solid #8f7bff;outline-offset:2px;}
+  .peek-card.todo-hint{animation:todoHint 1.1s var(--ease-spring) 1;}
+  @keyframes todoHint{0%,100%{box-shadow:0 0 0 0 rgba(143,123,255,0);}35%{box-shadow:0 0 0 6px rgba(143,123,255,.45);}}
+  @media (prefers-reduced-motion:reduce){ .peek-card.todo-hint{animation:none;} }
   .todo-list li i{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3);display:grid;place-items:center;flex:none;}
   .todo-list li.done i{background:#8fe3d0;box-shadow:none;color:#10132e;animation:todoPop .4s var(--ease-spring);}
   .todo-list li.done i svg{width:14px;height:14px;}
