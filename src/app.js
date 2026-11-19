@@ -3385,7 +3385,7 @@
   function startOnboarding(mode, after){
     var fromDemo = !!NS && mode !== 'edit';
     var me = fromDemo ? null : getMe();
-    ob = { mode:mode || 'new', step:0, back4:false, name:'', cal:'solar', leap:false, birth:'', unknown:false, h:null, m:null, gender:null, fromDemo:fromDemo, after:after || 'num', ret:currentTab || 'today' };
+    ob = { mode:mode || 'new', step:1, back4:false, name:'', cal:'solar', leap:false, birth:'', unknown:false, h:null, m:null, gender:null, fromDemo:fromDemo, after:after || 'num', ret:currentTab || 'today' };
     if (ob.mode === 'edit' && me){
       ob.name = me.name; ob.cal = me.cal; ob.leap = !!me.leap; ob.birth = me.y + pad2(me.m) + pad2(me.d);
       ob.unknown = !!me.unknown; ob.h = me.unknown ? null : me.hour; ob.m = me.unknown ? null : me.minute; ob.gender = me.gender; ob.step = 4; ob.editId = me.id;
@@ -3394,9 +3394,11 @@
   }
   function obEntry(){
     var b = parseBirth(ob.birth);
-    return { name:ob.name.trim(), gender:ob.gender, cal:ob.cal, leap:ob.cal === 'lunar' && ob.leap, y:b.y, m:b.m, d:b.d,
+    return { name:ob.name.trim() || obAutoName(), gender:ob.gender, cal:ob.cal, leap:ob.cal === 'lunar' && ob.leap, y:b.y, m:b.m, d:b.d,
       unknown:ob.unknown, hour:ob.unknown ? null : ob.h, minute:ob.unknown ? null : ob.m, corr:true };
   }
+  /* 이름을 비워 두면 띠로 부른다(예: 돼지띠님) — 닉네임은 선택(2026-11-19 소율) */
+  function obAutoName(){ var b = parseBirth(ob.birth); if (!b) return '나'; var r = compute({ name:'_', gender:ob.gender || 'F', cal:ob.cal, leap:ob.cal === 'lunar' && ob.leap, y:b.y, m:b.m, d:b.d, unknown:true, hour:null, minute:null, corr:true }); return r.error ? '나' : r.animal + '띠'; }
   function obBirthState(){
     var v = ob.birth, b = parseBirth(v);
     if (v.length < 8) return { ok:false, cls:'', text:'숫자 8자리로 입력해 주세요 (예: 19950412)' };
@@ -3442,13 +3444,13 @@
   }
   function renderOb(){
     var st = ob.step, body = $('obBody');
-    var prog = st >= 4 ? 100 : (st / 4) * 100 + 8;
+    var prog = st >= 4 ? 100 : ((st - 1) / 3) * 100 + 8;
     var q = '', sub = '', inner = '', next = '다음';
     if (st === 0){
       q = '뭐라고 불러 드릴까요?'; sub = '풀이와 오늘의 운세에서 부를 이름이에요. 별명도 괜찮아요.';
       inner = '<input class="ob-input" id="obName" maxlength="12" placeholder="이름 또는 별명" autocomplete="off" value="' + esc(ob.name) + '">';
     } else if (st === 1){
-      q = esc(ob.name) + '님의<br>생년월일을 알려 주세요'; sub = '음력 생일이라면 음력을 고르고, 윤달 여부도 확인해 주세요.';
+      q = ob.mode === 'edit' ? '생년월일을 알려 주세요' : '내 번호를 뽑으려면<br>생년월일이 필요해요'; sub = '사주 계산에만 써요. 음력 생일이면 음력과 윤달 여부를 골라 주세요.';
       inner = '<div class="toggle-row" style="grid-template-columns:1fr 1fr">' +
         '<div class="pill" role="group" aria-label="양력 음력"><button type="button" data-oc="solar" aria-pressed="' + (ob.cal === 'solar') + '">양력</button><button type="button" data-oc="lunar" aria-pressed="' + (ob.cal === 'lunar') + '">음력</button></div>' +
         '<div class="pill' + (ob.cal === 'lunar' ? '' : ' is-disabled') + '" role="group" aria-label="평달 윤달"><button type="button" data-ol="0" aria-pressed="' + !ob.leap + '"' + (ob.cal === 'lunar' ? '' : ' disabled') + '>평달</button><button type="button" data-ol="1" aria-pressed="' + ob.leap + '"' + (ob.cal === 'lunar' ? '' : ' disabled') + '>윤달</button></div></div>' +
@@ -3468,12 +3470,12 @@
         '<button type="button" class="opt-card" data-og="M" aria-pressed="' + (ob.gender === 'M') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="14" r="5"/><path d="M13.5 10.5L20 4M15 4h5v5"/></svg>남자</button></div>';
     } else {
       var e = obEntry(), r = compute(e), bs = obBirthState();
-      q = ob.mode === 'edit' ? '내 정보를 확인해 주세요' : '이 정보로<br>사주를 펼칠게요';
-      next = ob.mode === 'edit' ? '수정 완료' : '이 정보로 시작하기';
-      inner = '<div class="card cf-card">' + (r.error ? '' : figSVG(r.animal, MS.EL_KEY[r.pillars.day.sEl]) +
-        '<div class="poster-name">' + esc(e.name) + '</div><div class="poster-sub">' + r.pillars.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · <span style="font-family:var(--font-hanja);color:#fff">' + r.pillars.day.hanja + '</span>일주</div>') +
+      q = ob.mode === 'edit' ? '내 정보를 확인해 주세요' : '이 정보로<br>번호를 뽑을게요';
+      next = ob.mode === 'edit' ? '수정 완료' : (ob.after === 'num' ? '무료 번호 받기' : '이 정보로 시작하기');
+      var auto = obAutoName();
+      inner = '<div class="field ob-name"><label for="obName">부를 이름 <span class="helper">선택 · 비워 두면 ‘' + esc(auto) + '님’</span></label><input class="text-input" id="obName" maxlength="12" placeholder="이름 또는 별명" autocomplete="off" value="' + esc(ob.name) + '"></div>' + '<div class="card cf-card">' + (r.error ? '' : figSVG(r.animal, MS.EL_KEY[r.pillars.day.sEl]) +
+        '<div class="poster-name" id="obPosterName">' + esc(e.name) + '</div><div class="poster-sub">' + r.pillars.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · <span style="font-family:var(--font-hanja);color:#fff">' + r.pillars.day.hanja + '</span>일주</div>') +
         '<div class="cf-rows">' +
-        '<div class="cf-row"><span class="k">이름</span><span class="v">' + esc(e.name) + '</span><button data-ej="0">수정</button></div>' +
         '<div class="cf-row"><span class="k">생년월일</span><span class="v">' + (e.cal === 'lunar' ? '음력 ' + (e.leap ? '윤달 ' : '') : '양력 ') + e.y + '.' + pad2(e.m) + '.' + pad2(e.d) + '<small>' + (r.error ? '' : e.cal === 'lunar' ? '양력 ' + r.solar.y + '.' + pad2(r.solar.m) + '.' + pad2(r.solar.d) : (r.lunar ? '음력 ' + r.lunar.y + '.' + pad2(r.lunar.m) + '.' + pad2(r.lunar.d) + (r.lunar.leap ? ' (윤달)' : '') : '')) + '</small></span><button data-ej="1">수정</button></div>' +
         '<div class="cf-row"><span class="k">태어난 시간</span><span class="v">' + (e.unknown ? '모름' : pad2(e.hour) + ':' + pad2(e.minute)) + '<small>' + (e.unknown ? '시주 없이 6글자로 풀이' : (r.error || !r.pillars.hour ? '' : '진태양시 ' + pad2(r.corr.lmH) + ':' + pad2(r.corr.lmMi) + ' · ' + r.pillars.hour.bk + '시(' + r.pillars.hour.bh + '時)')) + '</small></span><button data-ej="2">수정</button></div>' +
         '<div class="cf-row"><span class="k">성별</span><span class="v">' + (e.gender === 'M' ? '남자' : '여자') + '</span><button data-ej="3">수정</button></div>' +
@@ -3481,10 +3483,10 @@
         '<p class="privacy">' + SHIELD_SVG + '<span>입력한 정보는 이 기기의 브라우저에만 저장돼요. 로그인하면 계정에 안전하게 보관할 수 있어요.</span></p>';
     }
     body.innerHTML = '<div class="ob-top"><button id="obBack" aria-label="이전">‹</button><div class="ob-prog" role="progressbar" aria-valuenow="' + Math.round(prog) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + prog + '%"></i></div><button class="x" id="obClose" aria-label="닫기">✕</button></div>' +
-      (st < 4 ? '<div class="ob-step">STEP ' + (st + 1) + ' / 4</div>' : '<div class="ob-step">CONFIRM</div>') +
+      (st < 4 ? '<div class="ob-step">STEP ' + st + ' / 3</div>' : '<div class="ob-step">CONFIRM</div>') +
       '<h1 class="ob-q">' + q + '</h1>' + (sub ? '<p class="helper" style="margin-top:-8px">' + sub + '</p>' : '') +
       '<div class="ob-body">' + inner + '</div>' +
-      '<div class="ob-cta"><button class="btn-primary btn-block" id="obNext"' + (obValid() ? '' : ' disabled') + '>' + next + '</button>' + (st === 4 && ob.mode !== 'edit' ? '<button type="button" class="btn-ghost btn-block" id="obSave" style="margin-top:8px">' + esc(ob.name) + '님 정보 저장하기</button>' : '') + '</div>';
+      '<div class="ob-cta"><button class="btn-primary btn-block" id="obNext"' + (obValid() ? '' : ' disabled') + '>' + next + '</button>' + (st === 4 && ob.mode !== 'edit' ? '<button type="button" class="btn-ghost btn-block" id="obSave" style="margin-top:8px">번호는 나중에, 정보만 저장하기</button>' : '') + '</div>';
     bindOb();
   }
   function refreshNext(){ $('obNext').disabled = !obValid(); }
@@ -3495,14 +3497,10 @@
   }
   function bindOb(){
     var st = ob.step;
-    $('obBack').onclick = function(){ if (ob.back4){ ob.back4 = false; ob.step = 4; renderOb(); return; } if (st === 0 || (ob.mode === 'edit' && st === 4)) return closeOb(); ob.step--; renderOb(); };
+    $('obBack').onclick = function(){ if (ob.back4){ ob.back4 = false; ob.step = 4; renderOb(); return; } if (st <= 1 || (ob.mode === 'edit' && st === 4)) return closeOb(); ob.step--; renderOb(); };
     $('obClose').onclick = closeOb;
     $('obNext').onclick = obGoNext;
-    if (st === 0){
-      var n = $('obName'); n.focus();
-      n.oninput = function(){ ob.name = n.value; refreshNext(); };
-      n.onkeydown = function(e){ if (e.key === 'Enter') obGoNext(); };
-    } else if (st === 1){
+    if (st === 1){
       var bi = $('obBirth'), hint = $('obBirthHint');
       var upd = function(){ var s = obBirthState(); hint.className = 'field-hint ' + s.cls; hint.textContent = s.text; refreshNext(); };
       bi.oninput = function(){ bi.value = bi.value.replace(/\D/g, '').slice(0, 8); ob.birth = bi.value; upd(); };
@@ -3518,6 +3516,9 @@
       $('obBody').querySelectorAll('[data-og]').forEach(function(b){ b.onclick = function(){ ob.gender = b.dataset.og; renderOb(); setTimeout(obGoNext, 280); }; });
     } else {
       if ($('obSave')) $('obSave').onclick = function(){ finishOb(true); };
+      var n = $('obName');
+      n.oninput = function(){ ob.name = n.value; $('obPosterName').textContent = ob.name.trim() || obAutoName(); };
+      n.onkeydown = function(e){ if (e.key === 'Enter') n.blur(); };
       $('obBody').querySelectorAll('[data-ej]').forEach(function(b){ b.onclick = function(){ ob.step = +b.dataset.ej; ob.back4 = true; renderOb(); }; });
     }
   }
