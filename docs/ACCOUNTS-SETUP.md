@@ -12,6 +12,10 @@
 | `KAKAO_ADMIN_KEY` | 앱 키 › Admin 키 (선택) | 탈퇴 시 카카오 연결 끊기 |
 | `GOOGLE_CLIENT_ID` | Google Cloud › API 및 서비스 › 사용자 인증 정보 › OAuth 클라이언트 ID | 구글 로그인 |
 | `GOOGLE_CLIENT_SECRET` | 같은 화면 › 클라이언트 보안 비밀 | **서버 전용** |
+| `PORTONE_STORE_ID` | 포트원 관리자 › 결제연동 › 연동 정보 › 스토어 ID (`store-…`) | 3개가 모두 있으면 포트원 사용 |
+| `PORTONE_CHANNEL_KEY` | 같은 화면 › 채널 관리 › 채널 키 (`channel-key-…`) | 테스트 채널이면 `PORTONE_TEST=1` |
+| `PORTONE_API_SECRET` | 같은 화면 › V2 API 시크릿 (결제 조회·취소 권한) | 서버 전용, 채팅·코드에 붙이지 말 것 |
+| `PORTONE_TEST` | `1` 이면 테스트 채널 (실제 돈 안 나감, 항상 켜짐) | 실결제 채널로 바꿀 땐 지우고 `PAY_LIVE=1` |
 | `TOSS_CLIENT_KEY` | 토스페이먼츠 개발자센터 › API 키 › **API 개별 연동 키** 클라이언트 키 | `test_ck_…` 면 테스트 결제 |
 | `TOSS_SECRET_KEY` | 같은 화면 › 시크릿 키 | `test_sk_…` |
 | `PAY_LIVE` | (실결제 때만) `1` | 라이브 키(`live_ck_…`)를 넣어도 이게 `1` 이고 **12/4(개업일) 이후**일 때만 결제가 열려요. 테스트 키는 이것과 무관하게 열림 |

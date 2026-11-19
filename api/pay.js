@@ -1,6 +1,6 @@
-/* 토스페이먼츠 엽전 충전 (결제창 · API 개별 연동 키)
+/* 엽전 충전 — 포트원 V2(PORTONE_*) 또는 토스페이먼츠(TOSS_*) 결제창. 포트원 키가 있으면 포트원을 쓴다.
    POST /api/pay?a=order    { pack }  → 서버가 금액을 정해 주문을 만든다(브라우저가 보낸 금액은 믿지 않는다)
-   GET  /pay/success        토스 결제창 successUrl (vercel.json rewrite → /api/pay?a=confirm). 금액 대조 → 승인 API → 엽전 적립 → /?pay=ok
+   GET  /pay/success        결제창 복귀 주소(포트원: paymentId, 토스: paymentKey·orderId) (vercel.json rewrite → /api/pay?a=confirm). 금액 대조 → 승인 API → 엽전 적립 → /?pay=ok
    실패·취소는 failUrl(/?pay=fail)로 바로 돌아온다. */
 const crypto = require('crypto');
 const S = require('./_lib/srv');
@@ -31,11 +31,12 @@ async function order(req, res){
     ? { order_id: id, user_id: uid, pack: b.pack, coins: P.n, bonus: P.b, amount: P.p }
     : { order_id: id, user_id: uid, pack: b.pack, coins: 0, bonus: 0, amount: Q.p } });
   const name = P ? '우니조아 엽전 ' + (P.n + P.b).toLocaleString('ko-KR') + '닢' : '우니조아 ' + Q.name;
-  return S.send(res, 200, { ok: true, orderId: id, amount: P ? P.p : Q.p, orderName: name, customerKey: 'wj_' + S.sha(uid).slice(0, 32) });
+  return S.send(res, 200, { ok: true, provider: S.CONF.provider, orderId: id, amount: P ? P.p : Q.p, orderName: name, customerKey: 'wj_' + S.sha(uid).slice(0, 32) });
 }
 
 async function confirm(req, res){
   const q = req.query || {};
+  if (q.paymentId) return confirmPortone(req, res, q);
   const paymentKey = String(q.paymentKey || ''), orderId = String(q.orderId || ''), amount = Number(q.amount);
   if (!paymentKey || !/^wj[a-z0-9]+$/.test(orderId)) return S.redirect(res, '/?pay=fail&code=BAD_REQUEST');
   const o = await S.one('orders?order_id=eq.' + orderId + '&select=order_id,user_id,pack,coins,bonus,amount,status');
@@ -59,11 +60,47 @@ async function confirm(req, res){
     await S.db('orders?order_id=eq.' + orderId + '&status=eq.ready', { method: 'PATCH', prefer: 'return=minimal', body: { status: 'failed', raw: { code: p.code, message: p.message } } });
     return S.redirect(res, '/?pay=fail&code=' + encodeURIComponent(p.code || 'CONFIRM'));
   }
-  await S.db('orders?order_id=eq.' + orderId, { method: 'PATCH', prefer: 'return=minimal', body: {
-    status: 'paid', payment_key: paymentKey, method: p.method || null, receipt_url: (p.receipt && p.receipt.url) || null,
-    approved_at: p.approvedAt || new Date().toISOString(), raw: { mId: p.mId, method: p.method, totalAmount: p.totalAmount, card: p.card ? { company: p.card.issuerCode, type: p.card.cardType } : null }
-  } });
+  await settle(o, { status: 'paid', payment_key: paymentKey, method: p.method || null, receipt_url: (p.receipt && p.receipt.url) || null,
+    approved_at: p.approvedAt || new Date().toISOString(), raw: { mId: p.mId, method: p.method, totalAmount: p.totalAmount, card: p.card ? { company: p.card.issuerCode, type: p.card.cardType } : null } });
+  return done();
+}
+
+/* 주문을 paid 로 바꾸고 엽전·패스를 지급한다 (엽전 원장은 키로 멱등) */
+async function settle(o, patch){
+  const orderId = o.order_id, pass = PASSES[o.pack];
+  await S.db('orders?order_id=eq.' + orderId, { method: 'PATCH', prefer: 'return=minimal', body: patch });
   if (o.user_id && pass) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'pass', p_why: pass.name + ' 시작', p_key: 'pass:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
   else if (o.user_id) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: o.coins + o.bonus, p_kind: 'charge', p_why: '엽전 충전 ' + (o.coins + o.bonus).toLocaleString('ko-KR') + '닢', p_key: 'charge:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: o.coins });
+}
+
+/* 포트원 V2: 복귀 주소의 paymentId 로 서버에서 결제 건을 직접 조회해 금액·상태를 대조한다 (브라우저가 준 값은 믿지 않는다) */
+async function confirmPortone(req, res, q){
+  const orderId = String(q.paymentId || '');
+  if (!/^wj[a-z0-9]+$/.test(orderId)) return S.redirect(res, '/?pay=fail&code=BAD_REQUEST');
+  if (q.code) return S.redirect(res, '/?pay=fail&code=' + encodeURIComponent(String(q.code).slice(0, 40)));   /* 사용자가 취소했거나 결제 실패 */
+  const o = await S.one('orders?order_id=eq.' + orderId + '&select=order_id,user_id,pack,coins,bonus,amount,status');
+  if (!o) return S.redirect(res, '/?pay=fail&code=NO_ORDER');
+  const pass = PASSES[o.pack];
+  const done = () => S.redirect(res, pass ? '/?pay=ok&pass=' + o.pack : '/?pay=ok&n=' + (o.coins + o.bonus));
+  if (o.status === 'paid') return done();
+  if (o.status !== 'ready') return S.redirect(res, '/?pay=fail&code=ORDER_' + o.status.toUpperCase());
+
+  const r = await fetch('https://api.portone.io/payments/' + encodeURIComponent(orderId), { headers: { Authorization: 'PortOne ' + process.env.PORTONE_API_SECRET } });
+  const p = await r.json().catch(() => ({}));
+  if (!r.ok || p.status !== 'PAID'){
+    console.error('portone lookup', r.status, p.type, p.status);
+    const again = await S.one('orders?order_id=eq.' + orderId + '&select=status');
+    if (again && again.status === 'paid') return done();
+    if (r.ok && (p.status === 'FAILED' || p.status === 'CANCELLED')) await S.db('orders?order_id=eq.' + orderId + '&status=eq.ready', { method: 'PATCH', prefer: 'return=minimal', body: { status: 'failed', raw: { status: p.status } } });
+    return S.redirect(res, '/?pay=fail&code=' + encodeURIComponent(p.status || p.type || 'CONFIRM'));
+  }
+  if (!p.amount || p.amount.total !== o.amount || p.currency !== 'KRW'){   /* 금액 위·변조 → 자동 취소 */
+    console.error('portone amount mismatch', orderId);
+    await fetch('https://api.portone.io/payments/' + encodeURIComponent(orderId) + '/cancel', { method: 'POST', headers: { Authorization: 'PortOne ' + process.env.PORTONE_API_SECRET, 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'amount mismatch' }) }).catch(() => {});
+    await S.db('orders?order_id=eq.' + orderId + '&status=eq.ready', { method: 'PATCH', prefer: 'return=minimal', body: { status: 'failed', raw: { code: 'AMOUNT_MISMATCH' } } });
+    return S.redirect(res, '/?pay=fail&code=AMOUNT_MISMATCH');
+  }
+  await settle(o, { status: 'paid', payment_key: p.transactionId || orderId, method: (p.method && p.method.type) || null, receipt_url: p.receiptUrl || null,
+    approved_at: p.paidAt || new Date().toISOString(), raw: { provider: 'portone', method: p.method && p.method.type, total: p.amount.total } });
   return done();
 }
