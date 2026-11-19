@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
 
 async function order(req, res){
   if (req.method !== 'POST' || !S.sameOrigin(req)) return S.send(res, 405, { ok: false });
-  if (!S.CONF.toss) return S.send(res, 503, { ok: false, err: 'off' });
+  if (!S.CONF.pay) return S.send(res, 503, { ok: false, err: 'off' });   /* 화면의 '준비 중'과 같은 스위치 */
   const uid = S.sessionUid(req); if (!uid) return S.send(res, 401, { ok: false, err: 'login' });
   const b = await S.body(req);
   const P = PACKS[b.pack], Q = PASSES[b.pack];

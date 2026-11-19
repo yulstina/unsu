@@ -16,7 +16,7 @@ var LEGAL = (function(){
     tel: '010-7475-5393',                      /* 고객센터 전화 (전자상거래법상 표시 필요) */
     site: 'https://woonijoa.com',
     hosting: 'Vercel Inc.',
-    effective: '2026-12-14'       /* 약관·방침 시행일 */
+    effective: '2026-12-04'       /* 약관·방침 시행일 = 개업일. 실결제가 열릴 수 있는 첫날(api/_lib/srv.js PAY_OPEN_AT)과 같게 유지 */
   };
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function v(x, label){ return x ? esc(x) : '<span class="todo">' + (label || '입력 예정') + '</span>'; }
