@@ -1122,7 +1122,10 @@
     try {
       store('unsu_auth', { provider:u.provider || 'kakao', nick:(getMe() && getMe().name) || u.nick || '우니조아 사용자', at:Date.now(), srv:true });
       var localAt = 0; try { localAt = JSON.parse(localStorage.getItem('unsu_syncat')) || 0; } catch(e){}
-      var snap = u.snapshot, useServer = snap && snap.unsu_me && (!getMe() || (!justLoggedIn && u.snapshotAt > localAt));
+      var snap = u.snapshot, hasSrv = !!(snap && snap.unsu_me);
+      /* 계정에 기록이 있는데 이 기기에도(비회원) 기록이 있으면: 계정 기록을 먼저 보여 주고, 기기 기록은 따로 맡아 뒀다가 확인받고 합친다 */
+      if (justLoggedIn && hasSrv && getMe()) stashLocalForMerge();
+      var useServer = hasSrv && (!getMe() || justLoggedIn || u.snapshotAt > localAt);
       if (useServer){ DATA_KEYS.forEach(function(k){ if (k === 'unsu_coin' || k === 'unsu_coinlog') return; var v = snap[k]; var key = nsk(k); if (v === null || v === undefined){ delete MEM[key]; try { localStorage.removeItem(key); } catch(e){} } else store(k, v); }); try { localStorage.setItem('unsu_syncat', JSON.stringify(u.snapshotAt)); } catch(e){} }
       store('unsu_coinlog', u.ledger || []);
       store('unsu_gift', 1);
@@ -1136,6 +1139,64 @@
     if (!useServer) pushSnapshot();
     if (getConsent() && (!u.consent || !u.consent.terms)) pushConsent();
     return useServer;
+  }
+  /* ---- 비회원 기록 → 계정 승계 (2026-11-19) ----
+     덮어쓰기 금지 · 겹치는 건 빼고 추가 · 사람(사주)은 이름만으로 같다고 보지 않고 생년월일시·성별까지 같아야 같은 사람.
+     엽전·구매는 계정(서버) 기준이라 여기서 옮기지 않는다. */
+  function stashLocalForMerge(){
+    var o = { at:Date.now(), list:getList().filter(function(x){ return !x.sample; }), me:store('unsu_me'), box:getBox(), dreams:getDreams(), ny:store('unsu_ny_open') || {} };
+    if (!o.list.length && !o.box.length && !o.dreams.length) return;
+    try { localStorage.setItem('wj_merge', JSON.stringify(o)); } catch(e){}
+  }
+  function readMerge(){ try { return JSON.parse(localStorage.getItem('wj_merge')) || null; } catch(e){ return null; } }
+  function sajuSig(x){ return [x.name, x.gender, x.cal, x.leap ? 1 : 0, x.y, x.m, x.d, x.unknown ? 'u' : x.hour + ':' + x.minute].join('|'); }
+  function boxSig(b){ return b.d + '|' + (b.nums || []).join(','); }
+  function mergePlan(){
+    var m = readMerge(); if (!m || !srvUser()) return null;
+    var list = getList(), ids = {}, sigs = {}, idMap = {};
+    list.forEach(function(x){ ids[x.id] = 1; sigs[sajuSig(x)] = x.id; });
+    var addList = m.list.filter(function(x){ if (ids[x.id]) { idMap[x.id] = x.id; return false; } var hit = sigs[sajuSig(x)]; if (hit){ idMap[x.id] = hit; return false; } idMap[x.id] = x.id; return true; });
+    var bs = {}; getBox().forEach(function(b){ bs[b.id] = 1; bs[boxSig(b)] = 1; });
+    var addBox = m.box.filter(function(b){ return !bs[b.id] && !bs[boxSig(b)]; });
+    var ds = {}; getDreams().forEach(function(d){ ds[d.id] = 1; });
+    var addDreams = m.dreams.filter(function(d){ return !ds[d.id]; });
+    return { list:addList, box:addBox, dreams:addDreams, idMap:idMap, ny:m.ny || {}, n:addList.length + addBox.length + addDreams.length };
+  }
+  function pendingMergeCount(){ var p = mergePlan(); if (p && !p.n){ try { localStorage.removeItem('wj_merge'); } catch(e){} } return p ? p.n : 0; }
+  function applyMerge(){
+    var p = mergePlan(); if (!p) return 0;
+    if (p.list.length) store('unsu_list', getList().concat(p.list.map(function(x){ return Object.assign({}, x, { saved:x.saved || Date.now() }); })));
+    if (p.box.length) store('unsu_numbox', getBox().concat(p.box).sort(function(a, b){ return a.d < b.d ? 1 : a.d > b.d ? -1 : 0; }));
+    if (p.dreams.length) store('unsu_dreams', getDreams().concat(p.dreams).sort(function(a, b){ return (b.at || 0) - (a.at || 0); }));
+    var ny = store('unsu_ny_open') || {}, nyCh = false;   /* 광고로 연 신년운세(엽전 아님)만 따라온다 */
+    Object.keys(p.ny).forEach(function(id){ var to = p.idMap[id]; if (to && !ny[to]){ ny[to] = p.ny[id]; nyCh = true; } });
+    if (nyCh) store('unsu_ny_open', ny);
+    try { localStorage.removeItem('wj_merge'); } catch(e){}
+    updateSegCount(); pushSnapshot(true);
+    return p.n;
+  }
+  function openMergeSheet(after){
+    var p = mergePlan(); if (!p || !p.n){ if (after) after(); return; }
+    var cell = function(n, l){ return '<div' + (n ? '' : ' class="zero"') + '><b>' + n + '</b><small>' + l + '</small></div>'; };
+    var done = false, fin = function(){ if (done) return; done = true; if (after) setTimeout(after, 280); };
+    openSheet('<div class="sheet-fig">' + uniImg('u-wave') + '</div><h3 id="sheetTitle">이 기기에 저장된 기록이 있어요</h3>' +
+      '<p class="body-text" style="margin:-6px 0 14px">로그인 전에 이 기기에서 만든 기록이에요. 계정에 추가하면 다른 기기에서도 볼 수 있어요.</p>' +
+      '<div class="merge-sum">' + cell(p.list.length, '사주') + cell(p.box.length, '번호') + cell(p.dreams.length, '꿈 기록') + '</div>' +
+      '<div class="view" style="gap:8px"><button class="btn-primary" id="mgGo">계정에 추가하기</button><button class="btn-ghost" id="mgLater">지금은 하지 않기</button></div>' +
+      '<p class="helper" style="text-align:center;margin-top:12px">계정에 이미 있는 기록은 덮어쓰지 않아요. 겹치는 건 빼고 추가해요.<br>엽전·구매 내역은 계정에 있는 기록이 기준이에요.</p>' +
+      '<button class="text-btn" id="mgDrop" style="display:block;margin:4px auto 0">가져오지 않고 지우기</button>');
+    $('mgGo').onclick = function(){ var n = applyMerge(); closeSheet(); toast('이 기기 기록 ' + n + '개를 계정에 추가했어요'); if (currentView === 'box') renderBox(); else if (currentView === 'today') renderToday(); fin(); };
+    $('mgLater').onclick = function(){ closeSheet(); toast('보관함 맨 위에서 언제든 가져올 수 있어요'); if (currentView === 'box') renderBox(); fin(); };
+    $('mgDrop').onclick = function(){ try { localStorage.removeItem('wj_merge'); } catch(e){} closeSheet(); toast('이 기기 기록을 지웠어요'); if (currentView === 'box') renderBox(); fin(); };
+  }
+  function resumeAfterLogin(rs){
+    if (!rs || !rs.k) return;
+    var e = rs.id ? getList().filter(function(x){ return x.id === rs.id; })[0] : null;
+    try {
+      if (rs.k === 'coin') openCoinSheet();
+      else if (rs.k === 'cat' && e && CATS[rs.cat]) openCatLock(e, compute(e), rs.cat);
+      else if (rs.k === 'tk' && e && TAEKIL.PURPOSES[rs.p]) openTaekil(e, compute(e), rs.p);
+    } catch(err){}
   }
   /* 토스페이먼츠 결제창 (SDK v2, API 개별 연동 키) */
   var tossLoad = null;
@@ -1160,7 +1221,8 @@
   }
   function srvInit(){
     var q = {}; try { new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; }); } catch(e){}
-    var back = null; try { back = sessionStorage.getItem('wj_back'); sessionStorage.removeItem('wj_back'); } catch(e){}
+    var back = null, rs = null; try { back = sessionStorage.getItem('wj_back'); sessionStorage.removeItem('wj_back'); } catch(e){}
+    if (back && back.charAt(0) === '{'){ try { rs = JSON.parse(back); back = rs.tab || 'today'; } catch(e){ back = null; } }
     if (q.login || q.pay){ try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){} }
     if (NS || !/^https?:$/.test(location.protocol)) return;
     api('/api/me').then(function(r){
@@ -1169,19 +1231,30 @@
       var a = store('unsu_auth');
       if (r.user){
         var lp = (q.login === 'kakao' || q.login === 'google') ? q.login : '';
+        var hadLocal = !!getMe();
         var fromServer = applySrvUser(r.user, !!lp);
         updateSegCount(); updateTopbar();
-        if (lp) toast(q['new'] ? PROV[lp] + '로 가입했어요 · 가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요' : fromServer ? '다시 오셨네요! 계정의 기록을 불러왔어요' : PROV[lp] + ' 계정으로 로그인했어요');
+        var carried = lp && hadLocal && !fromServer;   /* 빈 계정 + 이 기기 기록 → 그대로 계정에 올렸다 */
+        if (lp) toast(q['new'] ? PROV[lp] + '로 가입했어요 · ' + (carried ? '이 기기 기록도 계정에 옮겼어요' : '가입 선물 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 받았어요') : fromServer ? '다시 오셨네요! 계정의 기록을 불러왔어요' : carried ? '로그인했어요 · 이 기기 기록을 계정에 저장했어요' : PROV[lp] + ' 계정으로 로그인했어요');
         if (lp && q['new']) setTimeout(function(){ coinBurst(SIGNUP_COINS, '가입 환영 선물'); }, 500);   /* 처음 가입하면 엽전이 뾰롱 */
         if (q.pay === 'ok') toast(q.pass ? '우니 패스가 시작됐어요 · ' + passEndStr() + '까지 전부 열려요' : '엽전 ' + (+q.n || 0).toLocaleString() + '닢을 충전했어요');
         if (fromServer || q.login) { if (currentView === 'today' || !currentView) renderToday(); }
         if (back === 'coin' || q.pay) setTimeout(function(){ openCoinSheet(q.pay === 'fail' ? '결제가 완료되지 않았어요' + (q.code && q.code !== 'PAY_PROCESS_CANCELED' && q.code !== 'USER_CANCEL' ? ' (' + q.code + ')' : '') + '. 다시 시도해 주세요.' : undefined); }, 400);
-        else if (back && back !== 'today' && q.login) go(back === 'my' ? 'today' : back);
+        else if (back && q.login){
+          if (back !== 'today' || currentView !== 'today') go(back === 'my' ? 'today' : back);
+          var after = function(){ resumeAfterLogin(rs); };
+          if (lp && pendingMergeCount()) setTimeout(function(){ openMergeSheet(after); }, 700); else setTimeout(after, 450);
+        }
+        else if (lp && pendingMergeCount()) setTimeout(function(){ openMergeSheet(); }, 700);
       } else {
         if (a && a.srv){ store('unsu_auth', null); clearData(); updateSegCount(); updateTopbar(); renderToday(); toast('로그인이 만료됐어요. 다시 로그인하면 기록이 돌아와요'); }
         else if (a && !a.srv){ store('unsu_auth', null); store('unsu_account', null); updateTopbar(); }   /* 미리보기 시절 가짜 로그인 정리 — 기기 데이터는 그대로 */
         if (q.login === 'cancel') toast('로그인을 취소했어요');
         else if (q.login === 'error') toast('로그인 중 문제가 생겼어요. 다시 시도해 주세요');
+        if (back && (q.login === 'cancel' || q.login === 'error')){   /* 취소해도 보던 화면 그대로 */
+          if (back !== 'today') go(back === 'my' ? 'today' : back);
+          setTimeout(function(){ resumeAfterLogin(rs); }, 450);
+        }
       }
     }).catch(function(){});
   }
@@ -1393,7 +1466,7 @@
       '<button class="btn-primary btn-block" id="csPass"' + (payReady() || NS ? '' : ' disabled') + '>' + (payReady() ? PASS.p.toLocaleString() + '원 결제하고 바로 쓰기' : NS ? '예시 모드에서는 결제할 수 없어요' : '결제 준비 중') + '</button></div>';
   }
   function openCoinSheet(reason){
-    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·우니 꾹 뽑기로 더 모으고, 분야별 운세·꿈 해몽·번호 한 줄 더에 쓸 수 있어요.'); return; }
+    if (isGuest()){ openLoginSheet('처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 엽전은 출석·우니 꾹 뽑기로 더 모으고, 분야별 운세·꿈 해몽·번호 한 줄 더에 쓸 수 있어요.', { k:'coin' }); return; }
     var log = store('unsu_coinlog'); if (!Array.isArray(log)) log = [];
     var a = getAtt(), doneToday = !!a.days[todayStr()], left = 7 - (streakOf(a) % 7), used = adCount();
     var won = function(n){ return n.toLocaleString() + '원'; };
@@ -2362,7 +2435,7 @@
       passLinkHTML() + '<button class="btn-primary btn-block" id="clBuy">' + (guest ? '로그인하고 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢 받기' : short ? '엽전 충전하러 가기' : (passActive() ? '우니 패스로 열기' : COIN_SVG + '엽전 ' + CAT_COST + '닢으로 열기')) + '</button>' +
       '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 바로 받은 엽전으로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (CAT_COST - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · 열면 오늘 하루 계속 볼 수 있어요') + '</p></div>');
     $('clBuy').onclick = function(){
-      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 분야별 운세는 분야당 ' + CAT_COST + '닢이에요.'); return; }
+      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 분야별 운세는 분야당 ' + CAT_COST + '닢이에요.', { k:'cat', id:entry.id, cat:cat }); return; }
       if (short){ openCoinSheet('분야별 운세를 열려면 엽전이 ' + (CAT_COST - coins) + '닢 더 필요해요.'); return; }
       spendCoins(CAT_COST, C.name + ' 열기', 'cat:' + (entry.id || '') + ':' + cat + ':' + todayStr(), function(){ setCatPaid(cat); openCat(entry, r, cat); });
     };
@@ -2527,7 +2600,7 @@
       if (b.closest('.tk-av-list')) $('tkDay').scrollIntoView({ block:'nearest', behavior:reduceMotion ? 'auto' : 'smooth' });
     }; });
     if ($('tkBuy')) $('tkBuy').onclick = function(){
-      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 중요한 날 1년 전체 보기는 ' + COST.tk + '닢이에요.'); return; }
+      if (guest){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 중요한 날 1년 전체 보기는 ' + COST.tk + '닢이에요.', { k:'tk', id:entry.id, p:TK.p }); return; }
       if (short){ openCoinSheet('1년 전체를 열려면 엽전이 ' + (COST.tk - coins) + '닢 더 필요해요.'); return; }
       spendCoins(COST.tk, '중요한 날 잡기 · ' + P.short, 'tk:' + (entry.id || '') + ':' + TK.p, function(){
         setTkOpen(entry, TK.p);
@@ -2893,6 +2966,7 @@
   function renderBox(){
     var me = getMe(), box = getBox(), dreams = getDreams(), h = NS ? demoBarHTML() : '';
     h += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
+    h += saveStateHTML();
     h += winCheckHTML(box);
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">저장한 번호</h2><span class="sec-meta">' + box.length + '줄</span></div>';
     if (!box.length) h += '<div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 비어 있어요. 번호 뽑기에서 ‘보관함에 저장’을 누르면 여기에 모여요.</p></div><button class="btn-primary btn-block" id="bxGoNum" style="margin-top:12px">번호 뽑으러 가기</button>';
@@ -2914,9 +2988,8 @@
     h += '</div>';
     h += '<div class="card"><button class="row-link" id="bxList"><span class="ic">' + FEAT_IC.saju + '</span>저장한 사주 목록<span class="chev">›</span></button>' +
       (me ? '<button class="row-link" id="bxMy"><span class="ic">' + FEAT_IC.today + '</span>내 정보 · 엽전 기록<span class="chev">›</span></button>' : '<button class="row-link" id="bxStart"><span class="ic">' + FEAT_IC.today + '</span>내 사주 등록하기<span class="chev">›</span></button>') + '</div>';
-    if (!NS && isGuest() && box.length) h += '<p class="helper" style="text-align:center">지금은 이 기기에만 보관돼요. 로그인하면 기기를 바꿔도 그대로 남아요.</p>';
     $('boxBody').innerHTML = h;
-    bindDemoBar();
+    bindDemoBar(); bindSaveState();
     if ($('bxGoNum')) $('bxGoNum').onclick = function(){ go('num'); };
     if ($('bxGoDream')) $('bxGoDream').onclick = function(){ openDream(); };
     if ($('bxMy')) $('bxMy').onclick = function(){ openMy(); };
@@ -3111,20 +3184,42 @@
   var pendingWelcome = false;
   var PROV = { kakao:'카카오', google:'Google', apple:'Apple' };
   var OK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var CLOUD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8 6 6 0 0 0-11.6 1.6A3.3 3.3 0 0 0 7 18.5z"/><path d="M9.5 14l2 2 3.5-3.6"/></svg>';
+  var PHONE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.8" width="11" height="18.4" rx="2.6"/><path d="M10.5 18h3"/></svg>';
+  /* 저장 상태 한 줄 (보관함 맨 위): 비회원 = 이 기기에만 · 회원 = 계정에 저장됨 */
+  function saveStateHTML(){
+    if (NS) return '';
+    var auth = store('unsu_auth'), pend = pendingMergeCount();
+    if (srvUser() || auth) return '<div class="save-state on"><span class="ss-ic">' + CLOUD_SVG + '</span><span class="ss-t"><b>계정에 저장됨</b><small>' + (PROV[auth.provider] || '') + ' 계정 · 어느 기기에서나 그대로예요</small></span>' +
+      (pend ? '<button class="ss-btn" id="ssMerge">기기 기록 ' + pend + '개 가져오기</button>' : '<button class="ss-btn ghost" id="ssAcct">계정 관리</button>') + '</div>';
+    return '<div class="save-state"><span class="ss-ic">' + PHONE_SVG + '</span><span class="ss-t"><b>이 기기에만 저장 중</b><small>기기를 바꾸거나 방문 기록을 지우면 사라질 수 있어요</small></span><button class="ss-btn" id="ssLogin">계정에 백업</button></div>';
+  }
+  function bindSaveState(){
+    if ($('ssLogin')) $('ssLogin').onclick = function(){ openLoginSheet('보관함의 번호·꿈 기록·저장한 사주를 계정에 옮겨 둘게요. 계정에 이미 있는 기록은 덮어쓰지 않아요.', { tab:'box' }); };
+    if ($('ssAcct')) $('ssAcct').onclick = openSettings;
+    if ($('ssMerge')) $('ssMerge').onclick = function(){ openMergeSheet(); };
+  }
   var SHIELD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/></svg>';
 
   function updateTopbar(){
     var me = getMe(), auth = store('unsu_auth');
-    $('startChip').hidden = !!me;
     $('coinChip').hidden = !me;
     $('avatarBtn').hidden = !me;
     if (me) $('avatarTxt').textContent = me.name.charAt(0);
     $('syncDot').hidden = !(auth && !NS);
-    $('setBtn').hidden = !me;
-    $('setDot').hidden = !(me && isGuest());
+    /* 상단 우측(2026-11-19 로그인 동선 개편): 비회원 = [로그인] + 설정, 로그인 = 이니셜 아바타(계정·설정) */
+    var member = !NS && !!auth;
+    $('startChip').hidden = true;
+    $('loginChip').hidden = NS || member;
+    $('acctBtn').hidden = !member;
+    if (member) $('acctTxt').textContent = ((me && me.name) || auth.nick || '나').charAt(0);
+    $('setBtn').hidden = member || !me;
+    $('setDot').hidden = true;
     renderCoin();
   }
   $('startChip').onclick = function(){ startOnboarding('new'); };
+  $('loginChip').onclick = function(){ openLoginSheet(getMe() ? '지금 기록은 이 기기에만 있어요. 로그인하면 계정에 보관돼서 기기를 바꿔도 그대로예요.' : '이미 쓰던 계정이 있으면 로그인해서 기록을 불러오세요. 처음이면 로그인하면서 바로 가입돼요.'); };
+  $('acctBtn').onclick = openSettings;
   $('avatarBtn').onclick = function(){ openMy(); };
   /* ---- 설정 시트: 상단 오른쪽 버튼 하나로 내 정보·엽전·우니·쿠폰·글자 크기·앱 정보 ---- */
   var SET_IC = {
@@ -3137,7 +3232,17 @@
     user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.6"/><path d="M5.5 19.5c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke-linecap="round"/></svg>'
   };
   function openSettings(){
-    var me = getMe(); if (!me){ startOnboarding('new'); return; }
+    var me = getMe();
+    if (!me && srvUser()){   /* 로그인은 했는데 아직 내 사주가 없을 때(새 기기·새 계정) */
+      var au = store('unsu_auth');
+      openSheet('<h3 id="sheetTitle">내 계정</h3><div class="save-state on"><span class="ss-ic">' + CLOUD_SVG + '</span><span class="ss-t"><b>' + esc(au.nick || '우니조아 사용자') + '</b><small>' + PROV[au.provider] + ' 계정으로 로그인됨 · 엽전 ' + getCoins().toLocaleString() + '닢</small></span></div>' +
+        '<p class="body-text" style="margin:12px 0 16px">아직 내 사주가 없어요. 생년월일을 넣으면 오늘의 운세와 내 번호가 시작되고, 계정에 바로 보관돼요.</p>' +
+        '<div class="view" style="gap:8px"><button class="btn-primary" id="stStart">내 사주 등록하기</button><button class="btn-ghost" id="stLogout">로그아웃</button></div>' + bizFootHTML());
+      $('stStart').onclick = function(){ startOnboarding('new'); };
+      $('stLogout').onclick = function(){ closeSheet(); doLogout(); };
+      return;
+    }
+    if (!me){ startOnboarding('new'); return; }
     var p = getPet(), cps = getCoupons().length, guest = isGuest(), auth = store('unsu_auth');
     var row = function(id, ic, label, val, cls){ return '<button class="st-row' + (cls ? ' ' + cls : '') + '" id="' + id + '"><span class="st-ic">' + ic + '</span><span class="st-l">' + label + '</span><span class="st-v">' + val + '</span><span class="chev">›</span></button>'; };
     var h = '<h3 id="sheetTitle" class="sr-only">설정</h3>' +
@@ -3236,7 +3341,8 @@
       '<div class="wel-sample" aria-label="예시 번호 카드"><span class="ws-badge">예시</span><div class="ws-top"><b>김운수님의 오늘 번호</b><small>수(水) 기운 · 행운 숫자 1·6</small></div>' +
         '<div class="balls">' + [6,11,16,21,31,41].map(function(n, i){ return '<div class="ball' + (i === 1 || i === 4 ? ' yong el-water' : '') + '">' + n + '</div>'; }).join('') + '</div></div>' +
       '<ol class="wel-steps"><li><b>1</b>생년월일 입력</li><li><b>2</b>번호 뽑기</li><li><b>3</b>보관함에 저장</li></ol>' +
-      '<div class="wel-cta"><button class="btn-primary btn-block sheen" id="btnWelStart">내 행운 번호 무료로 뽑기</button><button class="text-btn" id="btnWelDemo">예시로 먼저 둘러보기</button></div></div>';
+      '<div class="wel-cta"><button class="btn-primary btn-block sheen" id="btnWelStart">내 행운 번호 무료로 뽑기</button><button class="text-btn" id="btnWelDemo">예시로 먼저 둘러보기</button>' +
+        (isGuest() ? '<p class="wel-login">이미 쓰던 계정이 있나요? <button type="button" id="btnWelLogin">로그인</button></p>' : '') + '</div></div>';
     if (acc && acc.snapshot && acc.snapshot.unsu_me){
       var rl = acc.snapshot.unsu_att && acc.snapshot.unsu_att.days ? Object.keys(acc.snapshot.unsu_att.days).length : 0;
       h += '<div class="card return-card"><div><div style="font-size:calc(15px*var(--fs));color:#fff;font-weight:600">다시 오셨네요, ' + esc(acc.nick) + '님</div><p class="helper">' + PROV[acc.provider] + ' 계정에 출석 ' + rl + '일 · 엽전 ' + (acc.snapshot.unsu_coin || 0) + '닢이 보관돼 있어요.</p></div><button class="btn-soft" id="btnWelReturn" style="padding:10px 14px;font-size:calc(13px*var(--fs))">로그인</button></div>';
@@ -3263,6 +3369,7 @@
     $('ftToday').onclick = function(){ openDream(); };
     if ($('btnWelStart')) $('btnWelStart').onclick = function(){ startOnboarding('new'); };
     if ($('btnWelDemo')) $('btnWelDemo').onclick = function(){ enterDemo('today'); };
+    if ($('btnWelLogin')) $('btnWelLogin').onclick = function(){ openLoginSheet('이전에 쓰던 계정으로 로그인하면 사주·번호·엽전을 그대로 불러와요.'); };
     if ($('btnInvStart')) $('btnInvStart').onclick = function(){ startOnboarding('new'); };
     if ($('btnInvSkip')) $('btnInvSkip').onclick = function(){ clearInvite(); renderWelcome(); window.scrollTo(0, 0); };
     $('ftSaju').onclick = function(){ show('input'); };
@@ -3533,7 +3640,7 @@
     if ($('btnLogoutOk')) $('btnLogoutOk').onclick = doLogout;
     if ($('btnWithdraw')) $('btnWithdraw').onclick = openWithdrawSheet;
     $('myBody').querySelectorAll('[data-mc]').forEach(function(b){ b.onclick = function(){ myConfirm = null; renderMy(); }; });
-    $('myBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ if (!getConsent() || !getConsent().terms){ openConsentSheet(b.dataset.login); return; } doLogin(b.dataset.login, b); }; });
+    $('myBody').querySelectorAll('[data-login]').forEach(function(b){ b.onclick = function(){ LOGIN_RESUME = null; if (!getConsent() || !getConsent().terms){ openConsentSheet(b.dataset.login); return; } doLogin(b.dataset.login, b); }; });
   }
 
   /* =========================================================
@@ -3742,8 +3849,11 @@
   function objJosa(w){ var c = String(w).charCodeAt(String(w).length - 1); return w + ((c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? '을' : '를'); }
   /* 받침에 따라 은/는 */
   function topic(w){ var c = String(w).charCodeAt(String(w).length - 1); return w + ((c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? '은' : '는'); }
-  function openLoginSheet(reason){
+  /* 로그인하러 갔다 오면(페이지 이동) 원래 보던 탭과 잠금 화면으로 돌려보낸다: { tab, k:'cat'|'tk'|'coin', … } */
+  var LOGIN_RESUME = null;
+  function openLoginSheet(reason, resume){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
+    LOGIN_RESUME = resume || null;
     openSheet('<div class="sheet-fig">' + uniImg('u-wave') + '</div><h3 id="sheetTitle">로그인하고 기록 지키기</h3>' + (reason ? '<p class="body-text" style="margin:-6px 0 14px">' + reason + '</p>' : '') +
       '<ul class="benefits"><li>' + OK_SVG + '<span><b>처음 로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요</span></li><li>' + OK_SVG + '<span>기기를 바꿔도 출석·엽전이 그대로예요</span></li><li>' + OK_SVG + '<span>저장한 사주와 궁합 리포트가 계정에 보관돼요</span></li></ul>' +
       '<div class="view" style="gap:8px;margin-top:18px">' + loginBtnsHTML() +
@@ -3754,7 +3864,8 @@
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
     if (srvOn()){   /* 실제 로그인: 동의 화면 → /auth/<provider>/callback → /?login=<provider> 로 돌아온다 */
       if (btn){ btn.disabled = true; btn.textContent = PROV[provider] + '로 이동 중…'; }
-      try { sessionStorage.setItem('wj_back', currentTab || 'today'); } catch(e){}
+      var rs = Object.assign({}, LOGIN_RESUME || {}); rs.tab = rs.tab || currentTab || 'today'; LOGIN_RESUME = null;
+      try { sessionStorage.setItem('wj_back', JSON.stringify(rs)); } catch(e){}
       location.href = '/auth/' + (provider === 'google' ? 'google' : 'kakao');
       return;
     }
@@ -3778,9 +3889,10 @@
   }
   function doLogout(){
     if (srvUser()){
+      var prov = (store('unsu_auth') || {}).provider;
       pushSnapshot(true).then(function(){ return api('/api/auth?a=logout', { method:'POST', body:{} }); }).catch(function(){}).then(function(){
-        store('unsu_auth', null); try { localStorage.removeItem('unsu_syncat'); } catch(e){} clearData();
-        updateSegCount(); updateTopbar(); go('today'); toast('로그아웃했어요. 카카오로 다시 로그인하면 기록이 돌아와요');
+        store('unsu_auth', null); try { localStorage.removeItem('unsu_syncat'); localStorage.removeItem('wj_merge'); } catch(e){} clearData();
+        updateSegCount(); updateTopbar(); go('today'); toast('로그아웃했어요. ' + (PROV[prov] || '같은 계정') + '로 다시 로그인하면 기록이 돌아와요');
       });
       return;
     }
