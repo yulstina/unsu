@@ -1204,13 +1204,28 @@
     if (window.TossPayments) return Promise.resolve();
     return tossLoad || (tossLoad = new Promise(function(ok, no){ var sc = document.createElement('script'); sc.src = 'https://js.tosspayments.com/v2/standard'; sc.onload = ok; sc.onerror = function(){ tossLoad = null; no(); }; document.head.appendChild(sc); }));
   }
+  /* 포트원 V2 결제창 (PC는 응답 객체, 모바일은 redirectUrl 로 복귀) */
+  var portoneLoad = null;
+  function loadPortone(){
+    if (window.PortOne) return Promise.resolve();
+    return portoneLoad || (portoneLoad = new Promise(function(ok, no){ var sc = document.createElement('script'); sc.src = 'https://cdn.portone.io/v2/browser-sdk.js'; sc.onload = ok; sc.onerror = function(){ portoneLoad = null; no(); }; document.head.appendChild(sc); }));
+  }
   function startCharge(k, btn){
     var label = btn.innerHTML; btn.disabled = true; btn.textContent = '결제창 여는 중…';
     var reset = function(){ btn.disabled = false; btn.innerHTML = label; };
-    Promise.all([api('/api/pay?a=order', { method:'POST', body:{ pack:k.id } }), loadToss()]).then(function(a){
+    var pp = SRV.cfg.pay.provider === 'portone';
+    Promise.all([api('/api/pay?a=order', { method:'POST', body:{ pack:k.id } }), pp ? loadPortone() : loadToss()]).then(function(a){
       var o = a[0]; if (!o.ok) throw o;
-      var pay = window.TossPayments(SRV.cfg.pay.clientKey).payment({ customerKey:o.customerKey });
       try { sessionStorage.setItem('wj_back', 'coin'); } catch(e){}
+      if (pp){
+        var c = SRV.cfg.pay;
+        return window.PortOne.requestPayment({ storeId:c.storeId, channelKey:c.channelKey, paymentId:o.orderId, orderName:o.orderName,
+          totalAmount:o.amount, currency:'CURRENCY_KRW', payMethod:'CARD', redirectUrl:location.origin + '/pay/success' }).then(function(r){
+          if (r && r.code){ if (/CANCEL/i.test(r.code + (r.message || ''))) return; var er = new Error(r.message || r.code); throw er; }
+          location.href = '/pay/success?paymentId=' + encodeURIComponent(o.orderId);   /* PC: 응답을 받으면 서버 확인 페이지로 */
+        });
+      }
+      var pay = window.TossPayments(SRV.cfg.pay.clientKey).payment({ customerKey:o.customerKey });
       return pay.requestPayment({ method:'CARD', amount:{ currency:'KRW', value:o.amount }, orderId:o.orderId, orderName:o.orderName,
         successUrl:location.origin + '/pay/success', failUrl:location.origin + '/?pay=fail', card:{ flowMode:'DEFAULT' } });
     }).then(reset, function(e){
@@ -1481,7 +1496,7 @@
           '<span class="cs-p">' + won(k.p) + '<small>1닢 ' + (k.p / (k.n + k.b)).toFixed(1) + '원</small></span></button>';
       }).join('') + '</div>' +
       '<button class="btn-primary btn-block" id="csBuy"></button>' +
-      '<p class="helper" style="text-align:center;margin:8px 0 18px">' + (payReady() ? (SRV.cfg.pay.test ? '<b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요 · ' : '') + '토스페이먼츠로 결제돼요 · 결제하면 <button class="link-btn" data-doc="refund">환불 정책</button>에 동의하는 것으로 봐요. 7일 안에 쓰지 않은 충전은 전액 환불돼요' : '카드 결제를 연결하고 있어요. 열리기 전까지는 아래 방법으로 무료로 모을 수 있어요.') + '</p>' +
+      '<p class="helper" style="text-align:center;margin:8px 0 18px">' + (payReady() ? (SRV.cfg.pay.test ? '<b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요 · ' : '') + '안전한 PG사 결제창으로 결제돼요 · 결제하면 <button class="link-btn" data-doc="refund">환불 정책</button>에 동의하는 것으로 봐요. 7일 안에 쓰지 않은 충전은 전액 환불돼요' : '카드 결제를 연결하고 있어요. 열리기 전까지는 아래 방법으로 무료로 모을 수 있어요.') + '</p>' +
       '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
       '<div class="hot"><span>꿈풀이 번호받기</span><b>' + COST.dream + '닢</b><small>꿈 하나 · 번호 6개</small></div>' +
       '<div><span>분야별 운세</span><b>' + COST.cat + '닢</b><small>분야 하나 · 오늘 하루</small></div>' +

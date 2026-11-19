@@ -14,7 +14,11 @@ function cfg(){
   return {
     on: S.CONF.db,
     login: { kakao: S.CONF.kakao, google: S.CONF.google },
-    pay: { on: S.CONF.pay, clientKey: S.CONF.pay ? ck : null, test: /^test_/.test(ck) },
+    pay: { on: S.CONF.pay, provider: S.CONF.pay ? S.CONF.provider : null,
+           clientKey: S.CONF.pay && S.CONF.provider === 'toss' ? ck : null,
+           storeId: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_STORE_ID : null,
+           channelKey: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_CHANNEL_KEY : null,
+           test: S.CONF.payTest },
     packs: PACKS,
     passes: PASSES, passDreamMax: PASS_DREAM_MAX,
     adCoin: AD_COIN_ON
