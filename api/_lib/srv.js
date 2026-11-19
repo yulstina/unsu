@@ -5,15 +5,25 @@
      KAKAO_REST_KEY, KAKAO_CLIENT_SECRET     카카오 로그인 (CLIENT_SECRET 은 콘솔에서 켰을 때만)
      KAKAO_ADMIN_KEY                         (선택) 탈퇴 시 카카오 연결 끊기
      TOSS_CLIENT_KEY, TOSS_SECRET_KEY        토스페이먼츠 (API 개별 연동 키 · test_ck_ / test_sk_ 로 시작하면 테스트 결제)
+     PAY_LIVE                                실결제 스위치. 라이브 키(live_ck_)는 PAY_LIVE=1 이고 개업일(2026-12-04 KST) 이후일 때만 켜진다. 테스트 키는 항상 켜짐
+     PAY_OFF                                 비상 스위치. 1 이면 키가 있어도 결제를 전부 '준비 중'으로 되돌린다
    하나라도 비어 있으면 그 기능만 꺼지고, 앱은 예전처럼 기기 저장 모드로 동작한다. */
 const crypto = require('crypto');
 
 const E = process.env;
+const PAY_OPEN_AT = Date.parse('2026-12-04T00:00:00+09:00');   /* 개업일(사업자등록) 전에는 실결제 금지 */
 const CONF = {
   db: !!(E.SUPABASE_URL && E.SUPABASE_SERVICE_KEY && E.SESSION_SECRET),
   get kakao(){ return this.db && !!E.KAKAO_REST_KEY; },
   get google(){ return this.db && !!(E.GOOGLE_CLIENT_ID && E.GOOGLE_CLIENT_SECRET); },
-  get toss(){ return this.db && !!(E.TOSS_CLIENT_KEY && E.TOSS_SECRET_KEY); }
+  get toss(){ return this.db && !!(E.TOSS_CLIENT_KEY && E.TOSS_SECRET_KEY); },
+  /* 결제가 열려 있는가 — 화면(me.js 의 cfg.pay.on)과 주문 API(pay.js)가 이 한 곳만 본다.
+     키가 있고, 비상 스위치(PAY_OFF)가 꺼져 있고, 테스트 키이거나(돈이 안 나감) 라이브 키 + PAY_LIVE=1 + 개업일 이후일 때만 true */
+  get pay(){
+    if (!this.toss || E.PAY_OFF === '1') return false;
+    if (/^test_/.test(E.TOSS_CLIENT_KEY)) return true;
+    return E.PAY_LIVE === '1' && Date.now() >= PAY_OPEN_AT;
+  }
 };
 
 /* ---- Supabase PostgREST ---- */

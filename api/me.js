@@ -14,7 +14,7 @@ function cfg(){
   return {
     on: S.CONF.db,
     login: { kakao: S.CONF.kakao, google: S.CONF.google },
-    pay: { on: S.CONF.toss, clientKey: S.CONF.toss ? ck : null, test: /^test_/.test(ck) },
+    pay: { on: S.CONF.pay, clientKey: S.CONF.pay ? ck : null, test: /^test_/.test(ck) },
     packs: PACKS,
     passes: PASSES, passDreamMax: PASS_DREAM_MAX,
     adCoin: AD_COIN_ON
