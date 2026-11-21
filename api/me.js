@@ -22,7 +22,8 @@ function cfg(){
     packs: COIN_SALE ? PACKS : null,   /* 엽전 판매는 기본 꺼짐(2026-11-21) */
     won: WON, wonNames: WON_NAMES, wonSale: WON_SALE,
     passes: PASS_SALE ? PASSES : null, passDreamMax: PASS_DREAM_MAX,
-    adCoin: AD_COIN_ON
+    adCoin: AD_COIN_ON,
+    nums: process.env.LUCKY_NUMS !== '0'   /* 부적·꿈 처방의 행운 숫자. PG 심사 중 숨기려면 LUCKY_NUMS=0 */
   };
 }
 

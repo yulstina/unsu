@@ -2247,6 +2247,36 @@
   /* 하단 탭: 라벨 항상 보이기 (스크롤해도 접지 않음) */
   body.tb-min .tab span{max-height:18px;opacity:1;}
   body.tb-min .tab{padding-block:7px 6px;}
+  /* ===== 2026-11-22 소율: 이야기책을 다른 화면과 같은 밤하늘 톤으로, PC에서는 앱 기둥 폭 안에 ===== */
+  .story-ov{background:#121020;color:#F6F2FC;left:0;right:0;margin-inline:auto;max-width:var(--app-w,460px);box-shadow:0 0 0 1px #2A243E;}
+  .sb-x{background:rgba(206,190,255,.12);color:#F6F2FC;}
+  .sb-dots i{background:rgba(206,190,255,.16);}.sb-dots i.on{background:#CEBEFF;}.sb-dots i.done{background:#8f7fd0;}
+  .sb-no{color:#BCB4CF;}
+  .sb-chn{color:#CEBEFF;}.sb-t{color:#F6F2FC;}
+  .sb-page p{color:#ddd6ee;}.sb-page b{color:#fff;}
+  .sb-h,.sb-h2{color:#CEBEFF!important;}
+  .sb-note,.sb-who,.sb-at{color:#BCB4CF!important;}
+  .sb-tree div,.sb-pil,.sb-ss,.sb-now,.sb-du .du{background:#201C30;color:#F6F2FC;box-shadow:inset 0 0 0 1px #423851;}
+  .sb-pil.sb-empty{background:rgba(32,28,48,.55);}
+  .sb-tree span,.sb-ph span,.sb-pow span,.sb-du .age{color:#BCB4CF;}
+  .sb-du .du.now{box-shadow:inset 0 0 0 2px #CEBEFF;}
+  .sb-pow>div{border-bottom-color:#423851;}
+  .sb-pow i{background:rgba(206,190,255,.15);}.sb-pow i.on{background:#CEBEFF;}
+  .sb-gl .el-wood{color:#5fd08a}.sb-gl .el-fire{color:#ff7a6b}.sb-gl .el-earth{color:#f6cd5b}.sb-gl .el-metal{color:#eef1f8}.sb-gl .el-water{color:#6c9dff}
+  .sb-ss .chip{background:#2A243E;color:#CEBEFF;}
+  .sb-tag{background:#CEBEFF;color:#21163B;}
+  .sb-letter{background:#271F38;border-color:#8f7fd0;}
+  .sb-blur i{background:#4d4468;}
+  .sb-lockbox{background:rgba(32,28,48,.96);box-shadow:inset 0 0 0 1px #423851,0 8px 24px rgba(0,0,0,.4);}
+  .sb-lockbox svg{color:#CEBEFF;}.sb-lockbox b{color:#F6F2FC;}.sb-lockbox .helper{color:#BCB4CF;}
+  .sb-nav .btn-ghost{color:#F6F2FC;border-color:#423851;}
+  .sb-page .btn-soft{background:#2A243E;color:#CEBEFF;}
+  .card.sb-cover{background:linear-gradient(160deg,#30254a,#201C30)!important;color:#F6F2FC;box-shadow:inset 0 0 0 1px #423851,0 10px 28px rgba(0,0,0,.28);}
+  .sb-ck{color:#CEBEFF;}.sb-ct{color:#F6F2FC;}.sb-cl{color:#ddd6ee;}.sb-cl li:before{color:#CEBEFF;}.sb-cover .helper{color:#BCB4CF;}
+  /* 엽전 안내: 비로그인 */
+  .cs-guest{margin:14px 0 18px;padding:14px;border-radius:16px;background:rgba(206,190,255,.08);box-shadow:inset 0 0 0 1px rgba(206,190,255,.18);}
+  .cs-guest p{margin:0 0 10px;font-size:calc(13.5px*var(--fs));line-height:1.6;color:var(--text-body);}
+  .tl-numnote{margin:8px 2px 0;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
