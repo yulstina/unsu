@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
     if (b.n !== undefined && Math.round(Number(b.n)) !== -price) return S.send(res, 409, { ok: false, err: 'price', price });
     args = { p_delta: -price, p_daily_max: null };
     ikey = 'spend:' + m[0];
-    /* 우니 패스 기간: 엽전 대신 0닢으로 기록만 남긴다(구매 기록·중복 방지는 그대로). 꿈 번호는 하루 한도, 넘으면 엽전으로 */
+    /* 우니 패스 기간: 엽전 대신 0닢으로 기록만 남긴다(구매 기록·중복 방지는 그대로). 꿈 풀이 리포트는 하루 한도, 넘으면 엽전으로 */
     try {
       if (await passUntil(uid) > Date.now()){
         const dream = m[1] === 'dream';

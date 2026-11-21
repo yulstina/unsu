@@ -1,6 +1,6 @@
 <title>우니조아</title>
 <meta name="theme-color" content="#0d0b1e">
-<meta name="description" content="만세력 기반 사주 풀이와 별자리 운세, 행운 번호까지 한 번에 보는 모바일 웹앱">
+<meta name="description" content="만세력 기반 사주 풀이와 별자리 운세, 꿈해몽, 행운 부적까지 한 번에 보는 모바일 웹앱">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -853,6 +853,30 @@
   .doc-sheet h4{margin:16px 0 6px;font-size:calc(15px*var(--fs));color:#fff;} .doc-sheet p,.doc-sheet li{font-size:calc(14.5px*var(--fs));line-height:1.7;color:var(--text-muted);}
   .doc-sheet .todo{display:inline-block;background:rgba(255,154,138,.12);color:#ffb4a8;border-radius:6px;padding:1px 7px;font-size:calc(12.5px*var(--fs));}
   /* 행운 추첨기 */
+
+  /* ---------- 행운 탭 · 행운 부적 (2026-11-21) ---------- */
+  .lk-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .lk-chip{min-width:52px;height:46px;padding:0 14px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:calc(19px*var(--fs));
+    color:var(--elc,#f5d48a);background:color-mix(in srgb,var(--elc,#f5d48a) 14%,transparent);box-shadow:inset 0 0 0 1.5px var(--elc,#f5d48a);}
+  .lk-row.sm .lk-chip{min-width:38px;height:34px;padding:0 10px;font-size:calc(14.5px*var(--fs));border-radius:11px;}
+  .pouch-card{align-items:center;text-align:center;gap:14px;}
+  .pouch-fig{width:min(54vw,210px);margin:6px auto 0;}
+  .pouch-fig img{width:100%;height:auto;display:block;}
+  .pouch-fig.shake{animation:pouchShake .62s ease-in-out;}
+  @keyframes pouchShake{0%,100%{transform:rotate(0)}15%{transform:rotate(-9deg) scale(1.04)}35%{transform:rotate(8deg) scale(1.07)}55%{transform:rotate(-6deg) scale(1.1)}75%{transform:rotate(4deg) scale(1.12)}}
+  .talisman{gap:12px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--elc,#f5d48a) 45%,transparent),var(--glass-edge,0 0 0 transparent);}
+  .tl-k{font-size:calc(12px*var(--fs));color:var(--text-muted);letter-spacing:.02em;}
+  .tl-head{font-family:var(--font-display);font-size:calc(19px*var(--fs));line-height:1.4;color:#fff;margin:0;}
+  .tl-rows{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .tl-row{display:flex;flex-direction:column;gap:4px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.06);}
+  .tl-row .k{font-size:calc(11.5px*var(--fs));color:var(--text-helper);}
+  .tl-row b{font-size:calc(14.5px*var(--fs));color:#fff;font-weight:600;line-height:1.4;}
+  .tl-row.tl-nums,.tl-row.tl-wide{grid-column:1/-1;}
+  .tl-row.tl-nums .lk-row{justify-content:flex-start;margin-top:2px;}
+  .dm-stars{display:flex;gap:3px;} .dm-stars i{font-style:normal;color:rgba(255,255,255,.2);font-size:calc(18px*var(--fs));} .dm-stars i.on{color:#f5d48a;}
+  .dmu-lock{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;filter:blur(.3px);} .dmu-lock span{padding:6px 12px;border-radius:999px;font-size:calc(12.5px*var(--fs));color:rgba(255,255,255,.7);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+  .wel-sample .lk-row{justify-content:flex-start;}
+  .bx-row .lk-row{grid-area:balls;justify-content:flex-start;}
   .machine-card{align-items:stretch;}
   .mc-canvas{display:block;border-radius:12px;}
   .num-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 2px 0;}
@@ -1988,7 +2012,7 @@
   <div class="pc-woni" id="pcWoni"></div>
   <h2>내 사주로 여는<br><em>오늘의 운</em></h2>
   <p>생년월일만 알려 주면 만세력으로 여덟 글자를 풀고, 매일 오늘의 운세를 챙겨 드려요.</p>
-  <ul><li>매일 바뀌는 오늘의 운세와 분야별 점수</li><li>어려운 말 없이 읽는 사주 풀이와 궁합</li><li>내 사주로 뽑는 행운 번호</li></ul>
+  <ul><li>매일 바뀌는 오늘의 운세와 분야별 점수</li><li>어려운 말 없이 읽는 사주 풀이와 궁합</li><li>꿈해몽과 매일 열어보는 행운 부적</li></ul>
 </aside>
 <aside class="pc-side r" aria-hidden="true">
   <div class="pc-qr"><div class="pc-qr-box" id="pcQr"></div><b>휴대폰으로 보기</b><small>카메라로 찍으면<br>같은 화면이 열려요</small></div>
@@ -2170,22 +2194,9 @@
     <div id="ghBody" class="view"></div>
   </section>
 
-  <!-- ================= 번호 채우기 ================= -->
+  <!-- ================= 행운 탭 ================= -->
   <section class="view" id="v-fill" hidden>
     <div id="numToday" class="view"></div>
-    <div class="card" id="pickCard" hidden>
-      <p class="helper">최대 6개까지 고르면 나머지는 자동으로 채워 드려요.</p>
-      <div class="number-grid" id="numberGrid"></div>
-      <div class="fill-status"><b id="fillCount">0</b>/6 선택됨</div>
-      <div class="row">
-        <button class="btn-primary grow" id="btnAutofill">나머지 자동 채우기</button>
-        <button class="btn-ghost" id="btnResetGrid">초기화</button>
-      </div>
-      <div class="balls" id="ballsFill" hidden></div>
-      <p class="fill-compare" id="fillCompare" hidden></p>
-      <div class="row" id="fillResultActions" hidden><button class="btn-ghost grow" id="btnCopyFill">결과 복사</button></div>
-      <p class="disclaimer" id="fillDisclaimer" hidden>재미로 즐기는 콘텐츠이며 실제 당첨을 보장하지 않습니다.</p>
-    </div>
   </section>
 
   <!-- ================= 보관함 ================= -->
@@ -2193,7 +2204,7 @@
     <div id="boxBody" class="view"></div>
   </section>
 
-  <!-- ================= 꿈 해몽 번호 ================= -->
+  <!-- ================= 꿈 해몽 ================= -->
   <section class="view" id="v-dream" hidden>
     <div id="dmInput" class="view"></div>
     <div id="dmResult" class="view" hidden></div>
@@ -2204,7 +2215,7 @@
 <nav class="tabbar" aria-label="주요 메뉴">
   <div class="tabbar-inner"><i class="tab-lens" aria-hidden="true"></i>
     <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>홈</span></button>
-    <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2"/></svg><span>번호 뽑기</span></button>
+    <button class="tab" data-tab="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 4.5h7M9 4.5c-.3 2-3.8 3.7-3.8 8.1 0 4 2.9 6.9 6.8 6.9s6.8-2.9 6.8-6.9c0-4.4-3.5-6.1-3.8-8.1"/><path d="M12 11v4M10.2 13h3.6"/></svg><span>행운</span></button>
     <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
     <button class="tab" data-tab="dream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.2A7.8 7.8 0 0 1 9.8 4.5a7.8 7.8 0 1 0 9.7 9.7z"/><path d="M16.2 4.2l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/></svg><span>꿈해몽</span></button>
     <button class="tab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg><span>보관함</span></button>
