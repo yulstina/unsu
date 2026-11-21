@@ -213,7 +213,7 @@
     var r = MS.calc({ y:now.getFullYear(), m:now.getMonth()+1, d:now.getDate(), cal:'solar', hour:now.getHours(), minute:now.getMinutes(), gender:'M', lonCorr:false });
     var yb = r.error ? 6 : r.pillars.year.br;
     var an = MS.BR_ANIMAL[yb];
-    $('heroFig').innerHTML = uniImg('u-gift', 'fig', '행운 복주머니를 든 우니') + '<figcaption>' + (r.error ? '' : r.seun.year + ' ' + r.pillars.year.hanja + ' · ' + r.color + ' ' + an) + '</figcaption>';
+    $('heroFig').innerHTML = uniImg('u-pouch', 'fig', '행운 복주머니를 든 우니') + '<figcaption>' + (r.error ? '' : r.seun.year + ' ' + r.pillars.year.hanja + ' · ' + r.color + ' ' + an) + '</figcaption>';
   })();
 
   /* =========================================================
@@ -238,6 +238,34 @@
     document.body.dataset.view = view; document.body.dataset.tab = currentTab || 'none';
     window.scrollTo(0, 0);
     if (viewChanged) enterFx(VIEWS[view]);
+    if (typeof coachMaybe === 'function') setTimeout(function(){ coachMaybe(view); }, 1100);
+  }
+  /* 처음 온 사람을 위한 안내: 한 번씩만 보여 준다(기기 기준) */
+  function coachOnce(k){ var c = store('unsu_coach') || {}; if (c[k]) return false; c[k] = 1; store('unsu_coach', c); return true; }
+  function coachScroll(text){
+    if (document.querySelector('.coach') || document.documentElement.scrollHeight < window.innerHeight * 1.4) return;
+    var el = document.createElement('div'); el.className = 'coach'; el.setAttribute('role', 'status');
+    el.innerHTML = '<span class="ar">↓</span>' + text; document.body.appendChild(el);
+    var off = function(){ if (!el.isConnected) return; el.classList.add('out'); setTimeout(function(){ el.remove(); }, 400); window.removeEventListener('scroll', onS); };
+    var onS = function(){ if (window.scrollY > 120) off(); };
+    window.addEventListener('scroll', onS, { passive:true }); setTimeout(off, 7000);
+  }
+  function coachTab(tab, text){
+    var b = document.querySelector('.tab[data-tab="' + tab + '"]'); if (!b) return;
+    var rc = b.getBoundingClientRect(), el = document.createElement('div'); el.className = 'coach-tab'; el.textContent = text;
+    el.style.left = (rc.left + rc.width / 2) + 'px'; el.style.bottom = (window.innerHeight - rc.top + 10) + 'px';
+    document.body.appendChild(el);
+    setTimeout(function(){ el.classList.add('out'); setTimeout(function(){ el.remove(); }, 400); }, 5000);
+  }
+  function coachMaybe(view){
+    if (view !== currentView || document.querySelector('.sheet-backdrop:not([hidden])') || document.body.classList.contains('shared-mode')) return;
+    var me = getMe();
+    if (view === 'today' && !me){
+      if (coachOnce('welTab')) coachTab('saju', '생년월일만 넣으면 여기서 사주 시작!');
+      else if (coachOnce('welScroll')) coachScroll('아래로 내리면 띠별 운세도 볼 수 있어요');
+    } else if (view === 'today' && me){ if (coachOnce('home')) coachScroll('아래로 내려 보면 오늘의 점수와 행운 부적이 있어요'); }
+    else if (view === 'result'){ if (coachOnce('result')) coachScroll('천천히 내려 보며 내 사주를 읽어 보세요'); }
+    else if (view === 'fill' && me){ if (coachOnce('lucky') && store('unsu_drawn') !== todayStr()) coachTab('num', '매일 새 복주머니가 생겨요'); }
   }
 
   /* =========================================================
@@ -296,7 +324,7 @@
   var pcMQ = window.matchMedia('(min-width:1100px)'), pcDone = false;
   function initPcSide(){
     if (pcDone || !pcMQ.matches) return; pcDone = true;
-    try { $('pcWoni').innerHTML = uniImg('u-gift', 'fig', '행운 복주머니를 든 우니'); } catch (e){}
+    try { $('pcWoni').innerHTML = uniImg('u-pouch', 'fig', '행운 복주머니를 든 우니'); } catch (e){}
     if (!window.QRCode){ var qs = document.querySelector('.pc-side.r'); if (qs) qs.hidden = true; }
     try { if (window.QRCode) new QRCode($('pcQr'), { text:location.origin + '/', width:232, height:232, colorDark:'#05060f', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); } catch (e){}
   }
@@ -740,6 +768,7 @@
     h += '<p class="body-text"><strong>' + EL_TEXT[fewEl].name + ' ' + minC + '개</strong> — ' + EL_TEXT[fewEl].few + ' 추천 활동: ' + EL_TEXT[r.yong].act + '.</p>';
     h += '</div>';
 
+    h += adSlotHTML('원국과 오행을 본 뒤');
     var ezStart = h.length, ezOpen = owns('ez');
     h += zoneHTML('read', '풀이', '글자들이 말해 주는 것');
     /* --- 십성 --- */
@@ -928,6 +957,7 @@
     return ZODIAC[0];
   }
   var EL_LABEL = { fire:'불', earth:'흙', air:'바람', water:'물' };
+  var ZEL = { fire:1, earth:2, air:0, water:4 };   /* 별자리 원소 → 오행 번호(바람은 나무 기운으로 본다) */
   var myZ = null;
   function renderZGrid(){
     $('zGrid').innerHTML = ZORDER.map(function(n){
@@ -954,7 +984,7 @@
     var zNow = nowD(), zDate = todayStr();
     var doy = Math.floor((zNow - new Date(zNow.getFullYear(), 0, 0)) / 86400000);
     var seed = iso ? iso + '|unknown|' + todayStr() : z.name + '|' + todayStr();
-    var nums = drawYongNumbers(seed, z.el).map(function(o){ return o.n; });
+    var nums = drawYongNumbers(seed, ZEL[z.el]).map(function(o){ return o.n; });
     var h = '<div class="flow-header"><button class="icon-back" id="btnZBack" aria-label="뒤로">‹</button><span class="ttl">별자리 운세 · ' + todayStr() + '</span></div>';
     h += '<div class="poster"><div class="poster-frame">' +
       '<div class="poster-corner l">TWELVE<br>CONSTELLATION</div><div class="poster-corner r">' + z.glyph + '<br>' + EL_LABEL[z.el] + '의 별자리</div>' +
@@ -968,7 +998,7 @@
       '<div class="divider"></div><div class="eyebrow"><span class="line"></span>오늘의 기운<span class="line right"></span></div>' +
       '<p class="body-text">' + FLAVOR[z.el] + '</p><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + ' (매일 바뀌어요)</p>' +
       '<button class="btn-primary btn-block" id="btnZDraw">오늘의 행운 숫자 보기</button>' +
-      '<div id="zNums" hidden class="view" style="gap:14px">' + luckChips(nums, EL_CLASS[z.el]) +
+      '<div id="zNums" hidden class="view" style="gap:14px">' + luckChips(nums, EL_CLASS[ZEL[z.el]] + ' soft') +
       '<div class="row"><button class="btn-ghost grow" id="btnZCopy">결과 복사</button><button class="btn-soft grow" id="btnZShare">공유하기</button></div>' +
       '<p class="disclaimer">재미로 즐기는 운세 콘텐츠예요.</p></div></div>';
     h += adSlotHTML('별자리 운세를 본 뒤');
@@ -1341,7 +1371,11 @@
   var COIN_FX_SVG = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="cfG" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#f0c35b"/><stop offset="1" stop-color="#a8721a"/></radialGradient></defs>' +
     '<circle cx="32" cy="32" r="30" fill="url(#cfG)" stroke="#8a5a12" stroke-width="2"/><circle cx="32" cy="32" r="24" fill="none" stroke="rgba(120,74,10,.55)" stroke-width="2"/>' +
     '<rect x="23" y="23" width="18" height="18" rx="2" fill="#1a1245" stroke="#8a5a12" stroke-width="2"/><path d="M14 20a22 22 0 0 1 14-9" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round"/></svg>';
+  var cfxQ = [], cfxOn = false;
   function coinBurst(n, why){
+    if (cfxOn){ var last = cfxQ[cfxQ.length - 1]; if (last && n < 100 && last.n < 100){ last.n += n; last.why = '엽전 선물'; } else cfxQ.push({ n:n, why:why }); return; }
+    cfxOn = true;
+    var next = function(){ cfxOn = false; var q = cfxQ.shift(); if (q) coinBurst(q.n, q.why); };
     var big = n >= 100, chip = $('setBtn'), cr = chip && !chip.hidden ? chip.getBoundingClientRect() : { left:window.innerWidth - 120, top:24, width:90, height:36 };
     var tx = cr.left + cr.width / 2, ty = cr.top + cr.height / 2;
     var el = document.createElement('div'); el.className = 'cfx' + (big ? ' big' : ''); el.setAttribute('role', 'status');
@@ -1350,7 +1384,7 @@
       '<div class="cfx-txt"><b id="cfxNum">' + (reduceMotion ? label : '+0') + '</b><small>' + esc(why || '') + '</small></div>';
     document.body.appendChild(el);
     var life = big ? 2600 : 1500;
-    if (reduceMotion){ setTimeout(function(){ el.remove(); }, big ? 1600 : 1200); return; }
+    if (reduceMotion){ setTimeout(function(){ el.remove(); next(); }, big ? 1600 : 1200); return; }
     var W2 = window.innerWidth, H2 = window.innerHeight, ox = W2 / 2, oy = big ? H2 * .42 : H2 * .3;
     var main = el.querySelector('.cfx-main');
     if (main) main.animate([{ transform:'translateY(60px) scale(.2) rotateY(0deg)', opacity:0 }, { transform:'translateY(-14px) scale(1.15) rotateY(540deg)', opacity:1, offset:.6 }, { transform:'translateY(0) scale(1) rotateY(720deg)', opacity:1 }], { duration:900, easing:'cubic-bezier(.2,.9,.3,1.1)', fill:'forwards' });
@@ -1371,8 +1405,9 @@
         { transform:'translate(' + (tx - sz / 2) + 'px,' + (ty - sz / 2) + 'px) scale(.35) rotate(540deg)', opacity:.9 }
       ], { duration:900, delay:d0, easing:'cubic-bezier(.4,0,.2,1)', fill:'both' }).onfinish = function(){ c.remove(); if (chip && !chip.hidden){ chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); } };
     })(i);
-    setTimeout(function(){ el.classList.add('out'); setTimeout(function(){ el.remove(); }, 350); }, life);
-    if (big) el.onclick = function(){ el.remove(); };
+    var gone = false, end = function(){ if (gone) return; gone = true; el.remove(); next(); };
+    setTimeout(function(){ el.classList.add('out'); setTimeout(end, 350); }, life);
+    if (big) el.onclick = end;
   }
   function adCount(){ var a = store('unsu_ad'); return a && a.d === todayStr() ? a.n : 0; }
   function useAd(){ store('unsu_ad', { d:todayStr(), n:adCount() + 1 }); }
@@ -2312,11 +2347,12 @@
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
     h += catChipsHTML(f);
+    h += adSlotHTML('오늘 점수를 본 뒤');
     h += todoCardHTML();
     h += petCardHTML();
     h += '<div class="card lt ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
       '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
-      '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>행운의 팁<span class="chev">›</span></button></div>';
+      '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>오늘의 행운 부적 열어 보기<span class="chev">›</span></button></div>';
     var z = getZodiac(r.solar.m, r.solar.d);
     var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
     h += '<div class="card lt"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:var(--text-headline);font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
@@ -2353,14 +2389,7 @@
         cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me],
         card:{ kicker:me.name + '님의 ' + md + ' 운세', head:f.head, rows:[['재물운', f.scores.w], ['연애운', f.scores.l], ['직업운', f.scores.j]] } });
     };
-    $('btnTips').onclick = function(){
-      openSheet('<h3 id="sheetTitle">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 오늘의 행운 팁이에요</h3><div class="tip-list ' + elc + '">' +
-        '<div class="tip"><span class="ic">' + TIP_IC.color + '</span><div><small>행운의 색상</small><b>' + f.tip.color + '</b></div></div>' +
-        '<div class="tip"><span class="ic">' + TIP_IC.item + '</span><div><small>행운의 물건</small><b>' + f.tip.item + '</b></div></div>' +
-        '<div class="tip"><span class="ic">' + TIP_IC.food + '</span><div><small>추천 음식</small><b>' + f.tip.food + '</b></div></div>' +
-        '<div class="tip"><span class="ic">' + TIP_IC.num + '</span><div><small>행운의 숫자</small><b>' + f.tip.nums.join(', ') + '</b><small style="margin-top:3px">오늘의 행운 숫자 ' + nums.map(function(o){ return o.y ? '<b style="font-size:calc(13px*var(--fs));color:var(--elc)">' + o.n + '</b>' : o.n; }).join(' · ') + '</small></div></div>' +
-        '</div><button class="btn-primary btn-block" data-close>확인</button>');
-    };
+    $('btnTips').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     $('btnTodayZ').onclick = $('btnQZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
     $('btnQNum').onclick = function(){ openDream(); };
     $('btnQGh').onclick = function(){ go('gunghap'); };
@@ -2686,28 +2715,39 @@
     var rnd = mulberry32(seedHash(entryISO(me, r) + '|' + todayStr() + '|lktime'));
     return GIFT_TIMES[Math.floor(rnd() * GIFT_TIMES.length)];
   }
+  /* 오늘의 한마디: 오늘 필요한 오행을 채우는 생활 조언. 홈의 운세 문장과 겹치지 않게 '어떻게 보내면 좋은지'만 말한다 */
+  var ADVICE = [
+    ['새싹은 하루아침에 자라지 않아요. 오늘 시작한 작은 일 하나가 내일의 숲이 돼요.', '창문을 열고 바깥 공기를 한 번 깊게 들이마셔 보세요.', '미뤄 둔 공부나 계획을 딱 10분만 시작해 보세요.', '굽은 나무도 햇빛 쪽으로 자라요. 마음이 가는 쪽으로 한 걸음만 옮겨 보세요.', '초록 잎을 가까이 두면 생각이 맑아져요. 화분 하나, 풀 한 줄기도 좋아요.', '오늘은 새로 만나는 사람에게 먼저 인사를 건네 보세요.'],
+    ['작은 불씨가 방 전체를 데워요. 오늘은 내 마음을 조금 더 표현해 보세요.', '햇볕을 10분만 쬐어도 기운이 차올라요. 점심엔 잠깐 밖으로 나가 보세요.', '고마웠던 사람에게 짧은 메시지 하나를 보내 보세요.', '불은 나눌수록 꺼지지 않아요. 내가 아는 것을 하나 알려 주는 날이에요.', '몸을 가볍게 움직이면 마음도 따라 밝아져요. 계단 한 층이라도 걸어 보세요.', '오늘의 칭찬은 아끼지 마세요. 돌아오는 말이 하루를 데워 줘요.'],
+    ['땅은 서두르지 않아도 모든 것을 키워요. 오늘은 한 가지를 끝까지 마무리하세요.', '책상이나 가방 한 칸을 정리하면 마음의 자리도 넓어져요.', '끼니를 제때 챙기는 것이 오늘의 가장 좋은 처방이에요.', '흔들릴 때는 발밑을 보세요. 이미 해낸 일을 하나 떠올려 보세요.', '약속은 작게 하고 꼭 지키세요. 믿음이 쌓이는 날이에요.', '오늘 쓴 돈을 한 번 적어 보세요. 새는 곳이 보이면 채울 곳도 보여요.'],
+    ['쇠는 다듬을수록 빛나요. 오늘은 필요 없는 것 하나를 덜어 내 보세요.', '할 일 목록을 세 줄로 줄이면 오늘이 훨씬 가벼워져요.', '결정은 기준을 먼저 적고 하세요. 마음보다 기준이 오늘을 지켜 줘요.', '맑은 소리는 빈 종에서 나요. 잠깐의 조용한 시간을 꼭 가져 보세요.', '끝맺음이 좋은 날이에요. 미뤄 둔 답장이나 정산을 마무리해 보세요.', '오늘은 말을 아끼고 잘 들어 주세요. 필요한 답이 그 안에 있어요.'],
+    ['물은 막히면 돌아가요. 오늘 안 풀리는 일은 다른 길로 가 보세요.', '물 한 잔을 천천히 마시며 하루를 시작해 보세요.', '생각이 많을 땐 적어 보세요. 글로 흐르면 마음도 흘러가요.', '깊은 물은 소리가 없어요. 오늘은 조용히 실력을 쌓는 날이에요.', '잠을 조금 일찍 청해 보세요. 충분한 쉼이 내일의 운을 채워요.', '흐르는 음악 한 곡이 막힌 기분을 풀어 줘요. 좋아하는 노래를 틀어 보세요.']
+  ];
+  function adviceOf(me, r, el){
+    var rnd = mulberry32(seedHash(entryISO(me, r) + '|' + todayStr() + '|advice'));
+    var L = ADVICE[el]; return L[Math.floor(rnd() * L.length)];
+  }
   function talismanHTML(me, r, luck, shown){
     var f = luck.f, lEl = luck.el, elc = EL_CLASS[lEl], nums = luck.nums.map(function(o){ return o.n; });
     var now = nowD(), md = (now.getMonth() + 1) + '월 ' + now.getDate() + '일';
+    var cell = function(k, v){ return '<div class="tl-row"><span class="k">' + k + '</span><b>' + v + '</b></div>'; };
     return '<div id="numReveal" class="num-reveal"' + (shown ? '' : ' hidden') + '>' +
       '<div class="card talisman ' + elc + '"><div class="tl-k">' + md + ' · ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운을 채우는 날</div>' +
       '<h2 class="tl-head">' + esc(f.head) + '</h2>' +
+      '<blockquote class="tl-quote"><small>오늘의 한마디</small><p>' + adviceOf(me, r, lEl) + '</p></blockquote>' +
       '<div class="tl-rows">' +
-        '<div class="tl-row"><span class="k">행운의 색</span><b>' + f.tip.color + '</b></div>' +
-        '<div class="tl-row"><span class="k">행운의 방향</span><b>' + EL_TEXT[lEl].dir + '</b></div>' +
-        '<div class="tl-row"><span class="k">행운 아이템</span><b>' + f.tip.item + '</b></div>' +
-        '<div class="tl-row"><span class="k">좋은 시간</span><b>' + luckTime(me, r) + '</b></div>' +
-        '<div class="tl-row tl-nums"><span class="k">행운의 숫자</span>' + luckChips(nums, '') + '</div>' +
+        cell('행운의 색', f.tip.color) + cell('행운의 방향', EL_TEXT[lEl].dir) +
+        cell('행운 아이템', f.tip.item) + cell('행운 음식', f.tip.food) +
+        cell('좋은 시간', luckTime(me, r)) + cell('행운의 숫자', nums.join(' · ')) +
       '</div>' +
-      '<p class="helper">숫자는 오늘 필요한 ' + MS.EL_K[lEl] + ' 기운의 끝자리(' + EL_TEXT[lEl].num.map(function(n){ return n % 10; }).join('·') + ')로 골랐어요. 약속 시간, 자리, 비밀번호 끝자리처럼 생활 속 작은 힌트로 가볍게 써 보세요.</p>' +
-      '<button class="btn-primary btn-block sheen" id="btnNumSave">' + SAVE_IC + '보관함에 저장</button>' +
-      '<div class="row" style="margin-top:8px"><button class="btn-soft grow" id="btnNumCopy">공유하기</button></div>' +
-      '<p class="disclaimer">재미로 즐기는 운세 콘텐츠예요. 나의 사주에서 필요한 기운을 바탕으로 매일 새로 만들어요.</p></div>' +
+      '<p class="helper">행운의 숫자는 ' + MS.EL_K[lEl] + ' 기운의 끝자리(' + EL_TEXT[lEl].num.map(function(n){ return n % 10; }).join('·') + ')로 골랐어요. 약속 시간이나 자리를 고를 때 가볍게 참고해 보세요.</p>' +
+      '<div class="row"><button class="btn-primary grow sheen" id="btnNumSave">' + SAVE_IC + '보관함에 저장</button><button class="btn-soft grow" id="btnNumCopy">공유하기</button></div>' +
+      '<p class="disclaimer">재미로 즐기는 운세 콘텐츠예요. 내 사주에 필요한 기운을 바탕으로 매일 새로 만들어요.</p></div>' +
       adSlotHTML('행운 부적을 열어 본 뒤') + '</div>';
   }
   function revealNums(){
     var el = $('numReveal'); if (!el || !el.hidden) return;
-    el.hidden = false; if ($('numWait')) $('numWait').hidden = true;
+    el.hidden = false; if ($('numWait')) $('numWait').hidden = true; if ($('pouchAd')) $('pouchAd').hidden = true;
     if (!reduceMotion){ el.classList.remove('nr-in'); void el.offsetWidth; el.classList.add('nr-in'); }
     if (typeof fillAds === 'function') try { fillAds(el); } catch (e){}
   }
@@ -2716,7 +2756,7 @@
     var title = me ? esc(me.name) + '님의 오늘 행운 부적' : '매일 열어보는 나만의 행운 부적';
     var head = '<div class="num-head"><h1 class="num-title">' + title + '</h1></div>';
     if (!me){
-      box.innerHTML = head + '<div class="card pouch-card"><div class="pouch-fig">' + uniImg('u-gift') + '</div>' +
+      box.innerHTML = head + '<div class="card pouch-card"><div class="pouch-fig">' + uniImg('u-pouch') + '</div>' +
         '<p class="helper" style="text-align:center">내 사주를 등록하면 복주머니에서 오늘의 행운 색, 방향, 숫자가 나와요. 매일 새로 바뀌어요.</p>' +
         '<button class="btn-primary btn-block sheen" id="btnNumOnb">내 사주 등록하고 복주머니 열기</button></div>';
       $('btnNumOnb').onclick = function(){ startOnboarding('new'); };
@@ -2726,17 +2766,20 @@
     var luck = todayLuck(me, r), lEl = luck.el, nums = luck.nums.map(function(o){ return o.n; });
     var opened = store('unsu_drawn') === todayStr();
     var h = head + '<div class="card pouch-card ' + EL_CLASS[lEl] + '" id="numWait"' + (opened ? ' hidden' : '') + '>' +
-      '<div class="pouch-fig" id="pouchFig">' + uniImg('u-gift') + '</div>' +
+      '<div class="pouch-fig" id="pouchFig">' + uniImg('u-pouch') + '</div>' +
       '<p class="helper" style="text-align:center">복주머니를 열면 오늘 ' + esc(me.name) + '님께 필요한 행운의 색, 방향, 숫자가 나와요.</p>' +
       '<button class="btn-primary btn-block sheen" id="btnPouch">복주머니 열기</button></div>';
     h += talismanHTML(me, r, luck, opened);
+    if (!opened) h += '<div id="pouchAd">' + adSlotHTML('복주머니를 열기 전') + '</div>';
     box.innerHTML = h;
     if ($('btnPouch')) $('btnPouch').onclick = function(){
       var fig = $('pouchFig'), btn = this; btn.disabled = true; FX.vib(10);
       if (fig && !reduceMotion){ fig.classList.add('shake'); }
       setTimeout(function(){
-        FX.confetti(document.querySelector('.talisman') || box, 34); FX.vib([18, 40, 24]);
-        markTodo('drawn'); revealNums(); toast('오늘의 행운 부적이 나왔어요'); bond('num');
+        markTodo('drawn'); revealNums(); FX.vib([18, 40, 24]);
+        var tl = document.querySelector('.talisman');
+        if (tl){ FX.confetti(tl, 46); setTimeout(function(){ FX.confetti(tl, 30); }, 260); }
+        toast('오늘의 행운 부적이 나왔어요'); setTimeout(function(){ bond('num'); }, 1600);
       }, reduceMotion ? 0 : 650);
     };
     $('btnNumSave').onclick = function(){
@@ -2870,6 +2913,7 @@
     h += '</div>';
     h += '<div class="card"><button class="row-link" id="bxList"><span class="ic">' + FEAT_IC.saju + '</span>저장한 사주 목록<span class="chev">›</span></button>' +
       (me ? '<button class="row-link" id="bxMy"><span class="ic">' + FEAT_IC.today + '</span>내 정보 · 엽전 기록<span class="chev">›</span></button>' : '<button class="row-link" id="bxStart"><span class="ic">' + FEAT_IC.today + '</span>내 사주 등록하기<span class="chev">›</span></button>') + '</div>';
+    h += adSlotHTML('보관함을 본 뒤');
     $('boxBody').innerHTML = h;
     bindDemoBar(); bindSaveState();
     if ($('bxGoNum')) $('bxGoNum').onclick = function(){ go('num'); };
@@ -3219,9 +3263,9 @@
     var h = INVITE ? inviteHeroHTML() : '<div class="wel-hero">' +
       '<div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日</div>' +
       '<h1 class="hero-title">매일 열어보는<br>나만의 행운 부적</h1>' +
-      '<div class="wel-fig" id="welFig">' + uniImg('u-gift', '', '행운 복주머니를 든 우니') + '</div>' +
+      '<div class="wel-fig" id="welFig">' + uniImg('u-pouch', '', '행운 복주머니를 든 우니') + '</div>' +
       '<div class="wel-sample" aria-label="예시 부적 카드"><span class="ws-badge">예시</span><div class="ws-top"><b>김운수님의 오늘 행운 부적</b><small>수(水) 기운 · 행운의 색 검정, 남색 · 방향 북쪽</small></div>' +
-        luckChips([6, 11, 21], 'el-water') + '</div>' +
+        luckChips([6, 11, 21], 'el-water soft') + '</div>' +
       '<ol class="wel-steps"><li><b>1</b>생년월일 입력</li><li><b>2</b>복주머니 열기</li><li><b>3</b>보관함에 저장</li></ol>' +
       '<div class="wel-cta"><button class="btn-primary btn-block sheen" id="btnWelStart">내 행운 부적 무료로 열기</button><button class="text-btn" id="btnWelDemo">예시로 먼저 둘러보기</button>' +
         (isGuest() ? '<p class="wel-login">이미 쓰던 계정이 있나요? <button type="button" id="btnWelLogin">로그인</button></p>' : '') + '</div></div>';

@@ -34,7 +34,7 @@ const fs = require('fs');
     <p>내 사주로 알려 주는 오늘의 색 · 방향 · 숫자</p>
     <div class="url">생년월일만 넣으면 무료 · woonijoa.com</div>
   </div>
-  <div class="tal"><small>오늘의 행운 부적</small><b>행운의 색 · 초록</b><b>행운의 방향 · 동쪽</b><div class="ch"><i>3</i><i>8</i><i>23</i></div></div><img class="uni" src="${img('u-gift')}">
+  <div class="tal"><small>오늘의 행운 부적</small><b>행운의 색 · 초록</b><b>행운의 방향 · 동쪽</b><div class="ch"><i>3</i><i>8</i><i>23</i></div></div><img class="uni" src="${img('u-pouch')}">
   </body></html>`;
   const p = await b.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
   await p.setContent(html); await p.waitForTimeout(300);
