@@ -828,8 +828,7 @@
     if (!ezOpen){
       h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') + bookCoverHTML(entry, false);
     }
-    h += moreMenuHTML(entry);
-    h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic uni" aria-hidden="true">' + uniImg('u-calendar') + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
+    h += '<div class="card lt"><div class="sec-head"><h2 class="sec-title">주제별 풀이</h2></div>' + topicListHTML(entry, 'result') + '</div>';
     h += '<div class="card num-cta ' + EL_CLASS[lEl] + '"><div class="num-cta-q">오늘 ' + esc(entry.name) + '님의<br><em>작은 행동</em></div>' +
       '<p class="helper">오늘 ' + esc(entry.name) + '님에게 필요한 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운을 채우는 한 가지예요. 매일 바뀌어요.</p>' +
       '<p class="num-act">' + luck.act + '</p>' +
@@ -847,8 +846,7 @@
     if (du) $('duScroll').scrollLeft = du.offsetLeft - 60;
     if (!reduceMotion && window.gsap) gsap.from('#resultBody .el-bar .fill', { scaleX:0, duration:.9, ease:'power2.out', stagger:.06, delay:.2 });
 
-    $('btnTkSaju').onclick = function(){ openTaekil(entry, r); };
-    bindMoreMenu(entry, r, $('resultBody'));
+    bindTopics(entry, r, $('resultBody'));
     $('btnDraw').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
     if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
@@ -2253,7 +2251,7 @@
     document.querySelectorAll('[data-pet]').forEach(function(b){ b.onclick = function(){
       var k = b.dataset.pet;
       if (k === 'today'){ bond('today'); return; }
-      if (k === 'zodiac'){ $('btnQZ').click(); return; }
+      if (k === 'zodiac'){ if ($('btnTodayZ')) $('btnTodayZ').click(); return; }
       if (k === 'ny'){ openNYSheet(me, r); return; }
       if (k === 'dream'){ openDream(); return; }
       go(PET_PTS[k].go); window.scrollTo(0, 0);
@@ -2352,44 +2350,40 @@
     var mood = moodOf(f); document.body.dataset.mood = mood.key;
     var h = '';
     if (NS) h += demoBarHTML();
-    h += attStripHTML(att.newly);
-    h += '<div class="today-head"><div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일, 오늘은</div>' +
-      '<h1 class="today-title">' + f.head + '</h1>' +
-      '<div class="today-ilj">' + P.year.hanja + '年 ' + P.month.hanja + '月 ' + P.day.hanja + '日 · ' + f.ten + '의 날</div><span class="mood-chip" data-mood="' + mood.key + '"><i></i>오늘 기운 · ' + mood.label + '</span></div>';
-    h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
-    h += peekCardHTML(me, nums, elc);   /* GPT 검토 P1-6: 오늘 한 문장 바로 아래 행운 선물 */
-    h += '<div class="qgrid">' + [['btnQNum','dream','꿈해몽','길몽일까 흉몽일까? 오늘의 처방','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + tkBannerHTML() + '</div>';
-    h += moreMenuHTML(me);
-    h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
-      '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
-      '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
-    h += catChipsHTML(f);
-    h += adSlotHTML('오늘 점수를 본 뒤');
-    h += todoCardHTML();
-    h += petCardHTML();
-    h += '<div class="card lt ' + elc + '"><div class="lucky-title">오늘 ' + esc(me.name) + '님에게는<br><em>' + f.bless + '의 기운</em>이 행운을 가져와요.</div>' +
-      '<p class="body-text">' + esc(me.name) + '님에게 필요한 ' + MS.EL_K[f.luckyEl] + '(' + MS.EL_H[f.luckyEl] + ') 기운을 가까이 두면 좋은 운은 높이고 흔들리는 운은 잡아 줘요. ' + EL_TEXT[f.luckyEl].act + '처럼 가벼운 행동으로 채워 보세요.</p>' +
-      '<button class="row-link" id="btnTips"><span class="ic" style="color:var(--elc)">' + TIP_IC.star + '</span>오늘의 행운 부적 열어 보기<span class="chev">›</span></button></div>';
+    var drawn = todoDone('drawn');
+    /* 2026-11-22 GPT 최종 시안: 오늘 부적 → 오늘의 운세 3줄 → 더 알아보기 → 계절 카드 1개 → 출석·교감은 아래로 */
+    h += '<section class="home-hero ' + elc + '"><div class="hh-txt"><div class="hh-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일</div>' +
+      '<h1 class="hh-title">' + f.head + '</h1><div class="hh-ilj">' + P.day.hanja + '日 · ' + f.ten + '의 날 · ' + mood.label + '</div></div>' +
+      '<span class="hh-uni" aria-hidden="true">' + uniImg(drawn ? 'u-gift' : 'u-pouch') + '</span>' +
+      '<button class="btn-primary btn-block hh-cta' + (drawn ? '' : ' sheen') + '" id="btnGoNum">' + (drawn ? '오늘 부적 다시 보기' : '오늘 부적 열기') + '</button></section>';
+    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">오늘의 운세</h2><button type="button" class="hs-link" id="btnTodayShare">공유</button></div><div class="h-rows">' +
+      [['money','w','재물'],['love','l','연애'],['career','j','일']].map(function(c){
+        var v = f.scores[c[1]];
+        return '<button type="button" class="h-row" data-cat="' + c[0] + '" data-tier="' + tierOf(v) + '"><span class="hr-t"><b>' + c[2] + '</b> · ' + f.lines[c[1]] + '</span><span class="hr-v">' + v + '<small>점</small></span><span class="chev" aria-hidden="true">›</span></button>';
+      }).join('') + '</div><p class="helper hs-note">' + esc(me.name) + '님, ' + f.body + '</p></section>';
+    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">더 알아보기</h2></div>' +
+      '<button type="button" class="h-feat" id="hmBook"><span class="hf-t"><b>사주 이야기책</b><small>내 사주를 이야기로 · 1장 무료</small></span><span class="hf-p">' + (owns('ez') ? '이어 읽기' : '2~6장 ' + priceTag('ez')) + '</span>' + uniImg('u-book', 'hf-uni') + '</button>' +
+      '<button type="button" class="h-feat" id="btnTk"><span class="hf-t"><b>중요한 날 잡기</b><small>일정 후보 비교 · 두 달 미리보기 무료</small></span><span class="hf-p">12개월 ' + priceTag('tk') + '</span>' + uniImg('u-calendar', 'hf-uni') + '</button>' +
+      '<button type="button" class="hs-more" id="hmTopics">궁합 · 달력 · 연간 운세 보기 ›</button></section>';
+    h += '<button type="button" class="h-season" id="dpNY"><span class="hsn-k">계절 카드 · 2027 정미년</span><b>' + esc(me.name) + '님의 2027년 키워드</b><span class="hsn-kw">#' + newYear(r).kw.join(' #') + '</span><span class="hsn-cta">신년운세 총평 무료로 보기 ›</span>' + uniImg('u-newyear', 'hsn-uni') + '</button>';
+    h += adSlotHTML('오늘의 운세를 본 뒤');
+    h += '<div class="home-low"><h2 class="sec-title hl-t">우니와 매일</h2>' + attStripHTML(att.newly) + peekCardHTML(me, nums, elc) + todoCardHTML() + petCardHTML() + '</div>';
     var z = getZodiac(r.solar.m, r.solar.d);
-    var doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    h += '<div class="card lt"><div class="mini-z">' + figSVG(z.name, z.el, 'mini') + '<div class="view" style="gap:4px"><div class="sec-meta" style="text-align:left">TODAY · ' + z.en.toUpperCase() + '</div><div style="font-size:calc(16px*var(--fs));color:var(--text-headline);font-weight:500">' + z.glyph + ' ' + z.name + '</div><p class="helper">' + DAILY_LINES[doy % DAILY_LINES.length] + '</p></div></div>' +
-      '<button class="row-link" id="btnTodayZ"><span class="ic">' + TIP_IC.star + '</span>내 별자리 운세 보기<span class="chev">›</span></button></div>';
-    h += deepHTML(me, r);
-    h += adSlotHTML('오늘의 결론을 본 뒤');
+    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">가볍게 보기</h2></div><div class="h-light">' +
+      '<button type="button" id="btnTodayZ">' + figSVG(z.name, z.el, 'mini') + '<span><b>' + z.glyph + ' ' + z.name + '</b><small>오늘의 별자리 운세</small></span></button>' +
+      '<button type="button" id="hmDream">' + uniImg('u-sleep') + '<span><b>꿈해몽</b><small>길몽일까? 오늘의 처방</small></span></button></div></section>';
     var stNow = streakOf(getAtt());
     if (!NS && !store('unsu_auth') && store('unsu_nudge') !== todayStr() && (stNow >= 3 || getCoins() >= 60 || getUnlocks().length))
       h += '<div class="nudge"><div><b>기록이 쌓이고 있어요</b><p>연속 ' + stNow + '일 출석 · 엽전 ' + getCoins() + '닢. 로그인하면 기기를 바꿔도 그대로 이어져요.</p></div><div class="acts"><button class="btn-primary" id="btnNudgeLogin">로그인</button><button class="btn-ghost" id="btnNudgeClose">닫기</button></div></div>';
     h += '<p class="disclaimer">오늘의 운세는 일진과 사주의 관계로 계산한 재미용 콘텐츠예요.</p>';
     body.innerHTML = h;
     $('dpNY').onclick = function(){ openNYSheet(me, r); };
-    $('dpGh').onclick = function(){ go('gunghap'); };
-    $('dpEz').onclick = function(){ go('saju'); };
-    $('dpSet').onclick = function(){ openCoinSheet(); };
-    $('dpDm').onclick = function(){ openDream(); };
+    $('hmBook').onclick = function(){ openStory(me, r, 0); };
+    $('hmTopics').onclick = function(){ openTopics(me, r); };
+    $('hmDream').onclick = function(){ openDream(); };
     $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     bindPeek(me, nums);
     renderCoin();
-    drawOn($('todayFig'));
     $('btnAtt').onclick = function(){ openAttSheet(me, r); };
     bindDemoBar();
     bindPetCard(me, r);
@@ -2406,12 +2400,7 @@
         cta:'너의 오늘 운세도 확인해 봐 →', link:resultLink('d', todayStr(), [me]), shareEntries:[me],
         card:{ kicker:me.name + '님의 ' + md + ' 운세', head:f.head, rows:[['재물운', f.scores.w], ['연애운', f.scores.l], ['직업운', f.scores.j]] } });
     };
-    $('btnTips').onclick = function(){ go('num'); window.scrollTo(0, 0); };
-    $('btnTodayZ').onclick = $('btnQZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
-    $('btnQNum').onclick = function(){ openDream(); };
-    $('btnQGh').onclick = function(){ go('gunghap'); };
-    $('btnQNY').onclick = function(){ openNYSheet(me, r); };
-    bindMoreMenu(me, r, body);
+    $('btnTodayZ').onclick = function(){ myZ = z.name; renderZGrid(); openZodiac(z, iso); show('zodiac'); };
     $('btnTk').onclick = function(){ openTaekil(me, r); };
     body.querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ openCat(me, r, b.dataset.cat); }; });
   }
@@ -2889,7 +2878,7 @@
         '<span class="peek-fig">' + uniImg(opened ? 'u-gift' : 'u-calm') + '</span></button>' +
       '</div>' +
       '<p class="helper peek-msg">' + (opened ? g.msg : '우니를 <b>꾹</b> 누르고 있으면 오늘의 선물을 하나 꺼내 줘요. 가끔 엽전도 나와요!') + '</p>' +
-      '<button class="btn-primary btn-block sheen" id="btnGoNum" style="margin-top:12px">오늘의 행운 부적 열어 보기</button></div>';
+      '</div>';
   }
   function bindPeek(me, nums){
     var btn = $('peekBtn'); if (!btn || btn.disabled) return;
@@ -2911,10 +2900,13 @@
     ['pointerup','pointerleave','pointercancel','keyup'].forEach(function(ev){ btn.addEventListener(ev, cancel); });
     btn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
   }
+  var boxTab = 'saved';
   function renderBox(){
-    var me = getMe(), box = getBox(), dreams = getDreams(), h = NS ? demoBarHTML() : '';
-    h += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
-    h += saveStateHTML();
+    var me = getMe(), box = getBox(), dreams = getDreams(), h = NS ? demoBarHTML() : '', H = h;
+    /* 2026-11-22 GPT 최종 시안: 저장한 기록 / 구매한 리포트 / 엽전 내역 탭 */
+    H += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
+    H += saveStateHTML();
+    h = '';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">저장한 행운 부적</h2><span class="sec-meta">' + box.length + '장</span></div>';
     if (!box.length) h += '<div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 비어 있어요. 행운 탭에서 ‘보관함에 저장’을 누르면 여기에 모여요.</p></div><button class="btn-primary btn-block" id="bxGoNum" style="margin-top:12px">복주머니 열러 가기</button>';
     else h += '<div class="bx-list">' + box.map(function(b){
@@ -2928,22 +2920,32 @@
     var rep = opened.map(function(o){ return '<button class="row-link" data-rp="' + o.id + '" data-gk="' + esc(o.ghKey || '') + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(o.name) + '<br><span class="helper">' + fmtDate(o.at) + ' · ' + (o.coin ? o.coin + '닢' : '') + '</span></span><span class="chev">›</span></button>'; });
     Object.keys(nyO).forEach(function(id){ var e = list.filter(function(x){ return x.id === id; })[0]; if (e) rep.push('<button class="row-link" data-rpny="' + id + '"><span class="ic">' + TIP_IC.star + '</span><span>2027 신년운세 전체 · ' + esc(e.name) + '<br><span class="helper">' + fmtDate(nyO[id]) + ' · 광고로 열림</span></span><span class="chev">›</span></button>'); });
     Object.keys(tkOpenMap()).forEach(function(k){ var id = k.split('|')[0], pp = k.split('|')[1], e = list.filter(function(x){ return x.id === id; })[0], Q = TAEKIL.PURPOSES[pp]; if (e && Q) rep.push('<button class="row-link" data-rptk="' + esc(k) + '"><span class="ic">' + TK_IC[pp] + '</span><span>중요한 날 잡기 · ' + Q.short + ' · ' + esc(e.name) + '<br><span class="helper">' + fmtDate(tkOpenMap()[k]) + ' · ' + COST.tk + '닢</span></span><span class="chev">›</span></button>'); });
-    if (rep.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">열어 둔 리포트</h2><span class="sec-meta">' + rep.length + '개</span></div>' + rep.join('') + '</div>';
+    var bought = rep.length ? '<div class="card"><div class="sec-head"><h2 class="sec-title">구매한 리포트</h2><span class="sec-meta">' + rep.length + '개</span></div>' + rep.join('') + '</div>'
+      : '<div class="card"><div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 구매한 리포트가 없어요. 사주 이야기책, 궁합 상세, 중요한 날 잡기를 열면 여기서 다시 볼 수 있어요.</p></div></div>';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">꿈해몽 기록</h2><span class="sec-meta">' + dreams.length + '개</span></div>';
     if (!dreams.length) h += '<div class="bx-empty">' + uniImg('u-sleep') + '<p class="helper">꿈을 풀면 해몽 기록이 여기에 남아요.</p></div><button class="btn-soft btn-block" id="bxGoDream" style="margin-top:12px">꿈 해몽 하러 가기</button>';
     else h += dreams.slice(0, 10).map(function(d){ return '<button class="row-link" data-dm="' + d.id + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(d.title || d.catName) + '<br><span class="helper">' + fmtDate(d.at) + ' · ' + (d.free ? '무료 해몽' : '꿈 풀이 리포트') + '</span></span><span class="chev">›</span></button>'; }).join('');
     h += '</div>';
     h += '<div class="card"><button class="row-link" id="bxList"><span class="ic">' + FEAT_IC.saju + '</span>저장한 사주 목록<span class="chev">›</span></button>' +
       (me ? '<button class="row-link" id="bxMy"><span class="ic">' + FEAT_IC.today + '</span>내 정보 · 엽전 기록<span class="chev">›</span></button>' : '<button class="row-link" id="bxStart"><span class="ic">' + FEAT_IC.today + '</span>내 사주 등록하기<span class="chev">›</span></button>') + '</div>';
-    h += adSlotHTML('보관함을 본 뒤');
-    $('boxBody').innerHTML = h;
+    var clog = store('unsu_coinlog'); if (!Array.isArray(clog)) clog = [];
+    var coinH = '<div class="card"><div class="sec-head"><h2 class="sec-title">엽전 내역</h2><span class="sec-meta">보유 ' + (isGuest() ? 0 : getCoins()).toLocaleString() + '닢</span></div>' +
+      '<p class="helper" style="margin:-4px 0 10px">엽전은 출석·가입·우니 선물로 모으는 무료 포인트예요. 현금으로 바꾸거나 사고팔 수 없어요.</p>' +
+      (isGuest() ? '<div class="bx-empty">' + uniImg('u-attend') + '<p class="helper">로그인하면 출석할 때마다 엽전이 쌓여요.</p></div>'
+        : clog.length ? '<ul class="bx-coin">' + clog.slice(0, 30).map(function(x){ return '<li><span>' + esc(x.why || '') + '<small>' + fmtDate(x.t) + '</small></span><b class="' + (x.n < 0 ? 'm' : 'p') + '">' + (x.n > 0 ? '+' : '') + x.n + '닢</b></li>'; }).join('') + '</ul>'
+        : '<div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 엽전 기록이 없어요.</p></div>') + '</div>';
+    var tabs = [['saved', '저장한 기록'], ['bought', '구매한 리포트'], ['coin', '엽전 내역']];
+    H += '<div class="seg bx-seg" role="tablist" aria-label="보관함 메뉴">' + tabs.map(function(t){ return '<button type="button" role="tab" data-bxt="' + t[0] + '" aria-selected="' + (boxTab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    H += boxTab === 'bought' ? bought : boxTab === 'coin' ? coinH : h;
+    $('boxBody').innerHTML = H;
+    $('boxBody').querySelectorAll('[data-bxt]').forEach(function(b){ b.onclick = function(){ boxTab = b.dataset.bxt; renderBox(); }; });
     bindDemoBar(); bindSaveState();
     if ($('bxGoNum')) $('bxGoNum').onclick = function(){ go('num'); };
     if ($('bxGoDream')) $('bxGoDream').onclick = function(){ openDream(); };
     if ($('bxMy')) $('bxMy').onclick = function(){ openMy(); };
     if ($('bxStart')) $('bxStart').onclick = function(){ startOnboarding('new'); };
-    $('bxList').onclick = function(){ renderList(); show('list'); };
-    document.querySelectorAll('[data-bx]').forEach(function(b){ b.onclick = function(){ store('unsu_numbox', getBox().filter(function(x){ return x.id !== b.dataset.bx; })); renderBox(); toast('지웠어요'); }; });
+    if ($('bxList')) $('bxList').onclick = function(){ renderList(); show('list'); };
+    document.querySelectorAll('[data-bx]').forEach(function(b){ b.onclick = function(){ store('unsu_numbox', getBoxAll().filter(function(x){ return x.id !== b.dataset.bx; })); renderBox(); toast('지웠어요'); }; });
     document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(); if (b.dataset.rp === 'gh') go('gunghap'); else if (me) openResult(me, compute(me), true); }; });
     document.querySelectorAll('[data-rptk]').forEach(function(b){ b.onclick = function(){ var k = b.dataset.rptk.split('|'), e = getList().filter(function(x){ return x.id === k[0]; })[0]; if (e) openTaekil(e, compute(e), k[1]); }; });
     document.querySelectorAll('[data-rpny]').forEach(function(b){ b.onclick = function(){ var e = getList().filter(function(x){ return x.id === b.dataset.rpny; })[0]; if (e) openNYSheet(e, compute(e)); }; });
@@ -3801,7 +3803,7 @@
     $('sbPrev').onclick = function(){ openStory(entry, r, ch - 1); };
     $('sbNext').onclick = function(){ if (locked) buy(); else if (ch === SB_CH.length - 1) close(); else openStory(entry, r, ch + 1); };
     if ($('sbBuy')) $('sbBuy').onclick = buy;
-    if ($('sbGoTk')) $('sbGoTk').onclick = function(){ close(); if ($('btnTkSaju')) $('btnTkSaju').click(); };
+    if ($('sbGoTk')) $('sbGoTk').onclick = function(){ close(); openTaekil(sbCtx.entry, sbCtx.r); };
     if ($('sbGoNum')) $('sbGoNum').onclick = function(){ close(); go('num'); };
   }
   function bookCoverHTML(entry, open){
@@ -3899,6 +3901,38 @@
      더보기 메뉴: 토정비결 · 월별 운세 달력 · 연애·결혼 시기 · 우니에게 묻기(AI 상담)
      2026-11-21 소율: "연애·결혼 시기, ai 상담이랑 월별 운세 달력은 있어야" (타로는 출시 후)
      ========================================================= */
+  /* 주제별 풀이 (2026-11-22 GPT 최종 시안): 관계 · 날짜 · 연간 운세 · 더 깊이 · 가볍게 보기 */
+  function topicGroups(){
+    return [
+      ['관계', [['gh', 'u-love', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'u-love', '연애·결혼 시기', '인연이 오는 해 찾기', '']]],
+      ['날짜', [['fc', 'u-calendar', '월별 운세 달력', '이번 달 좋은 날', '무료'], ['tk', 'u-calendar', '중요한 날 잡기', '이사·개업·계약·면접 날짜', '두 달 무료']]],
+      ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '키워드와 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '정미년 내 괘 풀이', '']]],
+      ['더 깊이', [['book', 'u-book', '사주 이야기책', '우니가 읽어 주는 내 사주', '1장 무료'], ['chat', 'u-thinking', '사주 AI 해석', '고민을 물으면 내 사주로 답해요', '하루 1번 무료'], ['job', 'u-work', '나에게 맞는 직업', '타고난 재능과 맞는 분야', '']]],
+      ['가볍게 보기', [['zodiac', 'u-zodiac', '별자리 운세', '오늘의 별자리', '무료'], ['dream', 'u-sleep', '꿈해몽', '길몽일까? 오늘의 처방', '무료']]]
+    ];
+  }
+  function topicListHTML(me, where){
+    return '<div class="tp-list">' + topicGroups().map(function(g){
+      return '<div class="tp-g"><h3>' + g[0] + '</h3>' + g[1].map(function(x){
+        return '<button type="button" class="tp-row" data-tp="' + x[0] + '"><span class="tp-ic" aria-hidden="true">' + uniImg(x[1]) + '</span><span class="tp-t"><b>' + x[2] + '</b><small>' + x[3] + '</small></span>' + (x[4] ? '<span class="tp-m">' + x[4] + '</span>' : '') + '<span class="chev" aria-hidden="true">›</span></button>';
+      }).join('') + '</div>';
+    }).join('') + '</div>';
+  }
+  function bindTopics(me, r, root){
+    var A = {
+      gh:function(){ go('gunghap'); window.scrollTo(0, 0); }, lv:function(){ openLoveTiming(me, r); },
+      fc:function(){ openFortuneCal(me, r, 0); }, tk:function(){ openTaekil(me, r); },
+      ny:function(){ openNYSheet(me, r); }, tj:function(){ openTojeong(me, r); },
+      book:function(){ openStory(me, r, 0); }, chat:function(){ openChat(me, r); }, job:function(){ openCat(me, r, 'job'); },
+      zodiac:function(){ var z = getZodiac(r.solar.m, r.solar.d); myZ = z.name; renderZGrid(); openZodiac(z, entryISO(me, r)); show('zodiac'); },
+      dream:function(){ openDream(); }
+    };
+    root.querySelectorAll('[data-tp]').forEach(function(b){ b.onclick = function(){ var fn = A[b.dataset.tp]; if (!fn) return; closeSheet(); fn(); }; });
+  }
+  function openTopics(me, r){
+    openSheet('<h3 id="sheetTitle">주제별 풀이</h3><p class="helper" style="margin:-8px 0 14px">' + esc(me.name) + '님 사주로 볼 수 있는 풀이를 주제별로 모았어요.</p>' + topicListHTML(me, 'sheet'));
+    bindTopics(me, r, $('sheetBody'));
+  }
   function moreMenuHTML(me){
     var M = [
       ['btnTj', 'u-book', '토정비결', '2027 정미년 내 괘 풀이', 'NEW'],
