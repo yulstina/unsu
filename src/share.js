@@ -1,29 +1,22 @@
 /* ================= 결과 공유: 링크 해석 + 미리보기 카드 내용 =================
    브라우저(app.js)와 서버(api/share.js · api/og.js)가 같은 코드를 쓴다 → 링크 미리보기 이미지와 실제 화면의 숫자가 항상 같다.
    링크 형식: r1|타입|YYYYMMDD|추가값|사람1(7칸)|사람2(7칸)
-   타입 s 사주 · d 오늘 운세 · n 행운 번호 · g 궁합 · z 별자리 · c 분야별 운세 */
+   타입 s 사주 · d 오늘 운세 · n 행운 숫자 · g 궁합 · z 별자리 · c 분야별 운세 */
 var SHARE = (function(){
   var EF = 7;
   var CAT = { money:{ name:'금전운', sk:'w' }, love:{ name:'연애·결혼운', sk:'l' }, career:{ name:'취업·직장운', sk:'j' }, job:{ name:'나에게 맞는 직업', sk:'' } };
   function pad2(n){ return (n < 10 ? '0' : '') + n; }
   function seedHash(str){ var h = 0; for (var i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0; return h >>> 0; }
   function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  function drawSix(seedStr){
-    var rand = mulberry32(seedHash(seedStr));
-    var pool = []; for (var i = 1; i <= 45; i++) pool.push(i);
-    var picked = [];
-    for (var k = 0; k < 6; k++){ var idx = Math.floor(rand() * pool.length); picked.push(pool[idx]); pool.splice(idx, 1); }
-    return picked.sort(function(a, b){ return a - b; });
-  }
-  /* 용신 수(하도수) 가중 번호: 용신 끝자리 번호 3개 + 나머지 3개 */
+  /* 행운 숫자: 오늘 나에게 필요한 오행의 끝자리(목 3·8 / 화 2·7 / 토 5·0 / 금 4·9 / 수 1·6)로 끝나는 1~50 사이 숫자 3개.
+     번호 조합을 만드는 기능이 아니라 '오늘의 행운 세트'에 곁들이는 작은 힌트다 */
   function drawYong(seedStr, el){
     var rand = mulberry32(seedHash(seedStr));
     var digits = EL_TEXT[el].num.map(function(n){ return n % 10; });
-    var yongPool = [], rest = [];
-    for (var i = 1; i <= 45; i++) (digits.indexOf(i % 10) > -1 ? yongPool : rest).push(i);
+    var pool = [];
+    for (var i = 1; i <= 50; i++) if (digits.indexOf(i % 10) > -1) pool.push(i);
     var out = [];
-    for (var a = 0; a < 3; a++){ var ix = Math.floor(rand() * yongPool.length); out.push({ n:yongPool[ix], y:true }); yongPool.splice(ix, 1); }
-    for (var b = 0; b < 3; b++){ var jx = Math.floor(rand() * rest.length); out.push({ n:rest[jx], y:false }); rest.splice(jx, 1); }
+    for (var a = 0; a < 3; a++){ var ix = Math.floor(rand() * pool.length); out.push({ n:pool[ix], y:true }); pool.splice(ix, 1); }
     return out.sort(function(p, q){ return p.n - q.n; });
   }
   function unb64u(s){
@@ -62,7 +55,7 @@ var SHARE = (function(){
     var A = S.entries[0], B = S.entries[1], dt = S.date, md = (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일';
     if (S.type === 'z'){
       var zn = String(S.extra).split('~')[0].slice(0, 8);
-      return { kind:'z', title:md + ' ' + zn + ' 운세', desc:'오늘의 별자리 운세와 행운 번호가 도착했어요', kicker:md + ' 별자리 운세', head:zn + ' 오늘의 운세' };
+      return { kind:'z', title:md + ' ' + zn + ' 운세', desc:'오늘의 별자리 운세와 행운 숫자가 도착했어요', kicker:md + ' 별자리 운세', head:zn + ' 오늘의 운세' };
     }
     var ra = compute(A, dt);
     if (S.type === 'g'){
@@ -81,12 +74,12 @@ var SHARE = (function(){
         kicker:A.name + '님의 ' + md + ' 운세', head:f.head, rows:[['재물운', f.scores.w], ['연애운', f.scores.l], ['직업운', f.scores.j]] };
     if (S.type === 'n'){
       var nums = luckNums(ra, S.dateStr, f.luckyEl).map(function(o){ return o.n; });
-      return { kind:'n', title:A.name + '님의 ' + md + ' 행운 번호', desc:nums.join(' · '), kicker:A.name + '님의 ' + md + ' 행운 번호', head:'우니가 전하는 오늘의 번호', nums:nums };
+      return { kind:'n', title:A.name + '님의 ' + md + ' 행운 부적', desc:'행운 숫자 ' + nums.join(' · ') + ' · 행운의 색과 방향', kicker:A.name + '님의 ' + md + ' 행운 숫자', head:'우니가 전하는 오늘의 행운 부적', nums:nums };
     }
     var C = CAT[S.extra];
     if (C.sk) return { kind:'c', title:A.name + '님의 ' + C.name + ' ' + f.scores[C.sk] + '점', desc:f.lines[C.sk], kicker:A.name + '님의 ' + md + ' ' + C.name, head:f.lines[C.sk], rows:[[C.name, f.scores[C.sk]]] };
     return { kind:'c', title:A.name + '님에게 맞는 직업', desc:'사주로 찾은 나에게 맞는 일', kicker:A.name + '님에게 맞는 직업', head:'사주로 찾은 나에게 맞는 일' };
   }
-  return { decode:decode, card:card, drawSix:drawSix, drawYong:drawYong, seedHash:seedHash, mulberry32:mulberry32, CAT:CAT };
+  return { decode:decode, card:card, drawYong:drawYong, seedHash:seedHash, mulberry32:mulberry32, CAT:CAT };
 })();
 if (typeof module !== 'undefined') module.exports = SHARE;

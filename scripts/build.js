@@ -30,7 +30,7 @@ const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 
   const jsOpts = { compress: { passes: 2 }, mangle: true, format: { ascii_only: false, comments: false } };
   const lunar = r('node_modules/korean-lunar-calendar/dist/korean-lunar-calendar.min.js').replace(/\/\/# sourceMappingURL=.*$/m, '').trim();
   fs.writeFileSync(path.join(OUT, 'js/lunar.js'), '/*! korean-lunar-calendar v0.4.0 | MIT License | (c) 2022 Jinil Lee */\n' + lunar + '\n');
-  const figures = (await minify(r('figures.js') + '\n' + r('render.js') + '\n' + r('machine.js'), jsOpts)).code;
+  const figures = (await minify(r('figures.js') + '\n' + r('render.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/figures.js'), figures);
   const core = (await minify(r('engine.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('content.js') + '\n' + r('content_legacy.js') + '\n' + r('daily.js') + '\n' + r('taekil.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('dream.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('share.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('legal.js').replace(/if \(typeof module[^\n]*\n?/, ''), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/core.js'), core);
@@ -43,8 +43,8 @@ const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호</title>
-<meta name="description" content="만세력으로 푸는 사주 원국·대운, 매일 바뀌는 오늘의 운세, 궁합, 행운 번호까지. 생년월일만 입력하면 30초면 시작해요.">
+<title>우니조아 — 매일 열어보는 나만의 행운 부적</title>
+<meta name="description" content="만세력으로 푸는 사주 원국·대운, 매일 바뀌는 오늘의 운세, 궁합, 꿈해몽, 행운 부적까지. 생년월일만 입력하면 30초면 시작해요.">
 <meta name="theme-color" content="#0d0b1e">
 <script>try{var f=parseInt(localStorage.getItem('unsu_fs'),10);if(f>=0&&f<=2)document.documentElement.setAttribute('data-fs',f);var x=localStorage.getItem('unsu_fx'),a=(localStorage.getItem('unsu_fxauto')||'').split('|');if(x==='lite'||(x!=='full'&&a[0]==='lite'))document.documentElement.setAttribute('data-perf','lite')}catch(e){}</script>
 <link rel="canonical" href="${SITE}/">
@@ -52,15 +52,15 @@ const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 
 <meta property="og:site_name" content="우니조아">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="${SITE}/">
-<meta property="og:title" content="우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호">
-<meta property="og:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호. 생년월일만 입력하면 바로 시작해요.">
+<meta property="og:title" content="우니조아 — 매일 열어보는 나만의 행운 부적">
+<meta property="og:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 꿈해몽 · 행운 부적. 생년월일만 입력하면 바로 시작해요.">
 <meta property="og:image" content="${OG}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="우니조아 — 별자리와 오로라 위에 떠 있는 로고와 '내 사주로 뽑는 여섯 개의 행운 번호' 문구">
+<meta property="og:image:alt" content="우니조아 — 별자리와 오로라 위에 떠 있는 우니와 '매일 열어보는 나만의 행운 부적' 문구">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호">
-<meta name="twitter:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 행운 번호">
+<meta name="twitter:title" content="우니조아 — 매일 열어보는 나만의 행운 부적">
+<meta name="twitter:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 꿈해몽 · 행운 부적">
 <meta name="twitter:image" content="${OG}">
 <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
@@ -91,7 +91,7 @@ ${markupMin}
   fs.writeFileSync(path.join(OUT, 'index.html'), html);
 
   fs.writeFileSync(path.join(OUT, 'manifest.webmanifest'), JSON.stringify({
-    name:'우니조아 — 내 사주로 뽑는 여섯 개의 행운 번호', short_name:'우니조아', lang:'ko', start_url:'/', scope:'/', display:'standalone',
+    name:'우니조아 — 매일 열어보는 나만의 행운 부적', short_name:'우니조아', lang:'ko', start_url:'/', scope:'/', display:'standalone',
     background_color:'#0d0b1e', theme_color:'#0d0b1e',
     icons:[{ src:'/icons/icon-192.png', sizes:'192x192', type:'image/png' }, { src:'/icons/icon-512.png', sizes:'512x512', type:'image/png' }]
   }));

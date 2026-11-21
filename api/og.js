@@ -1,6 +1,6 @@
 /**
  * GET /api/og?r=code — 결과 공유 링크의 미리보기 이미지(1200×630 PNG)
- * 링크 코드로 서버에서 같은 계산을 다시 해서 "정리된 결과 카드"를 그린다(점수 · 번호 · 궁합 점수).
+ * 링크 코드로 서버에서 같은 계산을 다시 해서 "정리된 결과 카드"를 그린다(점수 · 행운 숫자 · 궁합 점수).
  * 주소에 들어온 글자를 그대로 그리지 않고 코드에서 계산한 값만 그리므로, 임의 문구를 넣은 이미지를 만들 수 없다.
  */
 const fs = require('fs');
@@ -11,7 +11,6 @@ let font = null; const imgs = {};
 const png = n => imgs[n] || (imgs[n] = 'data:image/png;base64,' + fs.readFileSync(A(n + '.png')).toString('base64'));
 const h = (style, children, type) => ({ type: type || 'div', props: { style: Object.assign({ display: 'flex' }, style), children } });
 const tierCol = v => v >= 80 ? '#f5d48a' : v >= 60 ? '#c9b9ff' : v >= 40 ? '#8fe3d0' : '#ff9aa5';
-const ballCol = n => n <= 10 ? ['#ffe27a', '#e0a800'] : n <= 20 ? ['#a5e2ff', '#3a9fd0'] : n <= 30 ? ['#ffb0b0', '#d85a5a'] : n <= 40 ? ['#dcdcdc', '#8a8a8a'] : ['#d8f07e', '#86ad27'];
 function rnd(seed) { let a = seed; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 function tree(c) {
@@ -22,8 +21,8 @@ function tree(c) {
   const F = (c.head.length > 26 || (c.rows && c.rows.length > 1 && c.head.length > 15)) ? 46 : 58;   /* 두 줄까지만, 길면 글자를 줄인다 */
   body.push(h({ fontSize: F, color: '#fff', lineHeight: 1.25, marginTop: 12, letterSpacing: '-0.02em', maxHeight: Math.ceil(F * 1.25 * 2) + 4, overflow: 'hidden' }, c.head));
   if (c.tag) body.push(h({ marginTop: 22 }, [h({ fontSize: 28, color: '#2a1c00', background: '#f5d48a', padding: '8px 24px', borderRadius: 999 }, c.tag)]));
-  if (c.nums) body.push(h({ marginTop: 30, gap: 14 }, c.nums.map(n => h({ width: 92, height: 92, borderRadius: 999, alignItems: 'center', justifyContent: 'center', fontSize: 44, color: '#2a2140',
-    backgroundImage: 'linear-gradient(145deg,' + ballCol(n)[0] + ',' + ballCol(n)[1] + ')', boxShadow: '0 8px 18px rgba(8,4,40,.45)' }, String(n)))));
+  if (c.nums) body.push(h({ marginTop: 30, gap: 16 }, c.nums.map(n => h({ minWidth: 104, height: 84, padding: '0 22px', borderRadius: 22, alignItems: 'center', justifyContent: 'center', fontSize: 46, color: '#f5d48a',
+    background: 'rgba(245,212,138,.14)', border: '2px solid #f5d48a' }, String(n)))));
   if (c.rows) body.push(h({ flexDirection: 'column', marginTop: 26, gap: c.rows.length > 1 ? 14 : 0, width: 640 }, c.rows.map(rw => h({ alignItems: 'center', gap: 20 }, [
     h({ width: c.rows.length > 1 ? 120 : 190, fontSize: 30, color: '#e6e1f7' }, rw[0]),
     h({ flexGrow: 1, height: 16, borderRadius: 8, background: 'rgba(255,255,255,.16)' }, [h({ width: Math.max(4, Math.min(100, rw[1])) + '%', height: 16, borderRadius: 8, background: tierCol(rw[1]) })]),
