@@ -2324,6 +2324,23 @@
   .tab[data-tab="ask"] span{font-size:.92em;}
   /* 행운 숫자: 상자 없이 글자로 */
   .tl-numtxt{font-size:calc(18px*var(--fs));letter-spacing:.04em;font-variant-numeric:tabular-nums;}
+
+  /* ===== 2026-11-22 소율: 하단 메뉴 = 가운데만 큰 우니 버튼(글자 없음), 누르면 색만 바뀌고 상자는 안 생김 ===== */
+  .tab-lens{display:none!important;}
+  .tab,.tab.active{background:transparent!important;box-shadow:none!important;}
+  .tab.active{color:#CEBEFF;}
+  .tab.active svg{filter:none;transform:none;animation:none;}
+  .tab:focus-visible{outline:2px solid #CEBEFF;outline-offset:2px;}
+  .tabbar,.tabbar-inner{overflow:visible;}
+  .tab-uni{position:relative;padding:0!important;align-self:stretch;}
+  .tu-ball{position:absolute;left:50%;bottom:14px;width:66px;height:66px;margin-left:-33px;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle at 35% 28%,#5b4699 0%,#3a2b66 55%,#2a2048 100%);
+    box-shadow:0 0 0 3px #15112a,0 0 0 4px rgba(206,190,255,.28),0 10px 24px rgba(0,0,0,.45);transition:box-shadow .25s,background .25s;}
+  .tu-ball img{width:58px;height:58px;object-fit:contain;margin-top:-6px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));transition:transform .3s var(--ease-spring);}
+  .tab-uni.active .tu-ball{background:radial-gradient(circle at 35% 28%,#9d86f0 0%,#6a51c9 55%,#45348a 100%);box-shadow:0 0 0 3px #15112a,0 0 0 4px #CEBEFF,0 10px 26px rgba(124,98,230,.5);}
+  .tab-uni:active .tu-ball img{transform:scale(.94);}
+  body.tb-min .tu-ball{bottom:10px;}
+  @media (prefers-reduced-motion:reduce){.tu-ball img{transition:none}}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -2537,7 +2554,7 @@
   <div class="tabbar-inner"><i class="tab-lens" aria-hidden="true"></i>
     <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>홈</span></button>
     <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
-    <button class="tab" data-tab="ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2c4.6 0 8 2.9 8 6.6s-3.4 6.6-8 6.6c-.9 0-1.8-.1-2.6-.3L5.6 19l.9-3.2C5 14.6 4 12.8 4 10.8 4 7.1 7.4 4.2 12 4.2z"/><path d="M12 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/></svg><span>우니에게 묻기</span></button>
+    <button class="tab tab-uni" data-tab="ask" aria-label="우니에게 묻기"><i class="tu-ball" aria-hidden="true"><img src="img/u-thinking.webp" width="64" height="64" alt="" draggable="false"></i></button>
     <button class="tab" data-tab="dream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.2A7.8 7.8 0 0 1 9.8 4.5a7.8 7.8 0 1 0 9.7 9.7z"/><path d="M16.2 4.2l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/></svg><span>꿈해몽</span></button>
     <button class="tab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg><span>보관함</span></button>
   </div>
