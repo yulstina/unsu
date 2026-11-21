@@ -219,8 +219,8 @@
   /* =========================================================
      탭 네비게이션
      ========================================================= */
-  var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream'), shared:$('v-shared'), box:$('v-box') };
-  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'today', fill:'num', dream:'dream', shared:'', box:'box' };
+  var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream'), shared:$('v-shared'), box:$('v-box'), ask:$('v-ask') };
+  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'today', fill:'today', dream:'dream', shared:'', box:'box', ask:'ask' };   /* 2026-11-22: 부적은 홈의 하위 페이지, 하단에 우니에게 묻기 */
   var currentTab = 'today', currentView = 'today', lastSajuView = null;
   function show(view, tab){
     Object.keys(VIEWS).forEach(function(k){ VIEWS[k].hidden = k !== view; });
@@ -231,7 +231,7 @@
     if (typeof updateTopbar === 'function') updateTopbar();
     if (view === 'input' || view === 'list' || view === 'result') lastSajuView = view;
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === currentTab); b.setAttribute('aria-current', b.dataset.tab === currentTab ? 'page' : 'false'); });
-    var ti = ['today','num','saju','dream','box'].indexOf(currentTab), lens = document.querySelector('.tab-lens');
+    var ti = ['today','saju','ask','dream','box'].indexOf(currentTab), lens = document.querySelector('.tab-lens');
     if (lens){ lens.style.opacity = ti < 0 ? '0' : '1'; if (ti >= 0) lens.style.setProperty('--ti', ti); }
     var segKey = view === 'result' ? 'mine' : view;
     document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });
@@ -265,7 +265,7 @@
       else if (coachOnce('welScroll')) coachScroll('아래로 내리면 띠별 운세도 볼 수 있어요');
     } else if (view === 'today' && me){ if (coachOnce('home')) coachScroll('아래로 내려 보면 오늘의 점수와 행운 부적이 있어요'); }
     else if (view === 'result'){ if (coachOnce('result')) coachScroll('천천히 내려 보며 내 사주를 읽어 보세요'); }
-    else if (view === 'fill' && me){ if (coachOnce('lucky') && store('unsu_drawn') !== todayStr()) coachTab('num', '매일 새 복주머니가 생겨요'); }
+    else if (view === 'fill' && me){ }
   }
 
   /* =========================================================
@@ -343,6 +343,7 @@
     else if (t === 'dream'){ openDream(); }
     else if (t === 'num'){ renderNumToday(); show('fill'); }
     else if (t === 'box'){ renderBox(); show('box'); }
+    else if (t === 'ask'){ renderAsk(); show('ask'); }
   }
   /* 스크롤: 상단 바 유리 전환 + 탭바 최소화 (iOS 스타일) */
   (function(){
@@ -2050,7 +2051,7 @@
         '<div class="tl-row"><span class="k">좋은 방향</span><b>' + q.dir + '</b></div>' +
         '<div class="tl-row"><span class="k">좋은 색</span><b>' + q.color + '</b></div>' +
         '<div class="tl-row tl-wide"><span class="k">오늘 해볼 일</span><b>' + q.act + '</b></div>' +
-        (showNums() ? '<div class="tl-row tl-wide tl-nums"><span class="k">좋은 숫자</span>' + luckChips(q.nums, 'soft') + '</div>' : '') +
+        (showNums() ? '<div class="tl-row tl-wide tl-nums"><span class="k">좋은 숫자</span><b class="tl-numtxt">' + q.nums.join(' · ') + '</b></div>' : '') +
       '</div>' +
       (q.mine ? '' : '<p class="helper">내 사주를 등록하면 방향, 색, 해볼 일이 나에게 필요한 기운으로 바뀌어요.</p>') + '</div>';
   }
@@ -2756,7 +2757,7 @@
         cell('행운의 색', f.tip.color) + cell('행운의 방향', EL_TEXT[lEl].dir) +
         cell('행운 아이템', f.tip.item) + cell('행운 음식', f.tip.food) +
         cell('좋은 시간', luckTime(me, r)) + cell('작은 행동', luck.act) +
-        (showNums() ? '<div class="tl-row tl-wide tl-nums"><span class="k">행운의 숫자</span>' + luckChips(luck.nums.map(function(o){ return o.n; }), 'soft') + '</div>' : '') +
+        (showNums() ? '<div class="tl-row tl-wide tl-nums"><span class="k">행운의 숫자</span><b class="tl-numtxt">' + luck.nums.map(function(o){ return o.n; }).join(' · ') + '</b></div>' : '') +
       '</div>' +
       (showNums() ? '<p class="helper tl-numnote">행운의 숫자는 ' + MS.EL_K[lEl] + ' 기운의 끝자리(' + EL_TEXT[lEl].num.map(function(n){ return n % 10; }).join('·') + ')로 골랐어요. 약속 시간이나 자리를 고를 때 가볍게 참고해 보세요.</p>' : '') +
       '<div class="row"><button class="btn-primary grow sheen" id="btnNumSave">' + SAVE_IC + '보관함에 저장</button><button class="btn-soft grow" id="btnNumCopy">공유하기</button></div>' +
@@ -2772,17 +2773,19 @@
   function renderNumToday(){
     var me = getMe(), box = $('numToday');
     var title = me ? esc(me.name) + '님의 오늘 행운 부적' : '매일 열어보는 나만의 행운 부적';
-    var head = '<div class="num-head"><h1 class="num-title">' + title + '</h1></div>';
+    var head = '<div class="flow-header"><button class="icon-back" id="btnNumBack" aria-label="홈으로">‹</button><span class="ttl">오늘의 행운 부적</span></div><div class="num-head"><h1 class="num-title">' + title + '</h1></div>';
     if (!me){
       box.innerHTML = head + '<div class="card pouch-card"><div class="pouch-fig">' + uniImg('u-pouch') + '</div>' +
         '<p class="helper" style="text-align:center">내 사주를 등록하면 복주머니에서 오늘의 행운 색, 방향, 작은 행동이 나와요. 매일 새로 바뀌어요.</p>' +
         '<button class="btn-primary btn-block sheen" id="btnNumOnb">내 사주 등록하고 복주머니 열기</button></div>';
       $('btnNumOnb').onclick = function(){ startOnboarding('new'); };
+      $('btnNumBack').onclick = function(){ go('today'); };
       return;
     }
     var r = compute(me); if (r.error){ box.innerHTML = ''; return; }
     var luck = todayLuck(me, r), lEl = luck.el;
     var opened = store('unsu_drawn') === todayStr();
+    setTimeout(function(){ if ($('btnNumBack')) $('btnNumBack').onclick = function(){ go('today'); }; }, 0);
     var h = head + '<div class="card pouch-card ' + EL_CLASS[lEl] + '" id="numWait"' + (opened ? ' hidden' : '') + '>' +
       '<div class="pouch-fig" id="pouchFig">' + uniImg('u-pouch') + '</div>' +
       '<p class="helper" style="text-align:center">복주머니를 열면 오늘 ' + esc(me.name) + '님께 필요한 행운의 색, 방향, 작은 행동이 나와요.</p>' +
@@ -3918,9 +3921,9 @@
   /* 주제별 풀이 (2026-11-22 GPT 최종 시안): 관계 · 날짜 · 연간 운세 · 더 깊이 · 가볍게 보기 */
   function topicGroups(){
     return [
-      ['관계', [['gh', 'u-love', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'u-love', '연애·결혼 시기', '인연이 오는 해 찾기', '']]],
+      ['관계', [['gh', 'uj-hands', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'uj-hug', '연애·결혼 시기', '인연이 오는 해 찾기', '']]],
       ['날짜', [['fc', 'u-calendar', '월별 운세 달력', '이번 달 좋은 날', '무료'], ['tk', 'u-calendar', '중요한 날 잡기', '이사·개업·계약·면접 날짜', '두 달 무료']]],
-      ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '키워드와 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '정미년 내 괘 풀이', '']]],
+      ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '내 사주 × 정미년 기운 · 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '음력 생일로 뽑는 한 해 괘 · 옛 풀이', '']]],
       ['더 깊이', [['book', 'u-book', '사주 이야기책', '우니가 읽어 주는 내 사주', '1장 무료'], ['chat', 'u-thinking', '우니에게 묻기', '사주 AI 해석 · 고민을 내 사주로 답해요', '하루 1번 무료'], ['job', 'u-work', '나에게 맞는 직업', '타고난 재능과 맞는 분야', '']]],
       ['가볍게 보기', [['zodiac', 'u-zodiac', '별자리 운세', '오늘의 별자리', '무료'], ['dream', 'u-sleep', '꿈해몽', '길몽일까? 오늘의 처방', '무료']]]
     ];
@@ -3949,9 +3952,9 @@
   }
   function moreMenuHTML(me, home){
     var M = [
-      ['btnTj', 'u-book', '토정비결', '2027 정미년 내 괘 풀이', 'NEW'],
+      ['btnTj', 'u-book', '토정비결', '음력 생일로 뽑는 한 해 괘', 'NEW'],
       ['btnFc', 'u-calendar', '월별 운세 달력', '이번 달 좋은 날 무료', ''],
-      ['btnLv', 'u-love', '연애·결혼 시기', '인연이 오는 해 찾기', ''],
+      ['btnLv', 'uj-hug', '연애·결혼 시기', '인연이 오는 해 찾기', ''],
       ['btnChat', 'u-thinking', '우니에게 묻기', '사주 AI 해석 · 하루 1번 무료', 'AI']
     ];
     if (home) M = M.concat([['btnMmGh', 'uj-hands', '궁합', '둘의 합은 몇 점일까?', ''], ['btnMmJob', 'u-work', '나에게 맞는 직업', '타고난 재능과 분야', '']]);
@@ -4136,20 +4139,37 @@
     };
   }
   function chatLog(){ var l = store('unsu_chat_log'); return Array.isArray(l) ? l : []; }
-  function openChat(me, r, topic){
-    topic = topic || 'love';
+  /* 2026-11-22 소율: 우니에게 묻기는 하단 탭의 한 페이지. 우니를 크게, 답은 '우니의 쪽지' 카드로(말풍선 채팅 앱처럼 보이지 않게) */
+  var askTopic = 'love';
+  function openChat(me, r, topic){ if (topic) askTopic = topic; closeSheet(); renderAsk(); if (currentView !== 'ask') show('ask'); else { var a = $('askIn'); if (a) a.scrollIntoView({ block:'center' }); } }
+  function askHeroHTML(me){
+    var joa = askTopic === 'love' || askTopic === 'people';
+    return '<section class="ask-hero"><div class="ah-stage" aria-hidden="true"><span class="ah-halo"></span><span class="ah-orbit"><i></i><i></i><i></i></span>' +
+      uniImg('u-thinking', 'ah-uni') + (joa ? uniImg('uj-hug', 'ah-joa') : '') + '</div>' +
+      '<div class="ah-txt"><div class="ah-k">사주 AI 해석</div><h1>우니에게 묻기</h1><p>' + (me ? esc(me.name) + '님의 여덟 글자를 아는 우니가<br>고민 하나에 한 장씩 답을 써 줘요.' : '내 사주를 아는 우니가<br>고민 하나에 한 장씩 답을 써 줘요.') + '</p></div></section>';
+  }
+  function renderAsk(){
+    var me = getMe(), box = $('askBody'); if (!box) return;
+    if (!me){
+      box.innerHTML = (NS ? demoBarHTML() : '') + askHeroHTML(null) + '<div class="card ask-empty"><p class="body-text">생년월일을 알려 주면 우니가 사주를 읽고 연애, 일, 돈, 사람 고민에 답해요. 하루 한 번은 무료예요.</p><button class="btn-primary btn-block sheen" id="askStart">내 사주 등록하고 물어보기</button></div>';
+      $('askStart').onclick = function(){ startOnboarding('new'); };
+      return;
+    }
+    var r = compute(me); if (r.error){ box.innerHTML = ''; return; }
+    var topic = askTopic;
     var log = chatLog().filter(function(x){ return x.who === me.id; }).slice(-6), free = chatLeftFree(), cr = chatCredits();
     var can = free > 0 || cr > 0;
-    openSheet('<div class="chat-sheet"><div class="chat-head">' + uniImg('u-thinking', 'chat-uni') + '<div><h3 id="sheetTitle">우니에게 묻기</h3><p class="helper">' + esc(me.name) + '님 사주를 보고 우니가 답해요 · 사주 AI 해석</p></div></div>' +
-      '<div class="chat-log" id="chatLog">' + (log.length ? log.map(function(x){ return '<div class="cb q">' + esc(x.q) + '</div><div class="cb a">' + esc(x.a).replace(/\n/g, '<br>') + '</div>'; }).join('')
-        : '<div class="cb a">안녕하세요, ' + esc(me.name) + '님! 연애, 일, 돈, 사람 고민 무엇이든 한 가지씩 물어봐 주세요. 사주에 비춰서 솔직하게 답해 드릴게요.</div>') + '</div>' +
-      '<div class="chat-topics" role="radiogroup">' + CHAT_TOPICS.map(function(t){ return '<button type="button" role="radio" data-ct="' + t[0] + '" aria-checked="' + (t[0] === topic) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="chat-in"><textarea id="chatQ" maxlength="200" rows="2" placeholder="예: 올해 이직해도 괜찮을까요?"></textarea><button class="btn-primary" id="chatGo">' + (can ? '묻기' : '질문권 받기') + '</button></div>' +
+    var T = {}; CHAT_TOPICS.forEach(function(t){ T[t[0]] = t[1]; });
+    box.innerHTML = (NS ? demoBarHTML() : '') + askHeroHTML(me) +
+      '<div class="chat-sheet ask-page">' +
+      '<div class="chat-topics" role="radiogroup" aria-label="고민 주제">' + CHAT_TOPICS.map(function(t){ return '<button type="button" role="radio" data-ct="' + t[0] + '" aria-checked="' + (t[0] === topic) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="chat-in ask-in" id="askIn"><textarea id="chatQ" maxlength="200" rows="3" placeholder="예: 올해 이직해도 괜찮을까요?"></textarea><button class="btn-primary" id="chatGo">' + (can ? '우니에게 묻기' : '질문권 받기') + '</button></div>' +
       '<p class="helper chat-meta">' + (passActive() ? '우니 패스 · 오늘 ' + free + '번 남았어요' : free ? '오늘 무료 질문 ' + free + '번 남았어요' : cr ? '질문권 ' + cr + '번 남았어요' : '오늘 무료 질문을 다 썼어요 · 질문권 ' + CHAT_PACK + '회 ' + COST.chat + '닢') + (cr && free ? ' · 질문권 ' + cr + '번' : '') + '</p>' +
-      '<p class="disclaimer">AI가 사주를 바탕으로 만든 재미용 답변이에요. 건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 사주 요약은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p>' +
-      '<button class="text-btn" data-close>닫기</button></div>');
-    var lg = $('chatLog'); lg.scrollTop = lg.scrollHeight;
-    document.querySelectorAll('[data-ct]').forEach(function(b){ b.onclick = function(){ topic = b.dataset.ct; document.querySelectorAll('[data-ct]').forEach(function(x){ x.setAttribute('aria-checked', x === b); }); }; });
+      '<div class="chat-log ask-log" id="chatLog">' + (log.length ? log.slice().reverse().map(function(x){ return '<article class="ask-note"><div class="an-q"><small>' + (T[x.topic] || '고민') + '</small>' + esc(x.q) + '</div><div class="an-a">' + uniImg('u-calm', 'an-uni') + '<p>' + esc(x.a).replace(/\n/g, '<br>') + '</p></div></article>'; }).join('')
+        : '<article class="ask-note an-hello"><div class="an-a">' + uniImg('u-wave', 'an-uni') + '<p>안녕하세요, ' + esc(me.name) + '님! 연애, 일, 돈, 사람 고민 무엇이든 한 가지씩 물어봐 주세요. 사주에 비춰서 솔직하게 답해 드릴게요.</p></div></article>') + '</div>' +
+      '<p class="disclaimer">AI가 사주를 바탕으로 만든 재미용 답변이에요. 건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 사주 요약은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p></div>';
+    bindDemoBar();
+    document.querySelectorAll('[data-ct]').forEach(function(b){ b.onclick = function(){ topic = askTopic = b.dataset.ct; var h = box.querySelector('.ask-hero'); if (h) h.outerHTML = askHeroHTML(me); document.querySelectorAll('[data-ct]').forEach(function(x){ x.setAttribute('aria-checked', x === b); }); }; });
     $('chatGo').onclick = function(){
       if (!can){ chatBuy(me, r, topic); return; }
       var q = $('chatQ').value.replace(/\s+/g, ' ').trim();
@@ -4166,8 +4186,8 @@
   function chatAsk(me, r, topic, q){
     if (chatBusy) return; chatBusy = true;
     var lg = $('chatLog'), go = $('chatGo');
-    lg.insertAdjacentHTML('beforeend', '<div class="cb q">' + esc(q) + '</div><div class="cb a typing" id="chatTyping"><i></i><i></i><i></i></div>');
-    lg.scrollTop = lg.scrollHeight; go.disabled = true; $('chatQ').value = '';
+    lg.insertAdjacentHTML('afterbegin', '<article class="ask-note" id="chatTyping"><div class="an-q"><small>방금</small>' + esc(q) + '</div><div class="an-a">' + uniImg('u-thinking', 'an-uni') + '<p class="cb typing"><i></i><i></i><i></i></p></div></article>');
+    go.disabled = true; $('chatQ').value = '';
     var hist = chatLog().filter(function(x){ return x.who === me.id; }).slice(-2).map(function(x){ return { q:x.q, a:String(x.a).slice(0, 400) }; });
     var useFree = chatLeftFree() > 0;
     fetch('/api/chat', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ q:q, topic:topic, ctx:chatCtx(me, r), hist:hist }) })

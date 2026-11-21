@@ -1,3 +1,4 @@
+/* 2026-11-22: og.jpg는 소율이 준 이미지(scripts/assets/og-source.png)를 1200x630으로 줄여 쓴다. 이 스크립트를 다시 돌리면 덮어쓰니 아이콘만 필요할 때 og 부분을 건너뛸 것 */
 /* 카톡·SNS 미리보기 이미지(og.jpg)와 홈 화면 아이콘 생성 — 실행: npm run build:site 후 node scripts/og.js, 다시 npm run build:site(og.jpg?v= 해시 갱신)
    2026-11-21: 번호 추첨 기능을 없애고 '행운 부적' 카드 + 복주머니 든 우니로 교체 */
 const { chromium } = require('playwright');
