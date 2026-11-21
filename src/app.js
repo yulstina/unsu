@@ -828,7 +828,7 @@
     if (!ezOpen){
       h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') + bookCoverHTML(entry, false);
     }
-    h += tjCardHTML(entry);
+    h += moreMenuHTML(entry);
     h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic uni" aria-hidden="true">' + uniImg('u-calendar') + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
     h += '<div class="card num-cta ' + EL_CLASS[lEl] + '"><div class="num-cta-q">오늘 ' + esc(entry.name) + '님의<br><em>행운 숫자</em></div>' +
       '<p class="helper">오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자예요. 매일 바뀌어요.</p>' +
@@ -848,7 +848,7 @@
     if (!reduceMotion && window.gsap) gsap.from('#resultBody .el-bar .fill', { scaleX:0, duration:.9, ease:'power2.out', stagger:.06, delay:.2 });
 
     $('btnTkSaju').onclick = function(){ openTaekil(entry, r); };
-    if ($('btnTj')) $('btnTj').onclick = function(){ openTojeong(entry, r); };
+    bindMoreMenu(entry, r, $('resultBody'));
     $('btnDraw').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
     if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
@@ -1044,7 +1044,7 @@
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
   /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
      값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
-  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
+  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100, cal:100, lv:200, chat:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
   var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
@@ -1061,7 +1061,7 @@
   /* 원화 단건 결제 (2026-11-21 소율 결정): PG 심사 때문에 엽전은 팔지 않고, 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제한다.
      엽전은 출석·가입·선물로 모으는 무료 적립 포인트. 가격은 서버 api/_lib/shop.js WON 과 같게(서버 값이 오면 그 값을 쓴다).
      */
-  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990 };
+  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990, cal:990, lv:1900, chat:990 };
   function wonOf(k){ var w = SRV.cfg && SRV.cfg.won; return (w && w[k]) || WON[k] || 0; }
   function coinSale(){ return !!(SRV.cfg && SRV.cfg.packs); }   /* 서버 COIN_SALE=1 일 때만 엽전 충전 패키지를 보인다 */
   /* 잠금 화면 버튼: 엽전이 모자랄 때 '990원 바로 열기' */
@@ -1199,6 +1199,7 @@
       if (rs.k === 'cat' && e && CATS[rs.cat]) open(function(){ setCatPaid(rs.cat); openCat(e, compute(e), rs.cat); });
       else if (rs.k === 'tk' && e && TAEKIL.PURPOSES[rs.p]) open(function(){ setTkOpen(e, rs.p); openTaekil(e, compute(e), rs.p); });
       else if (rs.k === 'dream' && rs.text) open(function(){ go('dream'); setTimeout(function(){ dreamRun(rs.text, true, null, true); }, 300); });
+      else if (rs.k === 'chat' && e) open(function(){ store('unsu_chat_cr', chatCredits() + CHAT_PACK); openChat(e, compute(e), rs.topic); });
       else if (rs.k === 'pay' && product(rs.pid)) open(function(){ if (!owns(rs.pid) || rs.pid === 'gh') addOrder(rs.pid, { ghKey:rs.ghKey || null }); toast(product(rs.pid).name + ' 열렸어요 · 다시 누르면 바로 보여요'); });
       else toast('결제한 콘텐츠는 다시 누르면 바로 열려요');
     } catch(err){}
@@ -2341,7 +2342,7 @@
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += peekCardHTML(me, nums, elc);   /* GPT 검토 P1-6: 오늘 한 문장 바로 아래 행운 선물 */
     h += '<div class="qgrid">' + [['btnQNum','dream','꿈해몽','길몽일까 흉몽일까? 오늘의 처방','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + tkBannerHTML() + '</div>';
-    h += tjCardHTML(me);
+    h += moreMenuHTML(me);
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -2393,7 +2394,7 @@
     $('btnQNum').onclick = function(){ openDream(); };
     $('btnQGh').onclick = function(){ go('gunghap'); };
     $('btnQNY').onclick = function(){ openNYSheet(me, r); };
-    if ($('btnTj')) $('btnTj').onclick = function(){ openTojeong(me, r); };
+    bindMoreMenu(me, r, body);
     $('btnTk').onclick = function(){ openTaekil(me, r); };
     body.querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ openCat(me, r, b.dataset.cat); }; });
   }
@@ -3854,10 +3855,6 @@
     }
     return { no:'' + sang + jung + ha, sang:sang, jung:jung, ha:ha, age:age, months:months };
   }
-  function tjCardHTML(me){
-    return '<button type="button" class="card tj-bn" id="btnTj"><span class="tj-ic" aria-hidden="true">' + uniImg('u-book') + '</span><span class="tj-t"><b>2027 토정비결 <em>NEW</em></b>' +
-      '<small>내 괘로 보는 정미년 한 해 · 총운과 1~3월 무료</small></span><span class="chev" aria-hidden="true">›</span></button>';
-  }
   function openTojeong(me, r){
     setTimeout(function(){ bond('ny'); }, 900);
     var T = tjCalc(r), S = TJ_SANG[T.sang], open = owns('tj') || passActive(), FREE = 3;
@@ -3885,9 +3882,245 @@
       '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button></div>');
     if ($('btnTjBuy')) $('btnTjBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('tj', { who:esc(me.name) + '님', onPaid:function(){ openTojeong(me, r); } }); }, 260); };
   }
+  /* =========================================================
+     더보기 메뉴: 토정비결 · 월별 운세 달력 · 연애·결혼 시기 · 우니에게 묻기(AI 상담)
+     2026-11-21 소율: "연애·결혼 시기, ai 상담이랑 월별 운세 달력은 있어야" (타로는 출시 후)
+     ========================================================= */
+  function moreMenuHTML(me){
+    var M = [
+      ['btnTj', 'u-book', '토정비결', '2027 정미년 내 괘 풀이', 'NEW'],
+      ['btnFc', 'u-calendar', '월별 운세 달력', '이번 달 좋은 날 무료', ''],
+      ['btnLv', 'u-love', '연애·결혼 시기', '인연이 오는 해 찾기', ''],
+      ['btnChat', 'u-thinking', '우니에게 묻기', 'AI 사주 상담 · 하루 1번 무료', 'AI']
+    ];
+    return '<div class="more-menu">' + M.map(function(x){
+      return '<button type="button" class="mm-tile" id="' + x[0] + '"><span class="mm-ic" aria-hidden="true">' + uniImg(x[1]) + '</span><span class="mm-t"><b>' + x[2] + (x[4] ? '<em>' + x[4] + '</em>' : '') + '</b><small>' + x[3] + '</small></span></button>';
+    }).join('') + '</div>';
+  }
+  function bindMoreMenu(me, r, root){
+    var q = function(id){ return root.querySelector('#' + id); }, on = function(id, fn){ var b = q(id); if (b) b.onclick = fn; };
+    on('btnTj', function(){ openTojeong(me, r); });
+    on('btnFc', function(){ openFortuneCal(me, r, 0); });
+    on('btnLv', function(){ openLoveTiming(me, r); });
+    on('btnChat', function(){ openChat(me, r); });
+  }
+
+  /* ---------- 월별 운세 달력 (cal) ----------
+     하루하루 점수는 오늘의 운세와 같은 DAILY.today 로 계산 → 달력과 오늘 화면의 점수가 항상 같다.
+     무료: 이번 달 전체 / 유료(cal): 다음 달부터 11개월 + 달마다 흐름 한 줄 */
+  var FC_MON = {
+    '비겁':'친구·동료와 함께 움직이면 힘이 붙는 달이에요. 돈 거래와 보증은 선을 그어 두세요.',
+    '식상':'아이디어와 말솜씨가 살아나는 달이에요. 기획, 발표, 새 취미를 시작하기 좋아요.',
+    '재성':'돈과 실속이 움직이는 달이에요. 정산, 협상, 부수입을 챙기기 좋아요.',
+    '관성':'책임과 인정이 함께 오는 달이에요. 맡은 일을 끝까지 해내면 평가가 올라가요.',
+    '인성':'도움과 배움이 들어오는 달이에요. 공부, 자격증, 어른의 조언에 답이 있어요.'
+  };
+  var fcCache = {};
+  function fcMonth(me, r, y, m){
+    var key = me.id + '|' + y + '-' + m;
+    if (fcCache[key]) return fcCache[key];
+    var n = new Date(y, m, 0).getDate(), days = [];
+    for (var d = 1; d <= n; d++){ var f = DAILY.today(me, r, new Date(y, m - 1, d)); days.push({ d:d, f:f, t:f.total }); }
+    var mp = MS.calc({ y:y, m:m, d:15, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.month;
+    var g = TEN_TO_GROUP[MS.tenGod(r.pillars.day.stem, mp.stem)];
+    var sorted = days.slice().sort(function(a, b){ return b.t - a.t; });
+    /* 점수 구간은 그달 안에서 상대적으로: 위 20% 금색, 아래 15% 쉬어 갈 날 */
+    var hiT = sorted[Math.floor(n * .2)].t, loT = sorted[n - Math.ceil(n * .15)].t, avg = Math.round(days.reduce(function(s, x){ return s + x.t; }, 0) / n);
+    days.forEach(function(x){ x.tier = x.t > hiT || (x.t === hiT && x.t >= avg + 4) ? 'gold' : x.t <= loT ? 'rose' : x.t >= avg ? 'violet' : 'mint'; });
+    /* 이번 달은 남은 날 중에서 좋은 날·조심할 날을 고른다 */
+    var nd = nowD(), left = (nd.getFullYear() === y && nd.getMonth() + 1 === m) ? sorted.filter(function(x){ return x.d >= nd.getDate(); }) : sorted;
+    if (left.length < 6) left = sorted;
+    return (fcCache[key] = { y:y, m:m, days:days, mp:mp, g:g, best:left.slice(0, 3), care:left.slice(-3).reverse(), avg:avg });
+  }
+  function openFortuneCal(me, r, off, selD){
+    setTimeout(function(){ bond('today'); }, 900);
+    var open = owns('cal') || passActive(), now = nowD(), base = new Date(now.getFullYear(), now.getMonth() + off, 1);
+    var y = base.getFullYear(), m = base.getMonth() + 1, locked = off > 0 && !open;
+    var C = fcMonth(me, r, y, m), first = new Date(y, m - 1, 1).getDay();
+    var isNow = off === 0, today = now.getDate();
+    if (selD == null) selD = isNow ? today : C.best[0].d;
+    var tabs = '';
+    for (var i = 0; i < 12; i++){
+      var bd = new Date(now.getFullYear(), now.getMonth() + i, 1), lk = i > 0 && !open;
+      tabs += '<button type="button" data-fcm="' + i + '"' + (i === off ? ' aria-selected="true"' : '') + (lk ? ' class="lk"' : '') + '><b>' + (bd.getMonth() + 1) + '월</b>' + (lk ? '<i>' + LOCK_SVG + '</i>' : i === 0 ? '<i>무료</i>' : '') + '</button>';
+    }
+    var cells = '';
+    for (var k = 0; k < first; k++) cells += '<span></span>';
+    C.days.forEach(function(x){
+      var best = C.best.some(function(b){ return b.d === x.d; });
+      cells += '<button type="button" class="fc-d' + (best ? ' best' : '') + (x.d === selD && !locked ? ' sel' : '') + (isNow && x.d === today ? ' now' : '') + '" data-fcd="' + x.d + '" data-tier="' + x.tier + '"><b>' + x.d + '</b><small>' + x.t + '</small></button>';
+    });
+    var S = C.days[selD - 1], sf = S.f, wd = new Date(y, m - 1, selD).getDay();
+    var dayBox = locked ? '' : '<div class="fc-day"><div class="fc-day-h"><b>' + m + '월 ' + selD + '일 ' + WD[wd] + '요일</b><span class="tier-tag" data-tier="' + S.tier + '">' + S.t + '점 · ' + ({ gold:'좋은 날', violet:'괜찮은 날', mint:'보통인 날', rose:'쉬어 갈 날' })[S.tier] + '</span></div>' +
+      '<h4>' + sf.head + '</h4><p class="helper">' + sf.pillars.day.hanja + '日 · ' + sf.ten + '의 날</p>' + scoreRowsHTML(sf) + '</div>';
+    var list = function(a){ return a.map(function(x){ return m + '/' + x.d + '(' + WD[new Date(y, m - 1, x.d).getDay()] + ')'; }).join(', '); };
+    openSheet('<div class="fc-sheet"><div class="sheet-fig">' + uniImg('u-calendar') + '</div>' +
+      '<h3 id="sheetTitle">' + esc(me.name) + '님의 월별 운세 달력</h3>' +
+      '<p class="helper" style="margin:-4px 0 12px">날마다 일진과 내 사주의 관계로 매긴 점수예요. 날짜를 누르면 그날 풀이가 보여요.</p>' +
+      '<div class="tk-months fc-months" role="tablist">' + tabs + '</div>' +
+      '<div class="fc-msum"><b>' + y + '년 ' + m + '월 · ' + C.mp.hanja + '月</b>' +
+        (locked ? '<p class="tj-blur" aria-hidden="true">' + FC_MON[C.g] + '</p>' : '<p>' + FC_MON[C.g] + ' 이달 평균 ' + C.avg + '점.</p>') + '</div>' +
+      '<div class="tk-cal fc-cal' + (locked ? ' locked' : '') + '"><div class="tk-wd"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>' +
+        '<div class="tk-grid">' + cells + '</div>' +
+        (locked ? '<div class="tk-cal-lock">' + LOCK_SVG + '<b>' + m + '월 달력은 잠겨 있어요</b><small>이번 달은 무료, 12개월 전체는 한 번 결제로 계속 봐요</small></div>' : '') + '</div>' +
+      '<div class="tk-legend"><span data-tier="gold"><i></i>아주 좋은 날</span><span data-tier="rose"><i></i>쉬어 갈 날</span><span class="star"><i>★</i>추천 3일</span></div>' +
+      (locked ? '' : '<div class="fc-picks"><p><b>좋은 날</b> ' + list(C.best) + '</p><p><b>조심할 날</b> ' + list(C.care) + '</p></div>') +
+      dayBox +
+      (locked || (!open && isNow) ? '<div class="tj-buy"><b>다음 달부터 12개월 달력과 달마다 흐름까지</b>' + passLinkHTML() + '<button class="btn-primary btn-block sheen" id="btnFcBuy">12개월 달력 열기 · ' + COST.cal + '닢</button></div>' : adSlotHTML('운세 달력을 본 뒤')) +
+      '<p class="disclaimer">운세 달력은 사주와 일진으로 계산한 재미용 참고 콘텐츠예요. 중요한 일은 직접 판단해 주세요. 큰일 날짜를 고를 땐 ‘중요한 날 잡기’를 써 보세요.</p>' +
+      '<button class="text-btn" data-close>닫기</button></div>');
+    document.querySelectorAll('[data-fcm]').forEach(function(b){ b.onclick = function(){ openFortuneCal(me, r, +b.dataset.fcm); }; });
+    if (!locked) document.querySelectorAll('[data-fcd]').forEach(function(b){ b.onclick = function(){ var st = $('sheet').scrollTop; openFortuneCal(me, r, off, +b.dataset.fcd); $('sheet').scrollTop = st; }; });
+    if ($('btnFcBuy')) $('btnFcBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('cal', { who:esc(me.name) + '님', onPaid:function(){ openFortuneCal(me, r, off || 1); } }); }, 260); };
+  }
+
+  /* ---------- 연애·결혼 시기 (lv) ----------
+     그해 세운의 천간이 내 일간에게 무엇인지(여성: 관성=남자·결혼 별, 남성: 재성=여자·결혼 별),
+     세운 지지와 배우자 자리(일지)의 합·충, 도화(인연 끌림) 해를 더해 해마다 연애운·결혼운을 매긴다. 랜덤 없음. */
+  var LV_STYLE = [
+    '큰 나무처럼 곧은 사랑을 해요. 한번 마음을 주면 오래가고, 상대에게 믿음직한 기둥이 되어 줘요. 자존심 때문에 먼저 연락을 못 하는 게 아쉬운 점이에요.',
+    '덩굴꽃처럼 다정하게 스며드는 사랑을 해요. 작은 배려를 잘 알아채고 분위기를 부드럽게 만들어요. 상대에게 맞추다 내 마음을 숨기지 않게 조심하세요.',
+    '한여름 햇살처럼 화끈하고 솔직한 사랑을 해요. 좋으면 바로 표현하고 데이트도 늘 즐거워요. 빨리 뜨거워진 만큼 식지 않게 속도를 맞춰 보세요.',
+    '촛불처럼 은은하고 깊은 사랑을 해요. 상대의 마음을 섬세하게 읽고 따뜻하게 감싸 줘요. 혼자 서운함을 쌓지 말고 말로 꺼내는 연습이 필요해요.',
+    '큰 산처럼 듬직하고 변함없는 사랑을 해요. 화려하진 않아도 곁에 있으면 편안한 사람이에요. 표현이 적어 오해받기 쉬우니 가끔은 말로 마음을 전해 주세요.',
+    '기름진 밭처럼 챙겨 주고 길러 주는 사랑을 해요. 상대의 생활까지 살뜰히 돌봐요. 다 해 주다 지치지 않게 받는 연습도 해 보세요.',
+    '단단한 쇠처럼 분명하고 의리 있는 사랑을 해요. 약속을 지키고 아닌 건 아니라고 말해요. 날카로운 말이 상처가 되지 않게 부드럽게 다듬으면 좋아요.',
+    '빛나는 보석처럼 섬세하고 취향이 분명한 사랑을 해요. 센스 있는 연애를 하고 특별한 순간을 잘 만들어요. 완벽을 바라다 스스로 지치지 않게 조심하세요.',
+    '넓은 바다처럼 자유롭고 품이 넓은 사랑을 해요. 대화가 잘 통하고 상대를 크게 품어 줘요. 마음이 넓은 만큼 한곳에 머무는 약속이 중요해요.',
+    '이슬비처럼 조용히 젖어 드는 사랑을 해요. 눈치가 빠르고 공감을 잘해 상대가 편하게 기대요. 걱정이 많아질 땐 혼자 상상하지 말고 직접 물어보세요.'
+  ];
+  var LV_SPOUSE = ['자기 생각이 뚜렷하고 앞장서는 사람','다정하고 손재주 좋은 사람','밝고 에너지가 넘치는 사람','따뜻하고 감성이 풍부한 사람','듬직하고 믿음직한 사람','자상하고 살림 감각이 좋은 사람','의리 있고 결단력 있는 사람','깔끔하고 센스 있는 사람','시원시원하고 마음이 넓은 사람','차분하고 배려 깊은 사람'];
+  var LV_PALACE = ['자(子) · 생각이 깊고 밤에 대화가 잘 통하는 짝','축(丑) · 성실하고 묵묵히 곁을 지키는 짝','인(寅) · 추진력 있고 함께 도전하는 짝','묘(卯) · 다정하고 말이 잘 통하는 짝','진(辰) · 꿈이 크고 스케일 있는 짝','사(巳) · 똑똑하고 계획적인 짝','오(午) · 밝고 열정적인 짝','미(未) · 온순하고 가정적인 짝','신(申) · 재치 있고 일 잘하는 짝','유(酉) · 깔끔하고 취향이 분명한 짝','술(戌) · 의리 있고 책임감 강한 짝','해(亥) · 마음 넓고 낙천적인 짝'];
+  var LV_DOHWA = [9, 6, 3, 0, 9, 6, 3, 0, 9, 6, 3, 0];   /* 지지별 도화: 申子辰→酉, 巳酉丑→午, 寅午戌→卯, 亥卯未→子 */
+  function lvCalc(me, r){
+    var dS = r.pillars.day.stem, dB = r.pillars.day.br, yB = r.pillars.year.br, F = me.gender === 'F';
+    var dEl = MS.STEM_EL[dS], spEl = F ? (dEl + 3) % 5 : (dEl + 2) % 5;   /* 여: 나를 극하는 오행(관성), 남: 내가 극하는 오행(재성) */
+    var dh = [LV_DOHWA[dB], LV_DOHWA[yB]];
+    var y0 = Math.max(TJ_YEAR, r.solar.y + 18), years = [];
+    for (var Y = y0; Y < y0 + 10; Y++){
+      var p = MS.calc({ y:Y, m:6, d:15, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.year;
+      var tg = MS.tenGod(dS, p.stem), rel = DAILY.brRel(p.br, dB), lov = 58, mar = 56, why = [];
+      var star = F ? { '정관':'mar', '편관':'lov' } : { '정재':'mar', '편재':'lov' };
+      if (star[tg] === 'mar'){ mar += 22; lov += 10; why.push(tg + ' 해 · 결혼의 별이 들어와요'); }
+      else if (star[tg] === 'lov'){ lov += 20; mar += 9; why.push(tg + ' 해 · 설레는 인연의 별이 들어와요'); }
+      else if (tg === '식신' || tg === '상관'){ lov += 8; why.push('매력이 드러나는 해예요'); }
+      else if (tg === '정인' || tg === '편인'){ mar += 5; why.push('주변 소개와 어른 인연이 이어지는 해예요'); }
+      else if (tg === '비견' || tg === '겁재'){ lov -= 4; mar -= 6; why.push('경쟁자가 생기기 쉬운 해예요'); }
+      if (rel === 'hap'){ mar += 12; lov += 8; why.push('배우자 자리와 합 · 관계가 단단해져요'); }
+      else if (rel === 'samhap'){ mar += 6; lov += 6; why.push('배우자 자리와 삼합 · 함께하는 목표가 생겨요'); }
+      else if (rel === 'chung'){ mar -= 8; lov += 4; why.push('배우자 자리와 충 · 만남과 이별이 모두 빨라져요'); }
+      else if (rel === 'wonjin'){ mar -= 5; lov -= 5; why.push('원진 · 사소한 서운함을 조심해요'); }
+      if (dh.indexOf(p.br) > -1){ lov += 12; why.push('도화의 해 · 사람을 끄는 힘이 커져요'); }
+      years.push({ y:Y, age:Y - r.solar.y, p:p, tg:tg, rel:rel, lov:clamp(lov, 40, 98), mar:clamp(mar, 40, 98), why:why });
+    }
+    var byL = years.slice().sort(function(a, b){ return b.lov - a.lov; }), byM = years.slice().sort(function(a, b){ return b.mar - a.mar; });
+    /* 2027년 달마다: 월운 천간이 결혼·인연의 별이거나 월지가 배우자 자리와 합이면 좋은 달 */
+    var mons = [];
+    for (var mm = 1; mm <= 12; mm++){
+      var mp = MS.calc({ y:TJ_YEAR, m:mm, d:20, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.month;
+      var mt = MS.tenGod(dS, mp.stem), mr = DAILY.brRel(mp.br, dB), sc = 60;
+      if (star[mt]) sc += 20; if (mr === 'hap' || mr === 'samhap') sc += 12; if (mr === 'chung') sc -= 6; if (dh.indexOf(mp.br) > -1) sc += 10;
+      mons.push({ m:mm, sc:sc });
+    }
+    mons.sort(function(a, b){ return b.sc - a.sc || a.m - b.m; });
+    return { years:years, bestL:byL.slice(0, 2), bestM:byM.slice(0, 2), care:years.filter(function(x){ return (x.rel === 'chung' || x.rel === 'wonjin') && byL.slice(0, 2).indexOf(x) < 0 && byM.slice(0, 2).indexOf(x) < 0; }).slice(0, 2), mons:mons.slice(0, 3).sort(function(a, b){ return a.m - b.m; }), spEl:spEl, star:F ? '관성(남자·결혼의 별)' : '재성(여자·결혼의 별)' };
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  }
+  function openLoveTiming(me, r){
+    setTimeout(function(){ bond('gh'); }, 900);
+    var L = lvCalc(me, r), open = owns('lv') || passActive(), dS = r.pillars.day.stem, dB = r.pillars.day.br, now = L.years[0];
+    var chart = L.years.map(function(x){
+      return '<li><span class="lv-y"><b>' + x.y + '</b><small>' + x.age + '세</small></span><span class="lv-bars"><i class="l" style="--v:' + (x.lov / 100) + '"></i><i class="m" style="--v:' + (x.mar / 100) + '"></i></span><span class="lv-n">' + x.lov + ' · ' + x.mar + '</span></li>';
+    }).join('');
+    var yl = function(a){ return a.map(function(x){ return '<b>' + x.y + '년</b>(' + x.age + '세)'; }).join(', '); };
+    openSheet('<div class="lv-sheet"><div class="sheet-fig">' + uniImg('u-love') + '</div>' +
+      '<h3 id="sheetTitle">' + esc(me.name) + '님의 연애·결혼 시기</h3>' +
+      '<p class="helper" style="margin:-4px 0 12px">해마다 들어오는 기운과 배우자 자리(일지)로 본 인연의 흐름이에요.</p>' +
+      '<div class="tj-sec"><h4>나의 연애 스타일 · ' + MS.STEM_K[dS] + '(' + MS.STEM_H[dS] + ') 일간</h4><p>' + LV_STYLE[dS] + '</p></div>' +
+      '<div class="tj-sec"><h4>배우자 자리 · ' + LV_PALACE[dB] + '</h4><p>일지는 사주에서 배우자가 앉는 자리예요. ' + esc(me.name) + '님 곁에는 ' + LV_PALACE[dB].split(' · ')[1].replace(/ 짝$/, '') + ' 사람이 오래 머물기 쉬워요.</p></div>' +
+      '<div class="tj-sec"><h4>' + now.y + '년 인연운</h4><div class="lv-now"><span><small>연애운</small><b>' + now.lov + '</b></span><span><small>결혼운</small><b>' + now.mar + '</b></span></div><p>' + now.why.slice(0, 2).join(' · ') + '</p></div>' +
+      (open
+        ? '<div class="tj-sec"><h4>10년 인연 그래프 <small>연애 · 결혼</small></h4><ul class="lv-chart">' + chart + '</ul><div class="tk-legend"><span class="lv-lg l"><i></i>연애운</span><span class="lv-lg m"><i></i>결혼운</span></div></div>' +
+          '<div class="tj-sec"><h4>인연이 가장 가까운 해</h4><p><b>연애</b> ' + yl(L.bestL) + ' · ' + L.bestL[0].why[0] + '</p><p><b>결혼</b> ' + yl(L.bestM) + ' · ' + L.bestM[0].why[0] + '</p>' + (L.care.length ? '<p><b>천천히 갈 해</b> ' + yl(L.care) + ' · 큰 결정은 한 번 더 생각해요.</p>' : '') + '</div>' +
+          '<div class="tj-sec"><h4>' + TJ_YEAR + '년 인연 달</h4><p>' + L.mons.map(function(x){ return x.m + '월'; }).join(', ') + '에 소개팅, 고백, 상견례 같은 일을 잡아 보세요.</p></div>' +
+          '<div class="tj-sec"><h4>나와 잘 맞는 사람</h4><p>' + esc(me.name) + '님의 ' + L.star + '은 ' + MS.EL_K[L.spEl] + '(' + MS.EL_H[L.spEl] + ') 기운이에요. ' + LV_SPOUSE[L.spEl * 2 + (dB % 2)] + '에게 마음이 가고, 함께할 때 서로를 키워 줘요. ' + EL_TEXT[L.spEl].color + ' 계열 옷을 입은 날 인연을 만나기 쉬워요.</p></div>' + adSlotHTML('연애·결혼 시기를 본 뒤')
+        : '<div class="tj-sec tj-locked"><h4>10년 인연 그래프 ' + LOCK_SVG + '</h4><ul class="lv-chart tj-blur" aria-hidden="true">' + chart + '</ul></div>' +
+          '<div class="tj-buy"><b>10년 연애·결혼 그래프, 인연이 오는 해, ' + TJ_YEAR + '년 인연 달, 잘 맞는 사람까지</b>' + passLinkHTML() + '<button class="btn-primary btn-block sheen" id="btnLvBuy">연애·결혼 시기 전체 보기 · ' + COST.lv + '닢</button></div>') +
+      '<p class="disclaimer">연애·결혼 시기는 사주의 흐름으로 본 재미용 참고 콘텐츠예요. 인연은 결국 두 사람의 마음이 만들어요.</p>' +
+      '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button></div>');
+    if ($('btnLvBuy')) $('btnLvBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('lv', { who:esc(me.name) + '님', onPaid:function(){ openLoveTiming(me, r); } }); }, 260); };
+  }
+
+  /* ---------- 우니에게 묻기 (AI 사주 상담, item 'chat') ----------
+     /api/chat 이 내 사주 요약을 근거로 짧게 답한다(키가 없거나 막히면 서버가 사주 규칙으로 답을 만든다).
+     하루 1번 무료 · 질문권 5회 = 100닢(990원) · 우니 패스는 하루 10번까지 */
+  var CHAT_FREE = 1, CHAT_PACK = 5, CHAT_PASS_MAX = 10;
+  var CHAT_TOPICS = [['love','연애'],['work','일·직장'],['money','돈'],['people','인간관계'],['day','오늘 하루'],['etc','그 밖에']];
+  function chatDay(){ var c = store('unsu_chat_day'); return c && c.d === todayStr() ? c.n : 0; }
+  function chatCredits(){ var c = store('unsu_chat_cr'); return typeof c === 'number' ? c : 0; }
+  function chatLeftFree(){ return passActive() ? Math.max(0, CHAT_PASS_MAX - chatDay()) : Math.max(0, CHAT_FREE - chatDay()); }
+  function chatCtx(me, r){
+    var f = DAILY.today(me, r, nowD()), dS = r.pillars.day.stem, P = r.pillars;
+    var ys = MS.calc({ y:TJ_YEAR, m:6, d:15, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.year;
+    return {
+      name:String(me.name || '').slice(0, 12), gender:me.gender === 'F' ? '여성' : '남성', age:nowD().getFullYear() - r.solar.y,
+      pillars:[P.year, P.month, P.day, P.hour].filter(Boolean).map(function(p){ return p.hanja; }).join(' '),
+      ilgan:MS.STEM_K[dS] + '(' + MS.STEM_H[dS] + ') ' + MS.EL_K[MS.STEM_EL[dS]],
+      el:MS.EL_K.map(function(k, i){ return k + r.cnt[i]; }).join(' '), yong:MS.EL_K[r.yong],
+      today:f.head + ' (' + f.ten + '의 날, 재물 ' + f.scores.w + ' 연애 ' + f.scores.l + ' 직업 ' + f.scores.j + ')',
+      year:TJ_YEAR + '년 ' + ys.hanja + ' · ' + MS.tenGod(dS, ys.stem) + '의 해'
+    };
+  }
+  function chatLog(){ var l = store('unsu_chat_log'); return Array.isArray(l) ? l : []; }
+  function openChat(me, r, topic){
+    topic = topic || 'love';
+    var log = chatLog().filter(function(x){ return x.who === me.id; }).slice(-6), free = chatLeftFree(), cr = chatCredits();
+    var can = free > 0 || cr > 0;
+    openSheet('<div class="chat-sheet"><div class="chat-head">' + uniImg('u-thinking', 'chat-uni') + '<div><h3 id="sheetTitle">우니에게 묻기</h3><p class="helper">' + esc(me.name) + '님 사주를 보고 우니가 답해요 · AI 상담</p></div></div>' +
+      '<div class="chat-log" id="chatLog">' + (log.length ? log.map(function(x){ return '<div class="cb q">' + esc(x.q) + '</div><div class="cb a">' + esc(x.a).replace(/\n/g, '<br>') + '</div>'; }).join('')
+        : '<div class="cb a">안녕하세요, ' + esc(me.name) + '님! 연애, 일, 돈, 사람 고민 무엇이든 한 가지씩 물어봐 주세요. 사주에 비춰서 솔직하게 답해 드릴게요.</div>') + '</div>' +
+      '<div class="chat-topics" role="radiogroup">' + CHAT_TOPICS.map(function(t){ return '<button type="button" role="radio" data-ct="' + t[0] + '" aria-checked="' + (t[0] === topic) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="chat-in"><textarea id="chatQ" maxlength="200" rows="2" placeholder="예: 올해 이직해도 괜찮을까요?"></textarea><button class="btn-primary" id="chatGo">' + (can ? '묻기' : '질문권 받기') + '</button></div>' +
+      '<p class="helper chat-meta">' + (passActive() ? '우니 패스 · 오늘 ' + free + '번 남았어요' : free ? '오늘 무료 질문 ' + free + '번 남았어요' : cr ? '질문권 ' + cr + '번 남았어요' : '오늘 무료 질문을 다 썼어요 · 질문권 ' + CHAT_PACK + '회 ' + COST.chat + '닢') + (cr && free ? ' · 질문권 ' + cr + '번' : '') + '</p>' +
+      '<p class="disclaimer">AI가 사주를 바탕으로 만든 재미용 답변이에요. 건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 사주 요약은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p>' +
+      '<button class="text-btn" data-close>닫기</button></div>');
+    var lg = $('chatLog'); lg.scrollTop = lg.scrollHeight;
+    document.querySelectorAll('[data-ct]').forEach(function(b){ b.onclick = function(){ topic = b.dataset.ct; document.querySelectorAll('[data-ct]').forEach(function(x){ x.setAttribute('aria-checked', x === b); }); }; });
+    $('chatGo').onclick = function(){
+      if (!can){ chatBuy(me, r, topic); return; }
+      var q = $('chatQ').value.replace(/\s+/g, ' ').trim();
+      if (q.length < 4){ toast('질문을 조금만 더 자세히 적어 주세요'); $('chatQ').focus(); return; }
+      chatAsk(me, r, topic, q);
+    };
+  }
+  function chatBuy(me, r, topic){
+    if (isGuest()){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 질문권 ' + CHAT_PACK + '회는 ' + COST.chat + '닢이에요.'); return; }
+    var item = 'chat:' + Date.now().toString(36);
+    spendCoins(COST.chat, 'AI 상담 질문권 ' + CHAT_PACK + '회', item, function(){ store('unsu_chat_cr', chatCredits() + CHAT_PACK); toast('질문권 ' + CHAT_PACK + '회가 생겼어요'); openChat(me, r, topic); }, { k:'chat', id:me.id, topic:topic });
+  }
+  var chatBusy = false;
+  function chatAsk(me, r, topic, q){
+    if (chatBusy) return; chatBusy = true;
+    var lg = $('chatLog'), go = $('chatGo');
+    lg.insertAdjacentHTML('beforeend', '<div class="cb q">' + esc(q) + '</div><div class="cb a typing" id="chatTyping"><i></i><i></i><i></i></div>');
+    lg.scrollTop = lg.scrollHeight; go.disabled = true; $('chatQ').value = '';
+    var hist = chatLog().filter(function(x){ return x.who === me.id; }).slice(-2).map(function(x){ return { q:x.q, a:String(x.a).slice(0, 400) }; });
+    var useFree = chatLeftFree() > 0;
+    fetch('/api/chat', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ q:q, topic:topic, ctx:chatCtx(me, r), hist:hist }) })
+      .then(function(res){ return res.json().then(function(j){ return { ok:res.ok, j:j }; }); })
+      .then(function(o){
+        chatBusy = false;
+        if (!o.ok || !o.j.answer){ $('chatTyping').remove(); go.disabled = false; toast(o.j && o.j.error === 'personal_info' ? '전화번호 같은 개인정보는 빼고 물어봐 주세요' : o.j && o.j.error === 'banned_word' ? '고운 말로 다시 물어봐 주세요' : '지금은 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요'); return; }
+        if (o.j.source === 'local'){} else if (useFree) store('unsu_chat_day', { d:todayStr(), n:chatDay() + 1 }); else store('unsu_chat_cr', Math.max(0, chatCredits() - 1));
+        var l = chatLog(); l.push({ who:me.id, t:Date.now(), topic:topic, q:q, a:o.j.answer }); if (l.length > 40) l = l.slice(-40); store('unsu_chat_log', l);
+        openChat(me, r, topic);
+      }, function(){ chatBusy = false; if ($('chatTyping')) $('chatTyping').remove(); go.disabled = false; toast('연결이 불안정해요. 잠시 뒤 다시 물어봐 주세요'); });
+  }
   function product(id){
     return ({
       gh:{ id:'gh', name:'궁합 상세 리포트', coin:COST.gh, art:'gh', keep:'이 두 사람의 리포트는 계속 볼 수 있어요', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
+      cal:{ id:'cal', name:'월별 운세 달력 12개월', coin:COST.cal, art:'book', keep:'저장한 모든 사람의 달력을 계속 볼 수 있어요', items:['다음 달부터 12개월 날마다 점수','달마다 좋은 날·조심할 날','달마다 흐름 한 줄'] },
+      lv:{ id:'lv', name:'연애·결혼 시기', coin:COST.lv, art:'gh', keep:'저장한 모든 사람의 연애·결혼 시기를 계속 볼 수 있어요', items:['10년 연애운·결혼운 그래프','인연이 가장 가까운 해와 천천히 갈 해','2027년 인연 달과 잘 맞는 사람'] },
       tj:{ id:'tj', name:'2027 토정비결', coin:COST.tj, art:'book', keep:'저장한 모든 사람의 토정비결을 계속 볼 수 있어요', items:['상반기·하반기 풀이','4~12월 달마다 한 줄','좋은 달과 조심할 달, 한 해 처방'] },
       ez:{ id:'ez', name:'쉬운 사주 풀이', coin:COST.ez, art:'book', keep:'저장한 모든 사람의 풀이를 계속 볼 수 있어요', items:['십성으로 보는 나의 성향','띠 이야기','대운 흐름과 올해의 운'] }
     })[id];
