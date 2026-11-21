@@ -771,6 +771,7 @@
     h += adSlotHTML('원국과 오행을 본 뒤');
     var ezStart = h.length, ezOpen = owns('ez');
     h += zoneHTML('read', '풀이', '글자들이 말해 주는 것');
+    h += bookCoverHTML(entry, true);
     /* --- 십성 --- */
     var gCount = { '비겁':0,'식상':0,'재성':0,'관성':0,'인성':0 };
     order.forEach(function(k){ var p = P[k]; if (!p) return; if (k !== 'day') gCount[TEN_TO_GROUP[p.tenStem]]++; gCount[TEN_TO_GROUP[p.tenBr]]++; });
@@ -825,13 +826,7 @@
     var luck = todayLuck(entry, r), yongNums = luck.nums, lEl = luck.el;
     cur.yongNums = yongNums;
     if (!ezOpen){
-      var EZ = product('ez');
-      h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') +
-        '<div class="card locked ez-lock"><div class="sec-head"><h2 class="sec-title">쉬운 사주 풀이</h2><span class="sec-meta">' + EZ.coin + '닢</span></div>' +
-        '<div class="ez-art">' + tileArtSVG('book') + '</div><p class="body-text" style="text-align:center;margin:0 0 10px">어려운 한자 없이, ' + esc(entry.name) + '님의 사주를 이야기처럼 풀어 드려요.</p>' +
-        '<ul class="lock-list">' + EZ.items.map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
-        '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
-        '<div class="lock-cta"><button class="btn-primary" id="btnEzBuy">' + COIN_SVG + '엽전 ' + EZ.coin + '닢으로 풀이 열기</button><p class="helper" style="text-align:center">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
+      h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') + bookCoverHTML(entry, false);
     }
     h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic uni" aria-hidden="true">' + uniImg('u-calendar') + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
     h += '<div class="card num-cta ' + EL_CLASS[lEl] + '"><div class="num-cta-q">오늘 ' + esc(entry.name) + '님의<br><em>행운 숫자</em></div>' +
@@ -839,13 +834,14 @@
       luckChips(yongNums.map(function(o){ return o.n; }), EL_CLASS[lEl] + ' soft') +
       '<button class="btn-soft btn-block" id="btnDraw">오늘의 행운 부적 열어 보기</button></div>';
 
+    h += '<div class="row"><button class="btn-ghost grow" id="btnCopyRes">결과 복사</button><button class="btn-soft grow" id="btnShareRes">공유하기</button></div>';
     h += adSlotHTML('사주 풀이를 다 읽은 뒤');
     h += '<p class="disclaimer">전통 명리 이론을 바탕으로 계산한 참고용 풀이예요. 절기가 바뀌는 시각 전후 10분 이내에 태어났다면 월주가 달라질 수 있어요.</p>';
 
     $('resultBody').innerHTML = h;
     show('result', asTab ? 'saju' : prevView === 'today' ? 'today' : prevView === 'gunghap' ? 'gunghap' : 'saju');
     drawOn($('posterFig'));
-    if ($('btnEzBuy')) $('btnEzBuy').onclick = function(){ openPaySheet('ez', { onPaid:function(){ openResult(entry, r, asTab); } }); };
+    if ($('btnBook')) $('btnBook').onclick = function(){ openStory(entry, r, 0); };
     var du = $('duScroll') && $('duScroll').querySelector('.now');
     if (du) $('duScroll').scrollLeft = du.offsetLeft - 60;
     if (!reduceMotion && window.gsap) gsap.from('#resultBody .el-bar .fill', { scaleX:0, duration:.9, ease:'power2.out', stagger:.06, delay:.2 });
@@ -3673,6 +3669,130 @@
      토스 연결 전까지 PAY_READY=false → '준비 중' 안내. 예시 모드는 결제 없이 열어 볼 수 있다.
      ========================================================= */
   function payReady(){ return !!(srvUser() && SRV.cfg && SRV.cfg.pay && SRV.cfg.pay.on); }
+  /* =========================================================
+     쉬운 사주 풀이 — 우니가 읽어 주는 이야기책 (6개 장)
+     1장은 무료, 2~6장은 쉬운 사주 풀이를 열면 이어진다. 전문 카드(십성·신살·대운)는 결과 화면에 그대로 있다.
+     ========================================================= */
+  var SB_ROLE = {
+    year:{ n:'연주', img:'뿌리', age:'0~15세', who:'조상과 어린 시절, 세상이 처음 보는 나', tail:'어릴 때 집안 분위기와 주변에서 이 기운을 많이 받았고, 처음 만나는 사람에게 이 모습으로 보이기 쉬워요.' },
+    month:{ n:'월주', img:'줄기', age:'15~30세', who:'부모와 일하는 환경, 사회 속의 나', tail:'일하고 사람을 만나는 자리에서 이 기운이 가장 힘 있게 드러나요. 사주에서 가장 힘이 센 자리예요.' },
+    day:{ n:'일주', img:'꽃', age:'30~45세', who:'나 자신과 가장 가까운 사람', tail:'가장 가까운 사람과 있을 때 이 기운이 편하게 나와요. 내가 나를 어떻게 느끼는지가 여기에 담겨요.' },
+    hour:{ n:'시주', img:'열매', age:'45세~', who:'자녀와 말년, 속마음', tail:'나이가 들수록, 그리고 혼자 있을 때 이 기운이 짙어져요. 내가 맺고 싶은 열매의 모습이에요.' }
+  };
+  var SB_TEN_SHORT = { '비견':'나와 닮은 친구 같은 힘', '겁재':'승부욕과 배짱', '식신':'즐기며 만들어 내는 힘', '상관':'틀을 깨는 재능과 말솜씨', '편재':'크게 벌고 크게 쓰는 감각', '정재':'차곡차곡 모으는 성실함', '편관':'나를 단련시키는 도전과 카리스마', '정관':'질서와 신뢰, 책임감', '편인':'남다른 직관과 영감', '정인':'배움과 어른의 도움' };
+  var SB_SS_USE = {
+    '천을귀인':'어려울 때 손을 내밀어 주는 사람이 나타나는 별이에요. 도움은 먼저 청하는 사람에게 와요. 혼자 끙끙대지 말고 가까운 어른이나 선배에게 말해 보세요.',
+    '문창귀인':'글, 시험, 문서에 강한 별이에요. 자격증, 계약서, 기획서처럼 글로 남는 일에서 실력이 빛나요.',
+    '도화살':'사람을 끌어당기는 매력의 별이에요. 좋게 쓰면 인기와 센스, 서비스·콘텐츠 분야의 강점이 돼요. 관계가 복잡해지지 않게 선만 지키면 돼요.',
+    '역마살':'움직일수록 운이 트이는 별이에요. 이동, 여행, 이직, 해외와 인연이 있어요. 가만히 있으면 답답한 이유가 이거예요.',
+    '화개살':'혼자 깊이 파고드는 별이에요. 예술, 공부, 마음 공부에 재능이 있어요. 혼자만의 시간을 지키는 게 곧 개운법이에요.',
+    '양인살':'날이 선 칼 같은 별이에요. 결단력과 승부욕이 강해요. 그 힘을 운동, 전문 기술, 경쟁이 있는 일에 쓰면 든든한 무기가 돼요.',
+    '괴강살':'우두머리의 별이에요. 카리스마와 추진력이 강하고 호불호가 분명해요. 말을 한 번 더 고르면 사람이 따라와요.'
+  };
+  var SB_SS_AT = { year:'어릴 때부터 갖고 있던 기운이에요.', month:'일하는 환경과 사회생활에서 드러나요.', day:'평생 가까이 두고 쓰는 기운이고, 가까운 사람과의 관계에서 보여요.', hour:'나이가 들수록 짙어져요.' };
+  var SB_CH = [
+    { t:'내 사주는 네 개의 기둥이에요', pose:'u-book', free:true },
+    { t:'기둥마다 들여다보기', pose:'u-thinking' },
+    { t:'내 안의 다섯 가지 힘', pose:'u-work' },
+    { t:'나를 돕는 귀인과 특별한 별', pose:'u-gift' },
+    { t:'10년마다 바뀌는 계절', pose:'u-calendar' },
+    { t:'올해와 이번 달, 우니의 편지', pose:'u-happy' }
+  ];
+  var sbCtx = null;
+  function sbPillarCard(k, P, ig, full){
+    var p = P[k], R = SB_ROLE[k];
+    if (!p) return '<div class="sb-pil sb-empty"><div class="sb-ph"><b>' + R.n + '</b><span>' + R.img + ' · ' + R.age + '</span></div><p>태어난 시간을 모르면 시주는 비워 두어요. 시간을 알게 되면 사주를 다시 저장해 보세요.</p></div>';
+    var stemTxt = k === 'day' ? '나 자신을 뜻하는 글자예요. ' + esc(ig.t) + ', 곧 ' + ig.img + ' 같은 사람이에요.' : '위 글자는 ' + p.tenStem + '(' + SB_TEN_SHORT[p.tenStem] + ')이에요.';
+    return '<div class="sb-pil"><div class="sb-ph"><b>' + R.n + '</b><span>' + R.img + ' · ' + R.age + '</span></div>' +
+      '<div class="sb-gl"><span class="' + EL_CLASS[p.sEl] + '">' + p.sh + '</span><span class="' + EL_CLASS[p.bEl] + '">' + p.bh + '</span></div>' +
+      '<p class="sb-who">' + R.who + '</p>' +
+      '<p>' + stemTxt + ' 아래 글자는 ' + p.tenBr + '(' + SB_TEN_SHORT[p.tenBr] + ')이에요.</p>' +
+      (full ? '<p>' + R.tail + '</p>' : '') + '</div>';
+  }
+  function sbChapter(n, entry, r){
+    var P = r.pillars, ig = ILGAN[P.day.stem], name = esc(entry.name), h = '';
+    if (n === 0){
+      h += '<p class="sb-lead">사주는 태어난 해, 달, 날, 시간을 각각 두 글자로 적은 여덟 글자예요. 이 두 글자씩을 <b>기둥</b>이라고 불러요.</p>' +
+        '<div class="sb-tree"><div><b>연주</b><span>뿌리</span></div><div><b>월주</b><span>줄기</span></div><div><b>일주</b><span>꽃</span></div><div><b>시주</b><span>열매</span></div></div>' +
+        '<p>나무를 떠올리면 쉬워요. 뿌리(연주)는 집안과 어린 시절, 줄기(월주)는 부모와 일하는 환경, 꽃(일주)은 나 자신과 배우자, 열매(시주)는 자녀와 말년이에요. 나이로는 한 기둥이 대략 15년을 맡아요.</p>' +
+        '<h4 class="sb-h">' + name + '님의 연주부터 읽어 볼게요</h4>' + sbPillarCard('year', P, ig, true) +
+        '<p class="sb-note">나머지 세 기둥은 다음 장에서 하나씩 풀어 줄게요.</p>';
+    } else if (n === 1){
+      ['month', 'day', 'hour'].forEach(function(k){ h += sbPillarCard(k, P, ig, true); });
+      h += '<p class="sb-h2">일주 ' + P.day.name + '</p><p>' + ig.d + '</p><p><b>강점</b> ' + ig.good + '</p><p><b>조심할 점</b> ' + ig.care + '</p>';
+    } else if (n === 2){
+      var gCount = { '비겁':0,'식상':0,'재성':0,'관성':0,'인성':0 };
+      ['hour','day','month','year'].forEach(function(k){ var p = P[k]; if (!p) return; if (k !== 'day') gCount[TEN_TO_GROUP[p.tenStem]]++; gCount[TEN_TO_GROUP[p.tenBr]]++; });
+      var keys = Object.keys(gCount), top = keys.slice().sort(function(a, b){ return gCount[b] - gCount[a]; })[0], none = keys.filter(function(k){ return !gCount[k]; });
+      h += '<p class="sb-lead">글자마다 나와의 관계에 따라 이름이 붙어요. 다섯 묶음으로 보면 ' + name + '님이 어떤 힘을 많이 갖고 있는지 보여요.</p><div class="sb-pow">';
+      keys.forEach(function(k){ var d = ''; for (var i = 0; i < 5; i++) d += '<i class="' + (i < gCount[k] ? 'on' : '') + '"></i>'; h += '<div><b>' + k + '</b><span>' + TEN_GROUP[k].m.split('.')[0] + '</span><em>' + d + '</em></div>'; });
+      h += '</div><h4 class="sb-h">가장 큰 힘은 ' + top + '이에요</h4><p>' + TEN_GROUP[top].hi + '</p>';
+      none.forEach(function(k){ h += '<h4 class="sb-h">' + k + '은 비어 있어요</h4><p>' + TEN_GROUP[k].lo + '</p>'; });
+      h += '<p class="sb-note">비어 있다고 나쁜 게 아니에요. 그 힘은 사람과 환경에서 빌려 쓰면 돼요.</p>';
+    } else if (n === 3){
+      var gui = r.shinsal.filter(function(s){ return /귀인/.test(s.name); }), sal = r.shinsal.filter(function(s){ return !/귀인/.test(s.name); });
+      h += '<p class="sb-lead"><b>귀인</b>은 나를 도와주는 별, <b>살</b>은 한쪽으로 강하게 쏠린 기운이에요. 살은 나쁜 게 아니라 쓰는 방법에 따라 무기가 돼요.</p>';
+      var ssBlock = function(s){ return '<div class="sb-ss"><span class="chip">' + s.name + '</span><p>' + SB_SS_USE[s.name] + '</p><p class="sb-at">' + s.at.map(function(a){ return SB_ROLE[a].n; }).join('·') + '에 있어요. ' + SB_SS_AT[s.at[0]] + '</p></div>'; };
+      h += '<h4 class="sb-h">나를 돕는 귀인</h4>';
+      h += gui.length ? gui.map(ssBlock).join('') : '<p>원국에 귀인 별이 따로 보이지는 않아요. 대운이나 해마다 들어오는 귀인이 있으니 걱정하지 않아도 돼요. 사람을 대할 때 먼저 베푸는 쪽이 가장 빠른 귀인 운이에요.</p>';
+      h += '<h4 class="sb-h">특별한 별, 살</h4>';
+      h += sal.length ? sal.map(ssBlock).join('') : '<p>두드러진 살이 없는 담백한 사주예요. 굴곡이 적고 스스로 노력해서 길을 만드는 타입이에요.</p>';
+      var gongAt = ['year','month','hour'].filter(function(k){ return P[k] && r.gong.indexOf(P[k].br) > -1; });
+      h += '<div class="sb-ss"><span class="chip">공망</span><p>비어 있는 자리예요. ' + (gongAt.length ? gongAt.map(function(a){ return SB_ROLE[a].n; }).join('·') + '에 걸려 있어, 그 기둥이 맡은 인연이나 일이 조금 늦게 채워지는 편이에요. 늦을 뿐 없는 게 아니에요.' : '원국에는 걸린 기둥이 없어요.') + '</p></div>';
+    } else if (n === 4){
+      var du = r.curDaeun;
+      h += '<p class="sb-lead">사주 원국은 타고난 지도이고, <b>대운</b>은 10년마다 바뀌는 계절이에요. 같은 사주도 어느 계절을 지나느냐에 따라 느낌이 달라져요.</p>';
+      if (du){
+        h += '<div class="sb-now"><span class="sb-tag">지금</span><div class="sb-gl"><span class="' + EL_CLASS[du.sEl] + '">' + du.sh + '</span><span class="' + EL_CLASS[du.bEl] + '">' + du.bh + '</span></div><b>' + du.name + ' 대운 · ' + du.age + '~' + (du.age + 9) + '세</b></div>' +
+          '<p>' + TEN_DESC[du.tenStem] + '의 10년이에요. ' + SEUN_TEXT[du.tenStem] + '</p>';
+        var next = r.daeun[r.daeun.indexOf(du) + 1];
+        if (next) h += '<h4 class="sb-h">다음 계절 · ' + next.age + '세부터</h4><p>' + next.name + ' 대운이 와요. ' + TEN_DESC[next.tenStem] + '의 10년으로 넘어가요. ' + SEUN_TEXT[next.tenStem].split('. ')[0] + '.</p>';
+      } else h += '<p>첫 대운(' + r.dNum + '세) 전의 시기예요. 부모님의 기운과 월주의 영향이 가장 커요.</p>';
+      h += '<div class="scroller sb-du">' + r.daeun.map(function(p){ var now = r.curDaeun === p; return '<div class="du' + (now ? ' now' : '') + '"><span class="age">' + p.age + '세</span><span class="g"><span class="' + EL_CLASS[p.sEl] + '">' + p.sh + '</span><span class="' + EL_CLASS[p.bEl] + '">' + p.bh + '</span></span></div>'; }).join('') + '</div>';
+    } else {
+      var S = r.seun, M = r.wolun;
+      h += '<h4 class="sb-h">' + S.year + '년 · ' + S.name + '</h4><p>' + SEUN_TEXT[S.tenStem] + '</p><p class="sb-note">' + STAGE_DESC[S.stage] + '</p>' +
+        '<h4 class="sb-h">이번 달 · ' + M.name + '월</h4><p>' + TEN_DESC[M.tenStem] + '의 기운이 들어오는 달이에요. ' + SEUN_TEXT[M.tenStem].split('. ').slice(-1)[0] + '</p>' +
+        '<div class="sb-letter"><b>우니의 편지</b><p>' + name + '님, 여기까지 읽어 줘서 고마워요. ' + ig.t.split('(')[0] + '의 기운을 타고난 ' + name + '님은 ' + ig.kw.slice(0, 2).join('과 ') + '이 힘이에요. ' + EL_TEXT[r.yong].act + '이 도움이 돼요. 오늘도 복주머니 열러 와요.</p></div>' +
+        '<div class="row"><button class="btn-soft grow" id="sbGoTk">중요한 날 잡기</button><button class="btn-soft grow" id="sbGoNum">오늘의 행운 부적</button></div>';
+    }
+    return h;
+  }
+  function openStory(entry, r, ch){
+    ch = Math.max(0, Math.min(SB_CH.length - 1, ch || 0)); sbCtx = { entry:entry, r:r };
+    var ov = $('storyOv');
+    if (!ov){ ov = document.createElement('div'); ov.id = 'storyOv'; ov.className = 'story-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); document.body.appendChild(ov); }
+    var open = owns('ez'), locked = !open && !SB_CH[ch].free, C = SB_CH[ch], dots = '';
+    for (var i = 0; i < SB_CH.length; i++) dots += '<i class="' + (i === ch ? 'on' : i < ch ? 'done' : '') + '"></i>';
+    var body;
+    if (locked){
+      var EZ = product('ez');
+      body = '<p class="sb-lead">' + esc(entry.name) + '님의 사주를 이어서 읽어 드릴게요.</p><div class="sb-lock"><div class="sb-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="sb-lockbox">' + LOCK_SVG +
+        '<b>' + SB_CH.slice(1).map(function(c, j){ return (j + 2) + '장 ' + c.t; }).join('<br>') + '</b>' +
+        '<button class="btn-primary btn-block sheen" id="sbBuy">이야기책 이어 읽기 · ' + EZ.coin + '닢</button><p class="helper">한 번 열면 저장한 모든 사람의 풀이를 볼 수 있어요.</p></div></div>';
+    } else body = sbChapter(ch, entry, r);
+    ov.innerHTML = '<div class="sb-bar"><button class="sb-x" id="sbX" aria-label="닫기">✕</button><div class="sb-dots" aria-label="' + (ch + 1) + '장 / ' + SB_CH.length + '장">' + dots + '</div><span class="sb-no">' + (ch + 1) + '/' + SB_CH.length + '</span></div>' +
+      '<div class="sb-page" id="sbPage"><div class="sb-fig">' + uniImg(C.pose) + '</div><div class="sb-chn">' + (ch + 1) + '장</div><h2 class="sb-t">' + C.t + '</h2>' + body + '</div>' +
+      '<div class="sb-nav"><button class="btn-ghost" id="sbPrev"' + (ch ? '' : ' disabled') + '>이전</button>' +
+      '<button class="btn-primary" id="sbNext">' + (ch === SB_CH.length - 1 ? '책 덮기' : locked ? '이어 읽기' : '다음 장') + '</button></div>';
+    ov.hidden = false; document.body.classList.add('sb-on');
+    ov.scrollTop = 0; var pg = $('sbPage'); if (pg && !reduceMotion){ pg.classList.remove('sb-turn'); void pg.offsetWidth; pg.classList.add('sb-turn'); }
+    var close = function(){ ov.hidden = true; document.body.classList.remove('sb-on'); };
+    var buy = function(){ openPaySheet('ez', { who:esc(entry.name) + '님', onPaid:function(){ openResult(entry, r, cur && cur.asTab); openStory(entry, r, ch); } }); };
+    $('sbX').onclick = close;
+    $('sbPrev').onclick = function(){ openStory(entry, r, ch - 1); };
+    $('sbNext').onclick = function(){ if (locked) buy(); else if (ch === SB_CH.length - 1) close(); else openStory(entry, r, ch + 1); };
+    if ($('sbBuy')) $('sbBuy').onclick = buy;
+    if ($('sbGoTk')) $('sbGoTk').onclick = function(){ close(); if ($('btnTkSaju')) $('btnTkSaju').click(); };
+    if ($('sbGoNum')) $('sbGoNum').onclick = function(){ close(); go('num'); };
+  }
+  function bookCoverHTML(entry, open){
+    return '<div class="card sb-cover"><div class="sb-cfig">' + uniImg('u-book') + '</div><div class="sb-ck">쉬운 사주 풀이</div>' +
+      '<h2 class="sb-ct">우니가 읽어 주는<br>' + esc(entry.name) + '님의 사주 이야기책</h2>' +
+      '<ul class="sb-cl"><li>연주·월주·일주·시주가 내 삶에서 하는 일</li><li>나를 돕는 귀인과 특별한 별(살)</li><li>10년 계절(대운)과 올해·이번 달</li></ul>' +
+      '<button class="btn-primary btn-block sheen" id="btnBook">' + (open ? '이야기책 다시 읽기' : '1장 무료로 읽어 보기') + '</button>' +
+      '<p class="helper" style="text-align:center">' + (open ? '6개 장 모두 열려 있어요' : '1장은 무료예요. 2~6장은 쉬운 사주 풀이를 열면 이어져요.') + '</p></div>';
+  }
   function product(id){
     return ({
       gh:{ id:'gh', name:'궁합 상세 리포트', coin:COST.gh, art:'gh', keep:'이 두 사람의 리포트는 계속 볼 수 있어요', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
