@@ -863,6 +863,14 @@
   .pouch-fig{width:min(54vw,210px);margin:6px auto 0;}
   .pouch-fig img{width:100%;height:auto;display:block;}
   .pouch-fig.shake{animation:pouchShake .62s ease-in-out;}
+  .pouch-fig{position:relative;}
+  .pouch-fig.opened{animation:pouchPop .6s var(--ease-spring) both;}
+  .pf-glow{position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(255,226,150,.85),rgba(255,226,150,0) 65%);opacity:0;animation:pfGlow .9s ease-out forwards;z-index:0;pointer-events:none;}
+  .pf-ring{position:absolute;inset:8%;border-radius:50%;border:3px solid rgba(255,226,150,.9);opacity:0;animation:pfRing .9s ease-out forwards;z-index:0;pointer-events:none;}
+  .pouch-fig img{position:relative;z-index:1;}
+  @keyframes pouchPop{0%{transform:scale(.92)}55%{transform:scale(1.14) translateY(-6px)}100%{transform:scale(1.06)}}
+  @keyframes pfGlow{0%{opacity:0;transform:scale(.4)}35%{opacity:1}100%{opacity:0;transform:scale(1.5)}}
+  @keyframes pfRing{0%{opacity:.9;transform:scale(.5)}100%{opacity:0;transform:scale(1.7)}}
   @keyframes pouchShake{0%,100%{transform:rotate(0)}15%{transform:rotate(-9deg) scale(1.04)}35%{transform:rotate(8deg) scale(1.07)}55%{transform:rotate(-6deg) scale(1.1)}75%{transform:rotate(4deg) scale(1.12)}}
   .talisman{gap:12px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--elc,#f5d48a) 45%,transparent),var(--glass-edge,0 0 0 transparent);}
   .tl-k{font-size:calc(12px*var(--fs));color:var(--text-muted);letter-spacing:.02em;}

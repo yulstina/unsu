@@ -29,12 +29,12 @@ const fs = require('fs');
   </style></head><body>
   <svg viewBox="0 0 1200 630">${stars}</svg>
   <div class="l">
-    <div class="brand"><img src="${img('u-calm')}" width="48"><span>우니<em>조아</em></span></div>
+    <div class="brand"><img src="${img('u-wave')}" width="48"><span>우니<em>조아</em></span></div>
     <h1>매일 열어보는<br>나만의 <b>행운 부적</b></h1>
     <p>내 사주로 알려 주는 오늘의 색 · 방향 · 숫자</p>
     <div class="url">생년월일만 넣으면 무료 · woonijoa.com</div>
   </div>
-  <div class="tal"><small>오늘의 행운 부적</small><b>행운의 색 · 초록</b><b>행운의 방향 · 동쪽</b><div class="ch"><i>3</i><i>8</i><i>23</i></div></div><img class="uni" src="${img('u-pouch')}">
+  <div class="tal"><small>오늘의 행운 부적</small><b>행운의 색 · 초록</b><b>행운의 방향 · 동쪽</b><b>행운의 숫자 · 3 · 8 · 23</b></div><img class="uni" src="${img('u-pouch')}">
   </body></html>`;
   const p = await b.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
   await p.setContent(html); await p.waitForTimeout(300);

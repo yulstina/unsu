@@ -836,7 +836,7 @@
     h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic uni" aria-hidden="true">' + uniImg('u-calendar') + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
     h += '<div class="card num-cta ' + EL_CLASS[lEl] + '"><div class="num-cta-q">오늘 ' + esc(entry.name) + '님의<br><em>행운 숫자</em></div>' +
       '<p class="helper">오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자예요. 매일 바뀌어요.</p>' +
-      luckChips(yongNums.map(function(o){ return o.n; }), EL_CLASS[lEl]) +
+      luckChips(yongNums.map(function(o){ return o.n; }), EL_CLASS[lEl] + ' soft') +
       '<button class="btn-soft btn-block" id="btnDraw">오늘의 행운 부적 열어 보기</button></div>';
 
     h += adSlotHTML('사주 풀이를 다 읽은 뒤');
@@ -2028,7 +2028,7 @@
         '<div class="tl-row tl-wide"><span class="k">오늘 조심할 것</span><b>' + esc(q.caution) + '</b></div>' +
         '<div class="tl-row"><span class="k">좋은 방향</span><b>' + q.dir + '</b></div>' +
         '<div class="tl-row"><span class="k">좋은 색</span><b>' + q.color + '</b></div>' +
-        '<div class="tl-row tl-nums"><span class="k">좋은 숫자</span>' + luckChips(q.nums, '') + '</div>' +
+        '<div class="tl-row tl-nums"><span class="k">좋은 숫자</span>' + luckChips(q.nums, 'soft') + '</div>' +
       '</div>' +
       (q.mine ? '' : '<p class="helper">내 사주를 등록하면 방향, 색, 숫자가 나에게 필요한 기운으로 바뀌어요.</p>') + '</div>';
   }
@@ -2775,12 +2775,19 @@
     if ($('btnPouch')) $('btnPouch').onclick = function(){
       var fig = $('pouchFig'), btn = this; btn.disabled = true; FX.vib(10);
       if (fig && !reduceMotion){ fig.classList.add('shake'); }
+      /* 흔들린 뒤 주머니가 '열리는' 느낌: 빛이 퍼지고 우니가 활짝 웃는 포즈로 바뀐다 */
+      if (fig && !reduceMotion) setTimeout(function(){
+        var im = fig.querySelector('img'); if (im) im.src = 'img/u-happy.webp';
+        fig.classList.remove('shake'); fig.classList.add('opened');
+        fig.insertAdjacentHTML('afterbegin', '<span class="pf-glow" aria-hidden="true"></span><span class="pf-ring" aria-hidden="true"></span>');
+        FX.vib(14);
+      }, 620);
       setTimeout(function(){
         markTodo('drawn'); revealNums(); FX.vib([18, 40, 24]);
         var tl = document.querySelector('.talisman');
         if (tl){ FX.confetti(tl, 46); setTimeout(function(){ FX.confetti(tl, 30); }, 260); }
         toast('오늘의 행운 부적이 나왔어요'); setTimeout(function(){ bond('num'); }, 1600);
-      }, reduceMotion ? 0 : 650);
+      }, reduceMotion ? 0 : 1250);
     };
     $('btnNumSave').onclick = function(){
       if (saveToBox({ id:'b' + Date.now().toString(36), t:Date.now(), d:todayStr(), who:me.name, kind:'행운 부적', nums:nums.slice() })){ toast('보관함에 저장했어요'); bumpTab('box'); }
