@@ -828,6 +828,7 @@
     if (!ezOpen){
       h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') + bookCoverHTML(entry, false);
     }
+    h += tjCardHTML(entry);
     h += '<button type="button" class="card tk-saju" id="btnTkSaju"><span class="tk-bn-ic uni" aria-hidden="true">' + uniImg('u-calendar') + '</span><span class="tk-bn-t"><b>중요한 날 잡기</b><small>개업·계약·이사·면접, ' + esc(entry.name) + '님 사주에 맞는 날을 골라 드려요</small></span><span class="chev" aria-hidden="true">›</span></button>';
     h += '<div class="card num-cta ' + EL_CLASS[lEl] + '"><div class="num-cta-q">오늘 ' + esc(entry.name) + '님의<br><em>행운 숫자</em></div>' +
       '<p class="helper">오늘 ' + esc(entry.name) + '님에게 행운을 주는 ' + MS.EL_K[lEl] + '(' + MS.EL_H[lEl] + ') 기운의 숫자예요. 매일 바뀌어요.</p>' +
@@ -847,6 +848,7 @@
     if (!reduceMotion && window.gsap) gsap.from('#resultBody .el-bar .fill', { scaleX:0, duration:.9, ease:'power2.out', stagger:.06, delay:.2 });
 
     $('btnTkSaju').onclick = function(){ openTaekil(entry, r); };
+    if ($('btnTj')) $('btnTj').onclick = function(){ openTojeong(entry, r); };
     $('btnDraw').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
     if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
@@ -1042,7 +1044,7 @@
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
   /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
      값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
-  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
+  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
   var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
@@ -1059,7 +1061,7 @@
   /* 원화 단건 결제 (2026-11-21 소율 결정): PG 심사 때문에 엽전은 팔지 않고, 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제한다.
      엽전은 출석·가입·선물로 모으는 무료 적립 포인트. 가격은 서버 api/_lib/shop.js WON 과 같게(서버 값이 오면 그 값을 쓴다).
      */
-  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900 };
+  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990 };
   function wonOf(k){ var w = SRV.cfg && SRV.cfg.won; return (w && w[k]) || WON[k] || 0; }
   function coinSale(){ return !!(SRV.cfg && SRV.cfg.packs); }   /* 서버 COIN_SALE=1 일 때만 엽전 충전 패키지를 보인다 */
   /* 잠금 화면 버튼: 엽전이 모자랄 때 '990원 바로 열기' */
@@ -2339,6 +2341,7 @@
     h += '<div class="today-fig" id="todayFig">' + figSVG(r.animal, f.auraEl) + '</div>';
     h += peekCardHTML(me, nums, elc);   /* GPT 검토 P1-6: 오늘 한 문장 바로 아래 행운 선물 */
     h += '<div class="qgrid">' + [['btnQNum','dream','꿈해몽','길몽일까 흉몽일까? 오늘의 처방','HOT'],['btnQGh','gh','궁합','둘의 합은 몇 점일까?',''],['btnQZ','zodiac','별자리','오늘의 별자리 운세',''],['btnQNY','ny','2027 신년운세','광고 한 편이면 전체 무료','']].map(function(q){ return '<button type="button" class="qtile q-' + q[1] + '" id="' + q[0] + '"><span class="qt-t">' + q[2] + (q[4] ? '<em>' + q[4] + '</em>' : '') + '</span><span class="qt-s">' + q[3] + '</span>' + tileArtSVG(q[1]) + '</button>'; }).join('') + tkBannerHTML() + '</div>';
+    h += tjCardHTML(me);
     h += '<div class="card lt score-card">' + scoreRowsHTML(f) + '<div class="divider"></div>' +
       '<p class="body-text">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<button class="btn-soft btn-block" id="btnTodayShare">' + SH_IC.send + '오늘 운세 공유</button></div>';
@@ -2390,6 +2393,7 @@
     $('btnQNum').onclick = function(){ openDream(); };
     $('btnQGh').onclick = function(){ go('gunghap'); };
     $('btnQNY').onclick = function(){ openNYSheet(me, r); };
+    if ($('btnTj')) $('btnTj').onclick = function(){ openTojeong(me, r); };
     $('btnTk').onclick = function(){ openTaekil(me, r); };
     body.querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ openCat(me, r, b.dataset.cat); }; });
   }
@@ -3793,9 +3797,98 @@
       '<button class="btn-primary btn-block sheen" id="btnBook">' + (open ? '이야기책 다시 읽기' : '1장 무료로 읽어 보기') + '</button>' +
       '<p class="helper" style="text-align:center">' + (open ? '6개 장 모두 열려 있어요' : '1장은 무료예요. 2~6장은 쉬운 사주 풀이를 열면 이어져요.') + '</p></div>';
   }
+  /* =========================================================
+     2027 토정비결 (2026-11-21 소율: "남들 있는 건 다 있어야")
+     전통 작괘법: 상괘 = (그해 세는 나이 + 태세수) % 8, 중괘 = (생월 월건수 + 그 달 날수) % 6, 하괘 = (생일 + 생일 일진수) % 3
+     태세·월건·일진은 2027 정미년 음력 기준. 간지 수: 천간 갑기9 을경8 병신7 정임6 무계5 / 지지 자오9 축미8 인신7 묘유6 진술5 사해4.
+     풀이 글은 우니조아가 새로 쓴 글이다(옛 원문을 옮기지 않는다).
+     무료: 괘 번호 · 한 해 총운(상괘) · 1~3월 / 유료(tj): 상반기 · 하반기 · 4~12월 · 좋은 달과 조심할 달 · 한 해 처방
+     ========================================================= */
+  var TJ_YEAR = 2027, TJ_SNUM = [9,8,7,6,5,9,8,7,6,5], TJ_BNUM = [9,8,7,6,5,4,9,8,7,6,5,4];
+  var TJ_SANG = [null,
+    { g:'건(乾) · 하늘', head:'높은 곳에서 해가 비치는 해', s:2, d:'하늘이 활짝 열린 괘예요. 미뤄 둔 큰일을 시작하기 좋고, 윗사람의 눈에 띄어 자리가 올라가기 쉬워요. 다만 해가 높을수록 그림자도 길어지니, 잘될 때 말과 자세를 낮추면 복이 오래가요.' },
+    { g:'태(兌) · 연못', head:'고인 물에 꽃이 비치는 해', s:1, d:'사람이 모이고 웃음이 많은 괘예요. 말 한마디로 기회가 오고, 모임과 인연에서 좋은 소식이 들려요. 즐거움이 지나치면 지출이 늘어나니 재미와 절약의 선을 정해 두세요.' },
+    { g:'리(離) · 불', head:'어둠 속에 등불을 켜는 해', s:2, d:'숨어 있던 재능이 밝게 드러나는 괘예요. 이름이 알려지고, 문서와 계약에서 좋은 결과가 나와요. 불은 빨리 타오르는 만큼 금방 식기도 하니, 시작한 일은 끝까지 지켜보세요.' },
+    { g:'진(震) · 우레', head:'천둥 뒤에 새싹이 돋는 해', s:0, d:'놀랄 만한 변화가 찾아오는 괘예요. 처음에는 흔들려도 그 변화가 새 길을 열어 줘요. 겁먹고 피하기보다 한 걸음 먼저 움직이는 쪽이 이기는 해예요.' },
+    { g:'손(巽) · 바람', head:'순한 바람이 돛을 미는 해', s:1, d:'부드럽게 스며드는 괘예요. 억지로 밀기보다 흐름을 타면 일이 술술 풀려요. 멀리서 오는 소식, 이동과 거래에 운이 있어요. 마음이 자주 바뀌지 않게 중심만 잡으세요.' },
+    { g:'감(坎) · 물', head:'깊은 물을 건너 언덕에 오르는 해', s:-1, d:'건너야 할 물이 보이는 괘예요. 한두 번 막히는 일이 있어도 서두르지 않으면 반드시 건너요. 돈과 보증, 큰 약속은 한 번 더 확인하고, 건강과 잠을 먼저 챙기세요.' },
+    { g:'간(艮) · 산', head:'산에 올라 쉬며 멀리 보는 해', s:0, d:'멈추고 다지는 괘예요. 새로 벌이기보다 가진 것을 지키고 실력을 쌓을 때 운이 커져요. 지금 쌓은 것이 다음 해의 발판이 되니 조급해하지 마세요.' },
+    { g:'곤(坤) · 땅', head:'너른 땅에 씨앗을 심는 해', s:1, d:'받아들이고 길러 내는 괘예요. 혼자보다 함께할 때, 앞에 나서기보다 뒤에서 받쳐 줄 때 더 큰 몫이 돌아와요. 집과 가족, 부동산과 관련된 일에 좋은 기운이 있어요.' }
+  ];
+  var TJ_JUNG = [null,
+    { t:'봄에 씨를 뿌려 여름에 싹이 트는 형국', d:'상반기는 준비한 일을 꺼내 놓기 좋은 때예요. 새로 만나는 사람이 일을 도와주고, 수입도 조금씩 늘어나요.' },
+    { t:'물가에 앉아 고기를 기다리는 형국', d:'상반기는 기다림이 필요한 때예요. 결과가 늦게 와도 방향은 맞으니 꾸준함을 지키세요. 돈은 들어오는 것보다 새는 것을 막는 게 먼저예요.' },
+    { t:'귀한 손님이 문을 두드리는 형국', d:'상반기에 반가운 사람이 찾아와요. 소개, 추천, 제안이 들어오면 가볍게 넘기지 말고 들어 보세요. 그 인연이 한 해를 바꿀 수 있어요.' },
+    { t:'두 갈래 길 앞에 선 형국', d:'상반기에 선택할 일이 생겨요. 욕심을 덜어 낸 쪽이 결국 맞는 길이에요. 계약과 서류는 날짜와 금액을 꼼꼼히 보세요.' },
+    { t:'비 온 뒤 땅이 굳는 형국', d:'상반기 초반에는 흔들림이 있지만 그 덕에 관계와 자리가 단단해져요. 다투더라도 오래 끌지 말고 먼저 손을 내미세요.' },
+    { t:'곳간에 곡식이 차오르는 형국', d:'상반기에 노력의 대가가 들어와요. 보너스, 부수입, 오래 기다린 돈이 들어올 수 있어요. 들어온 몫의 일부는 꼭 따로 모아 두세요.' }
+  ];
+  var TJ_HA = [null,
+    { t:'가을 들판에 열매가 익는 형국', d:'하반기는 거두는 때예요. 상반기에 시작한 일이 결실을 맺고, 연말에는 웃으며 한 해를 돌아보게 돼요.' },
+    { t:'달이 차면 기우는 형국', d:'하반기는 지키는 때예요. 잘된 일일수록 욕심을 줄이고, 몸과 마음을 쉬게 하면 다음 해의 운까지 이어져요.' },
+    { t:'눈 속에서 매화가 피는 형국', d:'하반기 늦게 좋은 소식이 와요. 가을까지 답답해도 겨울 무렵 길이 열리니 끝까지 포기하지 마세요.' }
+  ];
+  var TJ_MON = {
+    '비겁':['사람이 모이는 달이에요. 함께하면 힘이 되지만 돈 거래는 선을 그어요.', '경쟁이 생기는 달이에요. 내 몫을 분명히 말하면 손해가 없어요.'],
+    '식상':['아이디어가 술술 나오는 달이에요. 말과 글로 나를 드러내 보세요.', '즐거운 일이 많은 달이에요. 다만 말실수와 충동구매는 조심해요.'],
+    '재성':['돈이 움직이는 달이에요. 작은 투자보다 수입을 늘리는 쪽에 힘을 쓰세요.', '실속을 챙기는 달이에요. 미뤄 둔 정산과 계약을 마무리하기 좋아요.'],
+    '관성':['책임이 커지는 달이에요. 맡은 일을 해내면 인정이 따라와요.', '규칙과 약속이 중요한 달이에요. 서두르지 말고 순서를 지키세요.'],
+    '인성':['도움을 받는 달이에요. 어른이나 선배의 조언에 답이 있어요.', '배우기 좋은 달이에요. 공부, 자격증, 책 한 권이 다음을 열어 줘요.']
+  };
+  function tjDayNum(y, m, d){ var j = MS.jd(y, m, d, 0) + 0.5, d60 = ((Math.floor(j) + 49) % 60 + 60) % 60; return TJ_SNUM[d60 % 10] + TJ_BNUM[d60 % 12]; }
+  function tjCalc(r){
+    var L = r.lunar || { y:r.solar.y, m:r.solar.m, d:r.solar.d };
+    var age = TJ_YEAR - L.y + 1, ys = (TJ_YEAR - 4) % 10, yb = (TJ_YEAR - 4) % 12;
+    var tae = TJ_SNUM[ys] + TJ_BNUM[yb];
+    var m = L.m, mStem = ((ys % 5) * 2 + 2 + m - 1) % 10, mBr = (m + 1) % 12;
+    var wolgeon = TJ_SNUM[mStem] + TJ_BNUM[mBr];
+    var s1 = MS.lunarToSolar(TJ_YEAR, m, 1, false), s2 = m < 12 ? MS.lunarToSolar(TJ_YEAR, m + 1, 1, false) : MS.lunarToSolar(TJ_YEAR + 1, 1, 1, false);
+    var days = (s1 && s2) ? Math.round((Date.UTC(s2.y, s2.m - 1, s2.d) - Date.UTC(s1.y, s1.m - 1, s1.d)) / 864e5) : 30;
+    var bd = Math.min(L.d, days), sb = MS.lunarToSolar(TJ_YEAR, m, bd, false) || { y:TJ_YEAR, m:m, d:bd };
+    var sang = (age + tae) % 8 || 8, jung = (wolgeon + days) % 6 || 6, ha = (L.d + tjDayNum(sb.y, sb.m, sb.d)) % 3 || 3;
+    var dS = r.pillars.day.stem, months = [];
+    for (var i = 1; i <= 12; i++){
+      var st = ((ys % 5) * 2 + 2 + i - 1) % 10, g = TEN_TO_GROUP[MS.tenGod(dS, st)];
+      var sc = Math.max(40, Math.min(96, 70 + TJ_SANG[sang].s * 6 + ({ '인성':6, '재성':5, '식상':3, '관성':0, '비겁':-3 })[g] + (((sang * 7 + jung * 5 + ha * 3 + i * 11) % 13) - 6) * 2));
+      months.push({ m:i, g:g, sc:sc, line:TJ_MON[g][(sang + jung + ha + i) % 2] });
+    }
+    return { no:'' + sang + jung + ha, sang:sang, jung:jung, ha:ha, age:age, months:months };
+  }
+  function tjCardHTML(me){
+    return '<button type="button" class="card tj-bn" id="btnTj"><span class="tj-ic" aria-hidden="true">' + uniImg('u-book') + '</span><span class="tj-t"><b>2027 토정비결 <em>NEW</em></b>' +
+      '<small>내 괘로 보는 정미년 한 해 · 총운과 1~3월 무료</small></span><span class="chev" aria-hidden="true">›</span></button>';
+  }
+  function openTojeong(me, r){
+    setTimeout(function(){ bond('ny'); }, 900);
+    var T = tjCalc(r), S = TJ_SANG[T.sang], open = owns('tj') || passActive(), FREE = 3;
+    var best = T.months.slice().sort(function(a, b){ return b.sc - a.sc; }), good = best.slice(0, 2), care = best.slice(-2).reverse();
+    var mon = T.months.map(function(x){
+      var on = open || x.m <= FREE;
+      return '<li class="' + (on ? '' : 'lock') + '"><b>' + x.m + '월</b><span>' + (on ? x.line : '<i class="tj-blur" aria-hidden="true">' + x.line + '</i>') + '</span></li>';
+    }).join('');
+    var E = EL_TEXT[r.yong];
+    openSheet('<div class="tj-sheet"><div class="sheet-fig">' + uniImg('u-book') + '</div>' +
+      '<h3 id="sheetTitle">' + esc(me.name) + '님의 2027 토정비결</h3>' +
+      '<p class="helper" style="margin:-4px 0 12px">정미년 · ' + T.age + '세(세는 나이) · 음력 생일로 지은 괘</p>' +
+      '<div class="tj-gwae"><div class="tj-no"><small>나의 괘</small><b>' + T.no + '</b></div><div><span class="tj-g">' + S.g + '</span><h4>' + S.head + '</h4></div></div>' +
+      '<div class="tj-sec"><h4>한 해의 흐름</h4><p>' + S.d + '</p></div>' +
+      (open
+        ? '<div class="tj-sec"><h4>상반기 · ' + TJ_JUNG[T.jung].t + '</h4><p>' + TJ_JUNG[T.jung].d + '</p></div>' +
+          '<div class="tj-sec"><h4>하반기 · ' + TJ_HA[T.ha].t + '</h4><p>' + TJ_HA[T.ha].d + '</p></div>'
+        : '<div class="tj-sec tj-locked"><h4>상반기 · 하반기 풀이 ' + LOCK_SVG + '</h4><p class="tj-blur" aria-hidden="true">' + TJ_JUNG[T.jung].d + '</p></div>') +
+      '<div class="tj-sec"><h4>달마다 한 줄 <small>' + (open ? '1~12월' : '1~3월 무료') + '</small></h4><ul class="tj-mon">' + mon + '</ul></div>' +
+      (open
+        ? '<div class="tj-sec"><h4>좋은 달과 조심할 달</h4><p><b>좋은 달</b> ' + good.map(function(x){ return x.m + '월'; }).join(', ') + ' · 큰 결정과 새 시작은 이때로 잡아 보세요.</p><p><b>조심할 달</b> ' + care.map(function(x){ return x.m + '월'; }).join(', ') + ' · 약속과 지출을 줄이고 쉬어 가세요.</p></div>' +
+          '<div class="tj-sec"><h4>한 해의 처방</h4><p>' + esc(me.name) + '님에게 힘이 되는 ' + MS.EL_K[r.yong] + '(' + MS.EL_H[r.yong] + ') 기운을 가까이 두세요. 색은 ' + E.color + ', 방향은 ' + E.dir + '이에요. ' + E.act + '이 한 해의 운을 받쳐 줘요.</p></div>' + adSlotHTML('토정비결을 다 본 뒤')
+        : '<div class="tj-buy"><b>상반기·하반기, 4~12월, 좋은 달과 조심할 달, 한 해 처방까지</b>' + passLinkHTML() + '<button class="btn-primary btn-block sheen" id="btnTjBuy">토정비결 전체 보기 · ' + COST.tj + '닢</button></div>') +
+      '<p class="disclaimer">토정비결은 음력 생년월일과 그해 간지로 괘를 짓는 전통 풀이예요. 풀이 글은 우니조아가 새로 썼고, 재미로 보는 참고용이에요.</p>' +
+      '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button></div>');
+    if ($('btnTjBuy')) $('btnTjBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('tj', { who:esc(me.name) + '님', onPaid:function(){ openTojeong(me, r); } }); }, 260); };
+  }
   function product(id){
     return ({
       gh:{ id:'gh', name:'궁합 상세 리포트', coin:COST.gh, art:'gh', keep:'이 두 사람의 리포트는 계속 볼 수 있어요', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
+      tj:{ id:'tj', name:'2027 토정비결', coin:COST.tj, art:'book', keep:'저장한 모든 사람의 토정비결을 계속 볼 수 있어요', items:['상반기·하반기 풀이','4~12월 달마다 한 줄','좋은 달과 조심할 달, 한 해 처방'] },
       ez:{ id:'ez', name:'쉬운 사주 풀이', coin:COST.ez, art:'book', keep:'저장한 모든 사람의 풀이를 계속 볼 수 있어요', items:['십성으로 보는 나의 성향','띠 이야기','대운 흐름과 올해의 운'] }
     })[id];
   }
