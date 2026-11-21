@@ -30,7 +30,12 @@ const WON = { cat: 990, dream: 1900, gh: 990, ez: 990, tk: 4900, tj: 990, cal: 9
 /* 결제창·구매 내역에 나오는 상품명 — '로또·당첨·번호 추천' 같은 말은 쓰지 않는다(PG 심사) */
 const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: '궁합 상세 리포트', ez: '쉬운 사주 풀이', tk: '중요한 날 잡기', tj: '2027 토정비결', cal: '월별 운세 달력', lv: '연애·결혼 시기', chat: 'AI 상담 질문권 5회' };
 const COIN_SALE = process.env.COIN_SALE === '1';
+/* 원화로 실제 판매하는 상품 (2026-11-21 GPT 최종 검토: 첫 판매는 3종만 — 사주 이야기책·궁합 상세·중요한 날 잡기).
+   나머지 상품은 미리보기 + 무료 적립 엽전으로만 연다. PG 승인 범위가 넓어지면 Vercel 환경변수 WON_SALE=ez,gh,tk,tj 처럼 늘린다 */
+const WON_SALE = (process.env.WON_SALE || 'ez,gh,tk').split(',').map(s => s.trim()).filter(k => WON[k]);
+/* 우니 패스 판매: 첫 출시엔 끔(환불·한도 조건 확정 후 PASS_SALE=1) */
+const PASS_SALE = process.env.PASS_SALE === '1';
 const PASSES = { pass30: { days: 30, p: 12900, name: '우니 패스 30일' } };
 const PASS_DREAM_MAX = 1;
 const SPEND_MAX = 5000;
-module.exports = { PACKS, WON, WON_NAMES, COIN_SALE, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };
+module.exports = { PACKS, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };

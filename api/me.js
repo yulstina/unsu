@@ -4,7 +4,7 @@
    POST    { consent }    약관·마케팅 동의 기록
    DELETE  { confirm:1 }  회원 탈퇴 */
 const S = require('./_lib/srv');
-const { PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX, WON, WON_NAMES, COIN_SALE } = require('./_lib/shop');
+const { PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE } = require('./_lib/shop');
 const { passUntil } = require('./_lib/pass');
 
 const SERVER_KEYS = ['unsu_coin', 'unsu_coinlog'];   /* 서버가 기준인 값 — 스냅샷에 저장하지 않는다 */
@@ -20,9 +20,10 @@ function cfg(){
            channelKey: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_CHANNEL_KEY : null,
            test: S.CONF.payTest },
     packs: COIN_SALE ? PACKS : null,   /* 엽전 판매는 기본 꺼짐(2026-11-21) */
-    won: WON, wonNames: WON_NAMES,
-    passes: PASSES, passDreamMax: PASS_DREAM_MAX,
-    adCoin: AD_COIN_ON
+    won: WON, wonNames: WON_NAMES, wonSale: WON_SALE,
+    passes: PASS_SALE ? PASSES : null, passDreamMax: PASS_DREAM_MAX,
+    adCoin: AD_COIN_ON,
+    nums: process.env.LUCKY_NUMS !== '0'   /* 부적·꿈 처방의 행운 숫자. PG 심사 중 숨기려면 LUCKY_NUMS=0 */
   };
 }
 

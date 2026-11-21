@@ -1,7 +1,7 @@
 /* ================= 결과 공유: 링크 해석 + 미리보기 카드 내용 =================
    브라우저(app.js)와 서버(api/share.js · api/og.js)가 같은 코드를 쓴다 → 링크 미리보기 이미지와 실제 화면의 숫자가 항상 같다.
    링크 형식: r1|타입|YYYYMMDD|추가값|사람1(7칸)|사람2(7칸)
-   타입 s 사주 · d 오늘 운세 · n 행운 숫자 · g 궁합 · z 별자리 · c 분야별 운세 */
+   타입 s 사주 · d 오늘 운세 · n 행운 부적 · g 궁합 · z 별자리 · c 분야별 운세 */
 var SHARE = (function(){
   var EF = 7;
   var CAT = { money:{ name:'금전운', sk:'w' }, love:{ name:'연애·결혼운', sk:'l' }, career:{ name:'취업·직장운', sk:'j' }, job:{ name:'나에게 맞는 직업', sk:'' } };
@@ -55,7 +55,7 @@ var SHARE = (function(){
     var A = S.entries[0], B = S.entries[1], dt = S.date, md = (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일';
     if (S.type === 'z'){
       var zn = String(S.extra).split('~')[0].slice(0, 8);
-      return { kind:'z', title:md + ' ' + zn + ' 운세', desc:'오늘의 별자리 운세와 행운 숫자가 도착했어요', kicker:md + ' 별자리 운세', head:zn + ' 오늘의 운세' };
+      return { kind:'z', title:md + ' ' + zn + ' 운세', desc:'오늘의 별자리 운세가 도착했어요', kicker:md + ' 별자리 운세', head:zn + ' 오늘의 운세' };
     }
     var ra = compute(A, dt);
     if (S.type === 'g'){
@@ -73,8 +73,9 @@ var SHARE = (function(){
       return { kind:'d', title:A.name + '님의 ' + md + ' 운세', desc:f.head + ' · 재물 ' + f.scores.w + ' · 연애 ' + f.scores.l + ' · 직업 ' + f.scores.j,
         kicker:A.name + '님의 ' + md + ' 운세', head:f.head, rows:[['재물운', f.scores.w], ['연애운', f.scores.l], ['직업운', f.scores.j]] };
     if (S.type === 'n'){
-      var nums = luckNums(ra, S.dateStr, f.luckyEl).map(function(o){ return o.n; });
-      return { kind:'n', title:A.name + '님의 ' + md + ' 행운 부적', desc:'행운 숫자 ' + nums.join(' · ') + ' · 행운의 색과 방향', kicker:A.name + '님의 ' + md + ' 행운 숫자', head:'우니가 전하는 오늘의 행운 부적', nums:nums };
+      /* 2026-11-21: 숫자 추천을 없앴다 — 부적 카드는 색과 방향만 */
+      var lk = '행운의 색 ' + f.tip.color + ' · 방향 ' + EL_TEXT[f.luckyEl].dir;
+      return { kind:'n', title:A.name + '님의 ' + md + ' 행운 부적', desc:lk, kicker:A.name + '님의 ' + md + ' 행운 부적', head:lk };
     }
     var C = CAT[S.extra];
     if (C.sk) return { kind:'c', title:A.name + '님의 ' + C.name + ' ' + f.scores[C.sk] + '점', desc:f.lines[C.sk], kicker:A.name + '님의 ' + md + ' ' + C.name, head:f.lines[C.sk], rows:[[C.name, f.scores[C.sk]]] };

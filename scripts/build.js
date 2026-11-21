@@ -57,7 +57,7 @@ const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 
 <meta property="og:image" content="${OG}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="우니조아 — 별자리와 오로라 위에 떠 있는 우니와 '매일 열어보는 나만의 행운 부적' 문구">
+<meta property="og:image:alt" content="우니조아 — 밤하늘 배경에 복주머니를 든 우니와 '매일 열어보는 나만의 행운 부적', 오늘의 색·방향·숫자 카드">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="우니조아 — 매일 열어보는 나만의 행운 부적">
 <meta name="twitter:description" content="만세력 사주 풀이 · 오늘의 운세 · 궁합 · 꿈해몽 · 행운 부적">
