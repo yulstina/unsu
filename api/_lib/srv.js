@@ -4,6 +4,7 @@
      SESSION_SECRET                          세션 쿠키 서명용 임의 문자열(32자 이상)
      KAKAO_REST_KEY, KAKAO_CLIENT_SECRET     카카오 로그인 (CLIENT_SECRET 은 콘솔에서 켰을 때만)
      KAKAO_ADMIN_KEY                         (선택) 탈퇴 시 카카오 연결 끊기
+     KAKAO_JS_KEY                            (선택) 카카오톡 카드 공유 버튼 (콘솔 > 앱 키 > JavaScript 키)
      TOSS_CLIENT_KEY, TOSS_SECRET_KEY        토스페이먼츠 (API 개별 연동 키 · test_ck_ / test_sk_ 로 시작하면 테스트 결제)
      PORTONE_STORE_ID, PORTONE_CHANNEL_KEY, PORTONE_API_SECRET   포트원 V2 (둘 다 있으면 포트원 우선). PORTONE_TEST=1 이면 테스트 채널이라 항상 켜짐
      PAY_LIVE                                실결제 스위치. 라이브 키(live_ck_)는 PAY_LIVE=1 이고 개업일(2026-12-04 KST) 이후일 때만 켜진다. 테스트 키는 항상 켜짐

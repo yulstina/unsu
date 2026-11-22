@@ -23,6 +23,7 @@ function cfg(){
     won: WON, wonNames: WON_NAMES, wonSale: WON_SALE,
     passes: PASS_SALE ? PASSES : null, passDreamMax: PASS_DREAM_MAX,
     adCoin: AD_COIN_ON,
+    kakaoJs: process.env.KAKAO_JS_KEY || null,   /* 카카오톡 카드 공유(공개 키). 없으면 공유 시트에 카카오 버튼이 안 뜬다 */
     nums: process.env.LUCKY_NUMS !== '0'   /* 부적·꿈 처방의 행운 숫자. PG 심사 중 숨기려면 LUCKY_NUMS=0 */
   };
 }
