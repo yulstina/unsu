@@ -873,23 +873,30 @@
     for (var i = 0; i < 70; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
     function rr(x,y,w,h,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); }
     g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('우니조아  ·  나의 사주 리포트', 540, 96);
-    g.fillStyle = '#fff'; g.font = '700 64px ' + F; g.fillText(entry.name + '님', 540, 650);
-    g.fillStyle = '#c9d4ff'; g.font = '400 34px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 706);
+    g.fillStyle = '#fff'; g.font = '700 62px ' + F; g.fillText(entry.name + '님', 540, 594);
+    g.fillStyle = '#c9d4ff'; g.font = '400 32px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 644);
+    /* 결과 한 줄: 일간 이미지 + 키워드 (공유 이미지만 봐도 무슨 사람인지 알게) */
+    var IG = ILGAN[P.day.stem];
+    rr(110, 676, 860, 96, 48); g.fillStyle = 'rgba(246,205,91,.10)'; g.fill(); g.strokeStyle = 'rgba(246,205,91,.45)'; g.lineWidth = 2; g.stroke();
+    var one = '“' + IG.img + ' 같은 사람”', ofs = 38;
+    g.font = '700 ' + ofs + 'px ' + F; while (ofs > 28 && g.measureText(one).width > 800){ ofs--; g.font = '700 ' + ofs + 'px ' + F; }
+    g.fillStyle = '#f6cd5b'; g.fillText(one, 540, 722);
+    g.fillStyle = '#e9dfb6'; g.font = '500 25px ' + F; g.fillText(IG.kw.slice(0, 3).join(' · '), 540, 756);
     /* 사주 네 기둥 */
     var keys = ['hour','day','month','year'], lab = {hour:'시주',day:'일주',month:'월주',year:'년주'};
     keys.forEach(function(k, i){
-      var x = 120 + i*205, y = 750, p = P[k];
-      rr(x, y, 185, 250, 26); g.fillStyle = k === 'day' ? 'rgba(124,86,246,.38)' : 'rgba(255,255,255,.07)'; g.fill();
+      var x = 120 + i*205, y = 796, p = P[k];
+      rr(x, y, 185, 226, 26); g.fillStyle = k === 'day' ? 'rgba(124,86,246,.38)' : 'rgba(255,255,255,.07)'; g.fill();
       g.strokeStyle = k === 'day' ? 'rgba(190,170,255,.8)' : 'rgba(255,255,255,.18)'; g.lineWidth = 2; g.stroke();
-      g.fillStyle = '#9fb0e8'; g.font = '500 26px ' + F; g.fillText(lab[k], x+92, y+42);
-      if (!p){ g.fillStyle = 'rgba(255,255,255,.4)'; g.font = '400 30px ' + F; g.fillText('모름', x+92, y+150); return; }
-      g.font = '700 80px ' + H; g.fillStyle = EL_HEX[p.sEl]; g.fillText(p.sh, x+92, y+137);
-      g.fillStyle = EL_HEX[p.bEl]; g.fillText(p.bh, x+92, y+226);
+      g.fillStyle = '#9fb0e8'; g.font = '500 26px ' + F; g.fillText(lab[k], x+92, y+40);
+      if (!p){ g.fillStyle = 'rgba(255,255,255,.4)'; g.font = '400 30px ' + F; g.fillText('모름', x+92, y+136); return; }
+      g.font = '700 74px ' + H; g.fillStyle = EL_HEX[p.sEl]; g.fillText(p.sh, x+92, y+124);
+      g.fillStyle = EL_HEX[p.bEl]; g.fillText(p.bh, x+92, y+205);
     });
     /* 오행 막대 */
     var mx = Math.max.apply(null, r.cnt.concat([1]));
     for (var e = 0; e < 5; e++){
-      var y2 = 1050 + e*40;
+      var y2 = 1066 + e*38;
       g.textAlign = 'left'; g.fillStyle = '#dfe6ff'; g.font = '500 28px ' + F; g.fillText(MS.EL_H[e] + ' ' + MS.EL_K[e], 130, y2+10);
       rr(270, y2-10, 560, 22, 11); g.fillStyle = 'rgba(255,255,255,.1)'; g.fill();
       if (r.cnt[e]){ rr(270, y2-10, Math.max(22, 560*r.cnt[e]/mx), 22, 11); g.fillStyle = EL_HEX[e]; g.fill(); }
@@ -899,9 +906,9 @@
     g.fillText('일간 ' + P.day.sh + ' · ' + ILGAN[P.day.stem].t + '  |  용신 ' + MS.EL_H[r.yong] + MS.EL_K[r.yong], 540, 1280);
     g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '400 26px ' + F; g.fillText(shortUrl(linkFor('')), 540, 1322);
     /* 동물 일러스트 */
-    var svg = figSVG(r.animal, ANIMAL_EL[r.animal]).replace('<svg ', '<svg width="560" height="560" ');
+    var svg = figSVG(r.animal, ANIMAL_EL[r.animal]).replace('<svg ', '<svg width="460" height="460" ');
     var im = new Image();
-    im.onload = function(){ g.drawImage(im, 260, 120, 560, 560); done(c); };
+    im.onload = function(){ g.drawImage(im, 310, 112, 460, 460); done(c); };
     im.onerror = function(){ done(c); };
     im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
@@ -912,7 +919,7 @@
         if (!blob){ toast('이미지를 만들지 못했어요'); return; }
         var file = null; try { file = new File([blob], 'unsu-saju.png', { type:'image/png' }); } catch(_){}
         if (file && navigator.canShare && navigator.canShare({ files:[file] })){
-          navigator.share({ files:[file], title:'우니조아 · ' + entry.name + '님의 사주', text:'[우니조아] ' + entry.name + '님의 사주 리포트' }).catch(function(){});
+          navigator.share({ files:[file] }).catch(function(){});   /* 이미지만: 글을 같이 넣으면 카톡에 노란 말풍선이 따로 붙는다 */
         } else {
           var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'unsu-saju-' + entry.name + '.png';
           document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요');
@@ -4532,8 +4539,34 @@
     };
     if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 66px "IBM Plex Sans KR"'), document.fonts.load('700 48px "Space Grotesk"')]).then(go, go); else go();
   }
+  /* ---- 카카오톡 카드 공유 (카카오 SDK 스크랩) ----
+     우리 /s/코드 링크의 OG(서버 결과 카드)를 카카오가 읽어 카드 한 장만 보낸다. 노란 글 말풍선 없음.
+     켜는 법: Vercel 환경변수 KAKAO_JS_KEY(카카오 콘솔 > 앱 키 > JavaScript 키) +
+              카카오 콘솔 > 플랫폼 > Web 사이트 도메인에 https://woonijoa.com 등록. 키가 없으면 버튼이 안 보인다. */
+  var KAKAO_SDK = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js', kakaoLoading = null;
+  var KAKAO_IC = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3.5c-5 0-9 3.1-9 7 0 2.5 1.7 4.7 4.2 6l-.9 3.4c-.1.3.3.6.6.4l4-2.7c.4 0 .7.1 1.1.1 5 0 9-3.1 9-7s-4-7.2-9-7.2z"/></svg>';
+  function kakaoKey(){ return SRV.cfg && SRV.cfg.kakaoJs; }
+  function kakaoShareOn(){ return !!kakaoKey() && isHosted(); }
+  function loadKakao(){
+    if (window.Kakao && window.Kakao.Share) return Promise.resolve(window.Kakao);
+    if (kakaoLoading) return kakaoLoading;
+    kakaoLoading = new Promise(function(ok, no){
+      var sc = document.createElement('script'); sc.src = KAKAO_SDK; sc.async = true; sc.crossOrigin = 'anonymous';
+      sc.onload = function(){ window.Kakao ? ok(window.Kakao) : no(new Error('kakao')); };
+      sc.onerror = function(){ kakaoLoading = null; no(new Error('kakao')); };
+      document.head.appendChild(sc);
+    });
+    return kakaoLoading;
+  }
+  function kakaoSendCard(link){
+    loadKakao().then(function(K){
+      if (!K.isInitialized()) K.init(kakaoKey());
+      K.Share.sendScrap({ requestUrl:link });
+      closeSheet();
+    }).catch(function(){ copyText(link, '카카오톡을 열 수 없어 링크를 복사했어요. 카톡에 붙여넣어 주세요'); });
+  }
   function openShare(o){ shareState = o; o.withTime = true; renderShareSheet(); }
-  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#shNative,#shLink,#shMsg')) markTodo('shared'); });
+  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#shNative,#shLink,#shMsg,#shKakao')) markTodo('shared'); });
   function renderShareSheet(){
     var o = shareState, link = currentLink();
     var h = '<div class="sheet-fig sm">' + uniImg('u-share') + '</div><h3 id="sheetTitle">' + o.sheetTitle + '</h3>' +
@@ -4547,7 +4580,7 @@
       h += '<p class="privacy" style="margin-top:10px">' + SHIELD_SVG + '<span>받는 사람도 똑같은 결과를 보도록 이 링크에 ' + o.shareEntries.map(function(e){ return esc(e.name); }).join('·') + '님의 이름·생년월일' +
         (o.shareEntries.some(function(e){ return !e.unknown; }) ? '·태어난 시간' : '') + '이 담겨요. 믿을 수 있는 사람에게만 보내 주세요.</span></p>';
     }
-    h += '<div class="share-actions">' +
+    h += '<div class="share-actions">' + (kakaoShareOn() ? '<button type="button" class="btn-social k sh-kakao" id="shKakao">' + KAKAO_IC + '카카오톡으로 보내기</button>' : '') +
       '<div class="sh-3"><button class="btn-soft" id="shSave">' + DL_IC + '이미지 저장</button><button class="btn-soft" id="shLink">' + SH_IC.link + '링크 복사</button><button class="btn-primary" id="shNative">' + SH_IC.send + '공유하기</button></div>' +
       '<button class="text-btn" id="shMsg">메시지와 링크만 복사</button></div>' +
       '<details class="sh-qr" id="shQrBox"><summary>QR 코드로 열기 <span class="helper">PC에서 휴대폰으로 넘길 때</span></summary><div id="shQr"></div></details>';
@@ -4561,16 +4594,19 @@
       document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요'); markTodo('shared');
     };
     $('shNative').onclick = function(){
-      var link = currentLink(), data = { title:o.title, text:o.text + '\n\n' + o.cta, url:link };
-      /* 링크만 보낸다: 카톡·문자에서 링크 미리보기가 결과 카드 이미지로 뜨고, 누르면 결과 화면으로 이어진다.
+      var link = currentLink(), data = { url:link };
+      /* 주소만 보낸다(제목·문구 없음): 카톡에서 별도 노란 말풍선 없이 결과 카드(링크 미리보기)만 뜨게.
+         iOS 카톡은 카드만 남는다. 안드로이드는 시스템 공유가 주소를 글자로 넘겨서 주소 한 줄 말풍선이 같이 붙는다
+         → 카드만 깔끔하게 보내려면 위 '카카오톡으로 보내기'(카카오 SDK) 버튼을 쓴다.
          (이미지 파일을 같이 보내면 앱에 따라 링크가 빠져서 카드만 덩그러니 남았다. 이미지는 '이미지 저장'으로 따로) */
       if (navigator.share){
         navigator.share(data).then(function(){ closeSheet(); toast('공유했어요'); }).catch(function(err){
           if (err && err.name === 'AbortError') return;
-          copyText(fullMsg(), '공유 창을 열 수 없어 메시지와 링크를 복사했어요. 카톡에 붙여넣어 주세요');
+          copyText(link, '공유 창을 열 수 없어 링크를 복사했어요. 카톡에 붙여넣어 주세요');
         });
-      } else copyText(fullMsg(), '메시지와 링크를 복사했어요. 카톡에 붙여넣어 주세요');
+      } else copyText(link, '링크를 복사했어요. 카톡에 붙여넣어 주세요');
     };
+    if ($('shKakao')) $('shKakao').onclick = function(){ kakaoSendCard(currentLink()); };
     $('shLink').onclick = function(){ copyText(currentLink(), '링크를 복사했어요'); };
     $('shMsg').onclick = function(){ copyText(fullMsg(), '메시지와 링크를 복사했어요'); };
     if ($('shTime')) $('shTime').onclick = function(){ o.withTime = !o.withTime; var open = $('shQrBox').open; renderShareSheet(); if (open){ $('shQrBox').open = true; drawQr(); } };
