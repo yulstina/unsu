@@ -4102,7 +4102,7 @@
     var P = ftPeriod(me, r, ftSel.p), C = FT_CATS.filter(function(c){ return c[0] === ftSel.c; })[0];
     var more = ftSel.p === 'd0' && { love:'love', money:'money', work:'career' }[ftSel.c];
     return '<div class="ft-tabs" role="tablist" aria-label="운세 기간">' + FT_PERIODS.map(function(p){ return '<button type="button" role="tab" data-ftp="' + p[0] + '" aria-selected="' + (p[0] === ftSel.p) + '">' + p[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c, i){ return '<button type="button" role="tab" class="ftc-' + c[0] + '" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 32 32">' + c[2] + '</svg></i><span>' + c[1] + (c[0] === 'total' ? ' <b>' + P.v.total + '</b>' : '') + '</span></button>'; }).join('') + '</div>' +
+      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c, i){ return '<button type="button" role="tab" class="ftc-' + c[0] + '" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 32 32">' + c[2] + '</svg></i><span>' + c[1] + '</span></button>'; }).join('') + '</div>' +
       '<div class="ft-body" aria-live="polite"><div class="ft-head"><span><small>' + P.title + ' · ' + P.sub + '</small><b>' + C[1] + '</b></span><em data-tier="' + tierOf(P.v[ftSel.c]) + '">' + P.v[ftSel.c] + '<small>점</small></em></div>' +
       '<p>' + (ftSel.c === 'total' && ftSel.p === 'd0' ? esc(me.name) + '님, ' : '') + P.t[ftSel.c] + '</p>' +
       (more ? '<button type="button" class="ft-more" data-cat="' + more + '">' + C[1] + ' 자세히 보기 · 타고난 그릇과 올해 흐름 ›</button>' : '') + '</div>';
@@ -4111,8 +4111,17 @@
     var box = $('ftBox'); if (!box) return;
     var re = function(){ box.innerHTML = ftHTML(me, r); bindFt(me, r); };
     box.querySelectorAll('[data-ftp]').forEach(function(b){ b.onclick = function(){ ftSel.p = b.dataset.ftp; re(); }; });
-    box.querySelectorAll('[data-ftc]').forEach(function(b){ b.onclick = function(){ ftSel.c = b.dataset.ftc; re(); }; });
-    var m = box.querySelector('.ft-more'); if (m) m.onclick = function(){ openCat(me, r, m.dataset.cat); };
+    /* 분야 버튼은 다시 그리지 않고 선택만 바꾼다 → 커지고 양옆이 밀리는 전환이 보인다. 아래 본문만 새로 */
+    var bindMore = function(){ var m = box.querySelector('.ft-more'); if (m) m.onclick = function(){ openCat(me, r, m.dataset.cat); }; };
+    box.querySelectorAll('[data-ftc]').forEach(function(b){ b.onclick = function(){
+      if (ftSel.c === b.dataset.ftc) return;
+      ftSel.c = b.dataset.ftc;
+      box.querySelectorAll('[data-ftc]').forEach(function(x){ x.setAttribute('aria-selected', String(x === b)); });
+      var t = document.createElement('div'); t.innerHTML = ftHTML(me, r);
+      var nb = t.querySelector('.ft-body'), ob = box.querySelector('.ft-body'); if (nb && ob) ob.replaceWith(nb);
+      bindMore();
+    }; });
+    bindMore();
   }
   /* =========================================================
      홈 상품 카드 (2026-11-23 헬로우봇 분석 → 기능 이름 대신 궁금해지는 제목 + 썸네일로 다시 포장)
