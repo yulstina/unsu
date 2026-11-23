@@ -219,9 +219,8 @@
   /* =========================================================
      탭 네비게이션
      ========================================================= */
-  if ($('btnGhBack')) $('btnGhBack').onclick = function(){ go('today'); window.scrollTo(0, 0); };
   var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream'), shared:$('v-shared'), box:$('v-box'), ask:$('v-ask') };
-  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'today', fill:'today', dream:'dream', shared:'', box:'box', ask:'ask' };   /* 2026-11-22: 부적은 홈의 하위 페이지, 하단에 우니에게 묻기 */
+  var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'saju', fill:'today', dream:'dream', shared:'', box:'box', ask:'ask' };   /* 2026-11-22: 부적은 홈의 하위 페이지, 하단에 우니에게 묻기 */
   var currentTab = 'today', currentView = 'today', lastSajuView = null;
   function show(view, tab){
     Object.keys(VIEWS).forEach(function(k){ VIEWS[k].hidden = k !== view; });
@@ -450,7 +449,7 @@
     return { spark:spark, star:star, confetti:confetti, hop:hop, vib:vib };
   })();
   document.querySelector('.tabbar').addEventListener('click', function(e){ var b = e.target.closest('.tab'); if (b) go(b.dataset.tab); });
-  document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ if (b.dataset.sub === 'mine'){ openMine(); return; } if (b.dataset.sub === 'list') renderList(); show(b.dataset.sub); }); });
+  document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click', function(){ if (b.dataset.sub === 'mine'){ openMine(); return; } if (b.dataset.sub === 'gunghap'){ go('gunghap'); return; } if (b.dataset.sub === 'list') renderList(); show(b.dataset.sub); }); });
   function openMine(){ var me = getMe(); if (!me){ startOnboarding('new'); return; } var r = compute(me); if (r.error){ show('input'); return; } openResult(me, r, true); }
 
   /* =========================================================
@@ -683,7 +682,7 @@
     var P = r.pillars, t = function(x){ return x.m + '월 ' + x.d + '일 ' + pad2(x.h) + ':' + pad2(x.mi); };
     var row = function(p, lab, h5, txt){ return '<div class="basis-row"><div class="pl"><b>' + (p ? p.hanja : '—') + '</b><small>' + lab + '</small></div><div><h5>' + h5 + '</h5><p>' + txt + '</p></div></div>'; };
     var y = r.solar.y, li = MS.jdToKST(MS.findLon(315, MS.jd(y, 2, 4, 0))), before = P.year.stem !== ((y - 4) % 10 + 10) % 10;
-    var h = row(P.year, '연주', '입춘이 지났는지로 해를 정해요', before
+    var h = row(P.year, '년주', '입춘이 지났는지로 해를 정해요', before
       ? y + '년 입춘 <em>' + t(li) + '</em> 전에 태어나 아직 ' + (y - 1) + '년의 기운, ' + P.year.name + '년이에요. 1월 1일이나 설날이 아니라 입춘이 기준이에요.'
       : y + '년 입춘 <em>' + t(li) + '</em> 이후에 태어나 ' + P.year.name + '년이에요. 1월 1일이나 설날이 아니라 입춘이 기준이에요.');
     var mb = P.month.br;
@@ -1188,8 +1187,8 @@
   function applyMerge(){
     var p = mergePlan(); if (!p) return 0;
     if (p.list.length) store('unsu_list', getList().concat(p.list.map(function(x){ return Object.assign({}, x, { saved:x.saved || Date.now() }); })));
-    if (p.box.length) store('unsu_numbox', getBox().concat(p.box).sort(function(a, b){ return a.d < b.d ? 1 : a.d > b.d ? -1 : 0; }));
-    if (p.dreams.length) store('unsu_dreams', getDreams().concat(p.dreams).sort(function(a, b){ return (b.at || 0) - (a.at || 0); }));
+    if (p.box.length) store('unsu_numbox', getBox().concat(p.box).sort(function(a, b){ return a.d < b.d ? 1 : a.d > b.d ? -1 : 0; }).slice(0, REC_MAX));
+    if (p.dreams.length) store('unsu_dreams', getDreams().concat(p.dreams).sort(function(a, b){ return (b.at || 0) - (a.at || 0); }).slice(0, REC_MAX));
     var ny = store('unsu_ny_open') || {}, nyCh = false;   /* 광고로 연 신년운세(엽전 아님)만 따라온다 */
     Object.keys(p.ny).forEach(function(id){ var to = p.idMap[id]; if (to && !ny[to]){ ny[to] = p.ny[id]; nyCh = true; } });
     if (nyCh) store('unsu_ny_open', ny);
@@ -1229,7 +1228,7 @@
       if (rs.k === 'cat' && e && CATS[rs.cat]) open(function(){ setCatPaid(rs.cat); openCat(e, compute(e), rs.cat); });
       else if (rs.k === 'tk' && e && TAEKIL.PURPOSES[rs.p]) open(function(){ setTkOpen(e, rs.p); openTaekil(e, compute(e), rs.p); });
       else if (rs.k === 'dream' && rs.text) open(function(){ go('dream'); setTimeout(function(){ dreamRun(rs.text, true, null, true); }, 300); });
-      else if (rs.k === 'chat' && e) open(function(){ store('unsu_chat_unl', todayStr()); openChat(e, compute(e), rs.topic); });
+      else if (rs.k === 'chat' && e) open(function(){ chatGrant(); openChat(e, compute(e), rs.topic); });
       else if (rs.k === 'pay' && product(rs.pid)) open(function(){ if (!owns(rs.pid) || rs.pid === 'gh') addOrder(rs.pid, { ghKey:rs.ghKey || null }); toast(product(rs.pid).name + ' 열렸어요 · 다시 누르면 바로 보여요'); });
       else toast('결제한 콘텐츠는 다시 누르면 바로 열려요');
     } catch(err){}
@@ -1650,7 +1649,7 @@
       useRow('', '사주 이야기책 2~6장', 'ez', '저장한 사람 모두') + useRow('', '2027 토정비결', 'tj', '한 사람 · 계속 보기') +
       useRow('', '월별 운세 달력', 'cal', '12개월 · 달마다 흐름') + useRow('', '연애·결혼 시기', 'lv', '한 사람 · 계속 보기') +
       useRow('', '내 재물 그릇', 'wl', '한 사람 · 계속 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 계속 보기') + useRow('', '나를 돕는 귀인 풀이', 'gw', '한 사람 · 계속 보기') +
-      useRow('', '우니에게 묻기 하루 무제한', 'chat', '오늘 자정까지 · 하루 1번은 무료') + '</div>' +
+      useRow('', '우니에게 묻기 하루 무제한', 'chat', '산 때부터 24시간 · 하루 1번은 무료') + '</div>' +
       (guestC ? '<div class="cs-guest"><p>엽전은 로그인한 계정에 쌓여요. 처음 로그인하면 <b>' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요.</p><button class="btn-primary btn-block" id="csLogin">로그인하고 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button></div>' : '') +
       '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
       '<div class="earn-row"><div><div class="t">매일 출석 +10</div><div class="s">오늘의 운세를 열면 자동으로 출석돼요</div></div><span class="chip" style="color:' + (doneToday ? '#8fdcaa' : 'var(--text-helper)') + '">' + (doneToday ? '오늘 완료' : '대기') + '</span></div>' +
@@ -1941,7 +1940,12 @@
   var DM_PHONE = /01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}/;
   var DM_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/><path d="M15.5 4.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>';
   var dmAgree = false;
-  function getDreams(){ var d = store('unsu_dreams'); return Array.isArray(d) ? d : []; }
+  /* 2026-11-24 소율: 기록이 많이 쌓이지 않게 꿈해몽·부적·대화 기록은 최근 3개까지만 두고, 지울 수 있게 */
+  var REC_MAX = 3;
+  function getDreams(){ var d = store('unsu_dreams'); return Array.isArray(d) ? d.slice(0, REC_MAX) : []; }
+  function delDream(id){ store('unsu_dreams', getDreams().filter(function(x){ return x.id !== id; })); }
+  /* ✕ 를 한 번 누르면 '지울까요?'로 바뀌고, 한 번 더 누르면 지운다 */
+  function bindRecDel(root, attr, fn){ (root || document).querySelectorAll('[' + attr + ']').forEach(function(b){ b.onclick = function(e){ e.stopPropagation(); if (!b.classList.contains('sure')){ b.classList.add('sure'); b.textContent = '지울까요?'; setTimeout(function(){ if (b.isConnected){ b.classList.remove('sure'); b.textContent = '✕'; } }, 3000); return; } fn(b.getAttribute(attr)); toast('지웠어요'); }; }); }
   function dmCoupon(){ return getCoupons()[0] || null; }
   function openDream(){ renderDreamInput(); $('dmResult').hidden = true; $('dmInput').hidden = false; show('dream'); }
   /* 대화형 입력: 주제 → (사람이면) 누구 → 이름(선택) → 꿈 이야기. 고른 맥락은 해몽 사전·AI 둘 다에 넘긴다 */
@@ -2027,8 +2031,8 @@
         '<button class="btn-primary btn-block sheen" id="btnDmGo" disabled>' + DM_IC + '꿈 풀이 리포트 받기' + (guest || cp ? '' : ' · ' + DM.cost + '닢') + '</button>' +
         '<button class="btn-ghost btn-block dm-free" id="btnDmFree" disabled>해몽만 무료로 보기</button>';
     }
-    if (past.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">지난 꿈풀이</h2><span class="sec-meta">' + past.length + '개 · 이 기기</span></div><div class="dm-past">' +
-      past.map(function(d, i){ return '<button type="button" data-dm="' + i + '"><b>' + esc(d.title) + '</b><span>' + fmtDate(d.at) + ' · ' + (d.free ? '무료 해몽' : '꿈 풀이 리포트') + '</span></button>'; }).join('') + '</div></div>';
+    if (past.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">지난 꿈풀이</h2><span class="sec-meta">최근 ' + REC_MAX + '개까지 · 이 기기</span></div><div class="dm-past">' +
+      past.map(function(d, i){ return '<div class="rec-row"><button type="button" data-dm="' + i + '"><b>' + esc(d.title) + '</b><span>' + fmtDate(d.at) + ' · ' + (d.free ? '무료 해몽' : '꿈 풀이 리포트') + '</span></button><button type="button" class="rec-del" data-dmdel="' + esc(d.id) + '" aria-label="이 기록 지우기">✕</button></div>'; }).join('') + '</div></div>';
     $('dmInput').innerHTML = h;
     $('btnDmBack').onclick = function(){ go('today'); };
     if ($('btnDmReset')) $('btnDmReset').onclick = function(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); };
@@ -2042,6 +2046,7 @@
       if (!('ontouchstart' in window)) ni.focus();
     }
     document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ renderDreamResult(getDreams()[+b.dataset.dm], false); }; });
+    bindRecDel($('dmInput'), 'data-dmdel', function(id){ delDream(id); renderDreamInput(); });
     if (!ready) return;
     var ta = $('dmText');
     function sync(){
@@ -2113,7 +2118,7 @@
       if (done) return; done = true;
       var item = { id:upgrade ? upgrade.id : 'd' + Date.now().toString(36), at:upgrade ? upgrade.at : Date.now(), text:text, ctx:ctx, cat:res.cat, catName:res.catName, title:res.title, summary:res.summary,
         symbols:(res.symbols || []).map(function(s){ return { word:s.word, meaning:s.meaning }; }), caution:res.caution || '', source:res.source || 'local', paid:paid ? (cp ? 'coupon' : DM.cost) : 0, free:!paid };
-      var list = getDreams().filter(function(x){ return x.id !== item.id; }); list.unshift(item); if (list.length > 20) list.length = 20; store('unsu_dreams', list);
+      var list = getDreams().filter(function(x){ return x.id !== item.id; }); list.unshift(item); if (list.length > REC_MAX) list.length = REC_MAX; store('unsu_dreams', list);
       renderDreamResult(item, true);
       setTimeout(function(){ bond('dream'); }, 1200);
     }
@@ -2900,11 +2905,11 @@
      ========================================================= */
   /* 2026-11-21 GPT 검토 P0: 예전 번호(nums) 기록은 부적으로 보여 주지 않는다. 저장소에는 남겨 두되 화면에서는 v:2 부적만 */
   function getBoxAll(){ var b = store('unsu_numbox'); return Array.isArray(b) ? b : []; }
-  function getBox(){ return getBoxAll().filter(function(x){ return x && x.v === 2; }); }
+  function getBox(){ return getBoxAll().filter(function(x){ return x && x.v === 2; }).slice(0, REC_MAX); }
   function saveToBox(item){
     var b = getBox();
     if (b.some(function(x){ return x.v === 2 && x.d === item.d && x.who === item.who; })){ toast('이미 보관함에 있는 부적이에요'); return false; }
-    b = getBoxAll(); b.unshift(item); if (b.length > 80) b.length = 80; store('unsu_numbox', b); return true;
+    b = getBox(); b.unshift(item); if (b.length > REC_MAX) b.length = REC_MAX; store('unsu_numbox', b); return true;
   }
   /* 행운 숫자 칩 — 공이 아니라 오행 색 이름표 */
   function luckChips(nums, cls){
@@ -3105,7 +3110,7 @@
     H += '<div class="num-head"><h1 class="num-title">보관함</h1></div>';
     H += saveStateHTML();
     h = '';
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">저장한 행운 부적</h2><span class="sec-meta">' + box.length + '장</span></div>';
+    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">저장한 행운 부적</h2><span class="sec-meta">' + box.length + '/' + REC_MAX + '장</span></div>';
     if (!box.length) h += '<div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 비어 있어요. 행운 탭에서 ‘보관함에 저장’을 누르면 여기에 모여요.</p></div><button class="btn-primary btn-block" id="bxGoNum" style="margin-top:12px">복주머니 열러 가기</button>';
     else h += '<div class="bx-list">' + box.map(function(b){
       return '<div class="bx-row"><div class="bx-meta"><b>' + esc(b.kind) + '</b><small>' + b.d.replace(/-/g, '.') + (b.who ? ' · ' + esc(b.who) : '') + '</small></div>' +
@@ -3120,9 +3125,9 @@
     Object.keys(tkOpenMap()).forEach(function(k){ var id = k.split('|')[0], pp = k.split('|')[1], e = list.filter(function(x){ return x.id === id; })[0], Q = TAEKIL.PURPOSES[pp]; if (e && Q) rep.push('<button class="row-link" data-rptk="' + esc(k) + '"><span class="ic">' + TK_IC[pp] + '</span><span>중요한 날 잡기 · ' + Q.short + ' · ' + esc(e.name) + '<br><span class="helper">' + fmtDate(tkOpenMap()[k]) + ' · ' + COST.tk + '닢</span></span><span class="chev">›</span></button>'); });
     var bought = rep.length ? '<div class="card"><div class="sec-head"><h2 class="sec-title">구매한 리포트</h2><span class="sec-meta">' + rep.length + '개</span></div>' + rep.join('') + '</div>'
       : '<div class="card"><div class="bx-empty">' + uniImg('u-empty') + '<p class="helper">아직 구매한 리포트가 없어요. 사주 이야기책, 궁합 상세, 중요한 날 잡기를 열면 여기서 다시 볼 수 있어요.</p></div></div>';
-    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">꿈해몽 기록</h2><span class="sec-meta">' + dreams.length + '개</span></div>';
+    h += '<div class="card"><div class="sec-head"><h2 class="sec-title">꿈해몽 기록</h2><span class="sec-meta">' + dreams.length + '/' + REC_MAX + '개</span></div>';
     if (!dreams.length) h += '<div class="bx-empty">' + uniImg('u-sleep') + '<p class="helper">꿈을 풀면 해몽 기록이 여기에 남아요.</p></div><button class="btn-soft btn-block" id="bxGoDream" style="margin-top:12px">꿈 해몽 하러 가기</button>';
-    else h += dreams.slice(0, 10).map(function(d){ return '<button class="row-link" data-dm="' + d.id + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(d.title || d.catName) + '<br><span class="helper">' + fmtDate(d.at) + ' · ' + (d.free ? '무료 해몽' : '꿈 풀이 리포트') + '</span></span><span class="chev">›</span></button>'; }).join('');
+    else h += dreams.map(function(d){ return '<div class="rec-row"><button class="row-link" data-dm="' + d.id + '"><span class="ic">' + TIP_IC.star + '</span><span>' + esc(d.title || d.catName) + '<br><span class="helper">' + fmtDate(d.at) + ' · ' + (d.free ? '무료 해몽' : '꿈 풀이 리포트') + '</span></span><span class="chev">›</span></button><button type="button" class="rec-del" data-dmdel="' + esc(d.id) + '" aria-label="이 기록 지우기">✕</button></div>'; }).join('') + '<p class="helper rec-note">최근 ' + REC_MAX + '개까지만 보관돼요. 새로 풀면 가장 오래된 기록이 지워져요.</p>';
     h += '</div>';
     h += '<div class="card"><button class="row-link" id="bxList"><span class="ic">' + FEAT_IC.saju + '</span>저장한 사주 목록<span class="chev">›</span></button>' +
       (me ? '<button class="row-link" id="bxMy"><span class="ic">' + FEAT_IC.today + '</span>내 정보 · 엽전 기록<span class="chev">›</span></button>' : '<button class="row-link" id="bxStart"><span class="ic">' + FEAT_IC.today + '</span>내 사주 등록하기<span class="chev">›</span></button>') + '</div>';
@@ -3143,7 +3148,8 @@
     if ($('bxMy')) $('bxMy').onclick = function(){ openMy(); };
     if ($('bxStart')) $('bxStart').onclick = function(){ startOnboarding('new'); };
     if ($('bxList')) $('bxList').onclick = function(){ renderList(); show('list'); };
-    document.querySelectorAll('[data-bx]').forEach(function(b){ b.onclick = function(){ store('unsu_numbox', getBoxAll().filter(function(x){ return x.id !== b.dataset.bx; })); renderBox(); toast('지웠어요'); }; });
+    bindRecDel($('boxBody'), 'data-bx', function(id){ store('unsu_numbox', getBoxAll().filter(function(x){ return x.id !== id; })); renderBox(); });
+    bindRecDel($('boxBody'), 'data-dmdel', function(id){ delDream(id); renderBox(); });
     document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(), id = b.dataset.rp; if (id === 'gh'){ go('gunghap'); return; } if (!me) return; var r = compute(me), O = { wl:openWealth, sal:openSal, gw:openGuin, lv:openLoveTiming, tj:openTojeong }; if (O[id]) O[id](me, r); else if (id === 'cal') openFortuneCal(me, r, 0); else if (id === 'ez') openStory(me, r, 0); else openResult(me, r, true); }; });
     document.querySelectorAll('[data-rptk]').forEach(function(b){ b.onclick = function(){ var k = b.dataset.rptk.split('|'), e = getList().filter(function(x){ return x.id === k[0]; })[0]; if (e) openTaekil(e, compute(e), k[1]); }; });
     document.querySelectorAll('[data-rpny]').forEach(function(b){ b.onclick = function(){ var e = getList().filter(function(x){ return x.id === b.dataset.rpny; })[0]; if (e) openNYSheet(e, compute(e)); }; });
@@ -3894,7 +3900,7 @@
      1장은 무료, 2~6장은 쉬운 사주 풀이를 열면 이어진다. 전문 카드(십성·신살·대운)는 결과 화면에 그대로 있다.
      ========================================================= */
   var SB_ROLE = {
-    year:{ n:'연주', img:'뿌리', age:'0~15세', who:'조상과 어린 시절, 세상이 처음 보는 나', tail:'어릴 때 집안 분위기와 주변에서 이 기운을 많이 받았고, 처음 만나는 사람에게 이 모습으로 보이기 쉬워요.' },
+    year:{ n:'년주', img:'뿌리', age:'0~15세', who:'조상과 어린 시절, 세상이 처음 보는 나', tail:'어릴 때 집안 분위기와 주변에서 이 기운을 많이 받았고, 처음 만나는 사람에게 이 모습으로 보이기 쉬워요.' },
     month:{ n:'월주', img:'줄기', age:'15~30세', who:'부모와 일하는 환경, 사회 속의 나', tail:'일하고 사람을 만나는 자리에서 이 기운이 가장 힘 있게 드러나요. 사주에서 가장 힘이 센 자리예요.' },
     day:{ n:'일주', img:'꽃', age:'30~45세', who:'나 자신과 가장 가까운 사람', tail:'가장 가까운 사람과 있을 때 이 기운이 편하게 나와요. 내가 나를 어떻게 느끼는지가 여기에 담겨요.' },
     hour:{ n:'시주', img:'열매', age:'45세~', who:'자녀와 말년, 속마음', tail:'나이가 들수록, 그리고 혼자 있을 때 이 기운이 짙어져요. 내가 맺고 싶은 열매의 모습이에요.' }
@@ -3933,9 +3939,9 @@
     var P = r.pillars, ig = ILGAN[P.day.stem], name = esc(entry.name), h = '';
     if (n === 0){
       h += '<p class="sb-lead">사주는 태어난 해, 달, 날, 시간을 각각 두 글자로 적은 여덟 글자예요. 이 두 글자씩을 <b>기둥</b>이라고 불러요.</p>' +
-        '<div class="sb-tree"><div><b>연주</b><span>뿌리</span></div><div><b>월주</b><span>줄기</span></div><div><b>일주</b><span>꽃</span></div><div><b>시주</b><span>열매</span></div></div>' +
-        '<p>나무를 떠올리면 쉬워요. 뿌리(연주)는 집안과 어린 시절, 줄기(월주)는 부모와 일하는 환경, 꽃(일주)은 나 자신과 배우자, 열매(시주)는 자녀와 말년이에요. 나이로는 한 기둥이 대략 15년을 맡아요.</p>' +
-        '<h4 class="sb-h">' + name + '님의 연주부터 읽어 볼게요</h4>' + sbPillarCard('year', P, ig, true) +
+        '<div class="sb-tree"><div><b>년주</b><span>뿌리</span></div><div><b>월주</b><span>줄기</span></div><div><b>일주</b><span>꽃</span></div><div><b>시주</b><span>열매</span></div></div>' +
+        '<p>나무를 떠올리면 쉬워요. 뿌리(년주)는 집안과 어린 시절, 줄기(월주)는 부모와 일하는 환경, 꽃(일주)은 나 자신과 배우자, 열매(시주)는 자녀와 말년이에요. 나이로는 한 기둥이 대략 15년을 맡아요.</p>' +
+        '<h4 class="sb-h">' + name + '님의 년주부터 읽어 볼게요</h4>' + sbPillarCard('year', P, ig, true) +
         '<p class="sb-note">나머지 세 기둥은 다음 장에서 하나씩 풀어 줄게요.</p>';
     } else if (n === 1){
       ['month', 'day', 'hour'].forEach(function(k){ h += sbPillarCard(k, P, ig, true); });
@@ -4008,7 +4014,7 @@
   function bookCoverHTML(entry, open){
     return '<div class="card sb-cover"><div class="sb-cfig">' + uniImg('u-book') + '</div><div class="sb-ck">사주 이야기책</div>' +
       '<h2 class="sb-ct">우니가 읽어 주는<br>' + esc(entry.name) + '님의 사주 이야기책</h2>' +
-      '<ul class="sb-cl"><li>연주·월주·일주·시주가 내 삶에서 하는 일</li><li>나를 돕는 귀인과 특별한 별(살)</li><li>10년 계절(대운)과 올해·이번 달</li></ul>' +
+      '<ul class="sb-cl"><li>년주·월주·일주·시주가 내 삶에서 하는 일</li><li>나를 돕는 귀인과 특별한 별(살)</li><li>10년 계절(대운)과 올해·이번 달</li></ul>' +
       '<button class="btn-primary btn-block sheen" id="btnBook">' + (open ? '이야기책 다시 읽기' : '1장 무료로 읽어 보기') + '</button>' +
       '<p class="helper" style="text-align:center">' + (open ? '6개 장 모두 열려 있어요' : '1장 무료 · 2~6장 ' + priceTag('ez')) + '</p></div>';
   }
@@ -4621,7 +4627,7 @@
     '원진살':{ old:'원진은 ‘서로 원망하고 미워하는 기운’이라, 부부나 가까운 사이가 까닭 없이 틀어지는 살로 봤어요. 궁합에서 특히 꺼렸어요.', oldFix:'옛사람들은 원진이 든 짝은 서로 말을 아끼고 예를 갖추면 괜찮다고 했어요.', k:'괜히 서운한 마음', good:'예민한 감각 덕분에 분위기와 사람 마음을 빨리 알아채요.', care:'가까운 사람에게 이유 없이 서운함이 쌓이기 쉬워요. 말로 꺼내지 않으면 오해가 커져요.', fix:'서운함은 그날 바로 한 줄로 말해요. 쌓아 두지 않으면 원진은 거의 힘을 못 써요.' }
   };
   var SAL_ORDER = ['도화살', '홍염살', '역마살', '화개살', '백호살', '괴강살', '양인살', '원진살'];
-  var SAL_POS = { year:'연주', month:'월주', day:'일주', hour:'시주', y2027:TJ_YEAR + '년' };
+  var SAL_POS = { year:'년주', month:'월주', day:'일주', hour:'시주', y2027:TJ_YEAR + '년' };
   function salCalc(me, r){
     var P = r.pillars, keys = ['year', 'month', 'day', 'hour'].filter(function(k){ return P[k]; }), list = [];
     function add(name, at){ if (!at.length) return; var x = list.filter(function(s){ return s.name === name; })[0]; if (x) at.forEach(function(a){ if (x.at.indexOf(a) < 0) x.at.push(a); }); else list.push({ name:name, at:at.slice() }); }
@@ -4717,7 +4723,7 @@
     '회의실, 은행, 정리된 사무 공간',
     '카페, 물가, 조용히 이야기 나누는 곳'
   ];
-  var GW_POS = { year:'연주', month:'월주', day:'일주', hour:'시주' };
+  var GW_POS = { year:'년주', month:'월주', day:'일주', hour:'시주' };
   function gwCalc(me, r){
     var P = r.pillars, keys = ['year', 'month', 'day', 'hour'].filter(function(k){ return P[k]; }), dS = P.day.stem, mB = P.month.br, list = [];
     function brAt(b){ return keys.filter(function(k){ return P[k].br === b; }); }
@@ -4853,14 +4859,19 @@
 
   /* ---------- 우니에게 묻기 (AI 사주 상담, item 'chat') ----------
      /api/chat 이 내 사주 요약을 근거로 짧게 답한다(키가 없거나 막히면 서버가 사주 규칙으로 답을 만든다).
-     하루 1번 무료 · 하루 무제한 대화권 = 100닢(990원), 산 날 자정(한국 시간)까지 · 우니 패스도 무제한
+     하루 1번 무료 · 하루 무제한 대화권 = 100닢(990원), 산 때부터 24시간 · 우니 패스도 무제한
      (2026-11-23 소율: 사주에 맞춰 답하니 같은 주제는 답이 비슷할 수밖에 없다 → 횟수권 대신 '하루 무제한 대화권'을 판다) */
   var CHAT_FREE = 1;
   var CHAT_SALE = true;
   var CHAT_TOPICS = [['love','연애'],['marry','결혼'],['work','일·직장'],['study','시험·공부'],['money','돈'],['people','인간관계'],['family','가족'],['mind','마음'],['move','이사·이동'],['self','나라는 사람'],['day','오늘 하루'],['etc','그 밖에']];
   var CHAT_HI = { love:'연애 이야기군요.', marry:'결혼 이야기군요.', work:'일 이야기군요.', study:'시험·공부 이야기군요.', money:'돈 이야기군요.', people:'사람 사이 이야기군요.', family:'가족 이야기군요.', mind:'마음이 많이 쓰였군요.', move:'자리를 옮기는 이야기군요.', self:'나 자신이 궁금하군요.', day:'오늘 하루가 궁금하군요.', etc:'어떤 고민이든 좋아요.' };
   function chatDay(){ var c = store('unsu_chat_day'); return c && c.d === todayStr() ? c.n : 0; }
-  function chatUnl(){ return passActive() || store('unsu_chat_unl') === todayStr(); }   /* 오늘 무제한(대화권·패스) */
+  /* 하루 무제한 대화권: 산 시각부터 24시간(2026-11-24 소율: 밤 11시에 사도 억울하지 않게). 예전 값(날짜 문자열)도 그날까지는 인정 */
+  var CHAT_HOURS = 24;
+  function chatUntil(){ var v = store('unsu_chat_unl'); return typeof v === 'number' ? v : (v === todayStr() ? Date.now() + 1 : 0); }
+  function chatGrant(){ store('unsu_chat_unl', Math.max(chatUntil(), Date.now()) + CHAT_HOURS * 3600e3); }
+  function chatUnlTill(){ var d = new Date(chatUntil()); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  function chatUnl(){ return passActive() || chatUntil() > Date.now(); }   /* 무제한(대화권·패스) */
   function chatLeftFree(){ return chatUnl() ? 99 : Math.max(0, CHAT_FREE - chatDay()); }
   /* 서버가 원국을 엔진으로 다시 계산하도록 생년월일 원본을 보낸다(2026-11-23 AI 재설계: LLM이 원국을 계산하지 않게) */
   function chatBirth(me){
@@ -4911,7 +4922,7 @@
     }).join('') + '</div>';
   }
   function akMeta(){
-    return passActive() ? '패스 · 무제한' : chatUnl() ? '오늘 무제한' : chatLeftFree() ? '오늘 무료 ' + chatLeftFree() + '번' : '무료 질문 끝';
+    return passActive() ? '패스 · 무제한' : chatUnl() ? (passActive() ? '무제한' : chatUnlTill() + '까지 무제한') : chatLeftFree() ? '오늘 무료 ' + chatLeftFree() + '번' : '무료 질문 끝';
   }
   function akCan(){ return chatLeftFree() > 0; }
   function renderAsk(){
@@ -4926,7 +4937,7 @@
       return;
     }
     var r = compute(me); if (r.error){ box.innerHTML = ''; return; }
-    var log = chatLog().filter(function(x){ return x.who === me.id; }).slice(-8);
+    var log = chatLog().filter(function(x){ return x.who === me.id; }).slice(-REC_MAX);
     var now = new Date();
     box.innerHTML = (NS ? demoBarHTML() : '') +
       '<div class="ak">' +
@@ -4972,7 +4983,7 @@
     };
     function akOut(){
       akInputState();
-      akSay([akB('오늘 무료 질문은 다 썼어요. 내일 다시 한 번 무료로 물어볼 수 있어요.')].concat(CHAT_SALE ? [akB('오늘 더 이야기하고 싶다면 <b>하루 무제한 대화권</b>으로 오늘 자정까지 마음껏 물어볼 수 있어요.') + akPassCard()] : []), function(){
+      akSay([akB('오늘 무료 질문은 다 썼어요. 내일 다시 한 번 무료로 물어볼 수 있어요.')].concat(CHAT_SALE ? [akB('오늘 더 이야기하고 싶다면 <b>하루 무제한 대화권</b>으로 지금부터 24시간 동안 마음껏 물어볼 수 있어요.') + akPassCard()] : []), function(){
         var pcs = $('chatLog').querySelectorAll('.ak-pass button'), pc = pcs[pcs.length - 1]; if (pc) pc.onclick = function(){ chatBuy(me, r, askTopic); };
         akChips((CHAT_SALE ? [['하루 무제한 대화권 · ' + priceTag('chat'), function(){ chatBuy(me, r, askTopic); }]] : []).concat([['내일 할게요', function(){ akChips([]); akUser('내일 다시 올게요'); akSay([akB('좋아요, 내일 기다릴게요. 그동안 오늘의 행운 부적도 열어 보세요.') + akRecs(me, 'day')], function(){ box.querySelectorAll('[data-akrec]').forEach(function(b){ if (b.onclick) return; b.onclick = function(){ var k = b.dataset.akrec; if (k === 'fill'){ go('num'); window.scrollTo(0, 0); return; } var fn = topicActs(me, r)[k]; if (fn) fn(); }; }); }); }, 'ghost']]));
       });
@@ -5032,14 +5043,14 @@
   }); }
   /* 하루 무제한 대화권 카드(채팅 안 말풍선) */
   function akPassCard(){
-    return '<div class="ak-pass"><span class="ak-pass-art">' + uniImg('u-love') + '</span><div><b>하루 무제한 대화권</b><small>오늘 자정까지 질문 수 제한 없이 · 주제 상관없이</small></div><em>' + priceTag('chat') + '</em><button type="button" class="btn-primary">대화권 받기</button></div>';
+    return '<div class="ak-pass"><span class="ak-pass-art">' + uniImg('u-love') + '</span><div><b>하루 무제한 대화권</b><small>산 때부터 24시간 · 질문 수 제한 없이 · 주제 상관없이</small></div><em>' + priceTag('chat') + '</em><button type="button" class="btn-primary">대화권 받기</button></div>';
   }
   function chatBuy(me, r, topic){
     if (isGuest()){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 하루 무제한 대화권은 ' + COST.chat + '닢이에요.'); return; }
-    openChoice({ k:'chat', name:'하루 무제한 대화권', who:'오늘 ' + todayStr().slice(5).replace('-', '월 ') + '일 자정까지', art:'book',
-      items:['오늘 자정(한국 시간)까지 우니에게 질문 수 제한 없이', '연애·일·돈·가족·마음 등 12가지 주제 모두', '내 사주 원국과 오늘 일진을 바탕으로 한 답'],
-      coin:COST.chat, item:'chat:' + todayStr(), keep:'산 날 자정까지 쓸 수 있어요', rs:{ k:'chat', id:me.id, topic:topic },
-      onOpen:function(){ store('unsu_chat_unl', todayStr()); closeSheet(); toast('오늘 자정까지 우니와 마음껏 이야기할 수 있어요'); openChat(me, r, topic); } });
+    openChoice({ k:'chat', name:'하루 무제한 대화권', who:'지금부터 24시간', art:'book',
+      items:['산 때부터 24시간 동안 우니에게 질문 수 제한 없이', '연애·일·돈·가족·마음 등 12가지 주제 모두', '내 사주 원국과 오늘 일진을 바탕으로 한 답'],
+      coin:COST.chat, item:'chat:' + todayStr(), keep:'산 때부터 24시간 쓸 수 있어요', rs:{ k:'chat', id:me.id, topic:topic },
+      onOpen:function(){ chatGrant(); closeSheet(); toast(chatUnlTill() + '까지 우니와 마음껏 이야기할 수 있어요'); openChat(me, r, topic); } });
   }
   var chatBusy = false;
   function chatAsk(me, r, topic, q){
@@ -5059,7 +5070,7 @@
         chatBusy = false;
         if (useFree && !chatUnl()) store('unsu_chat_day', { d:todayStr(), n:chatDay() + 1 });
         var tp = CHAT_EX[o.j.topic] ? o.j.topic : topic; askTopic = tp;
-        var l = chatLog(); l.push({ who:me.id, t:Date.now(), topic:tp, q:q, a:o.j.answer }); if (l.length > 40) l = l.slice(-40); store('unsu_chat_log', l);
+        var l = chatLog(); l.push({ who:me.id, t:Date.now(), topic:tp, q:q, a:o.j.answer }); if (l.length > REC_MAX) l = l.slice(-REC_MAX); store('unsu_chat_log', l);
         if (seq !== akSeq || !$('chatTyping')) return;
         $('chatTyping').remove(); if ($('chatGo')) $('chatGo').disabled = false;
         akInputState();
