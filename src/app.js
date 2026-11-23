@@ -4557,7 +4557,7 @@
     var now = new Date();
     box.innerHTML = (NS ? demoBarHTML() : '') +
       '<div class="ak">' +
-      '<header class="ak-head"><span class="ak-hav">' + uniImg('u-thinking') + '<i aria-hidden="true"></i></span><div><b>우니</b><small>' + esc(me.name) + '님 사주를 읽고 있어요</small></div><span class="ak-left" id="akLeft">' + akMeta() + '</span></header>' +
+      '<header class="ak-head"><span class="ak-hav">' + uniImg('u-calm') + '<i aria-hidden="true"></i></span><div><b>우니</b><small>' + esc(me.name) + '님 사주를 읽고 있어요</small></div><span class="ak-left" id="akLeft">' + akMeta() + '</span></header>' +
       '<div class="ak-stream" id="chatLog" aria-live="polite">' +
       (log.length ? '<div class="ak-day"><span>지난 이야기</span></div>' + log.map(function(x){ return akMe(x.q, x.t) + akBot(akParas(x.a).join(''), true); }).join('') : '') +
       '<div class="ak-day"><span>' + (now.getMonth() + 1) + '월 ' + now.getDate() + '일</span></div>' +
