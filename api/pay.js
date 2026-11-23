@@ -8,12 +8,13 @@
    실패·취소는 failUrl(/?pay=fail)로 바로 돌아온다. */
 const crypto = require('crypto');
 const S = require('./_lib/srv');
-const { PACKS, PASSES, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, COUPON, couponOn, couponPrice } = require('./_lib/shop');
+const { PKGS, PKG_SALE, PACKS, PASSES, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, COUPON, couponOn, couponPrice } = require('./_lib/shop');
 const ITEM_RE = /^([a-z]+):?([^\s]{0,100})$/;   /* api/coins.js 와 같은 규칙 */
 const itemOf = pack => (/^buy:/.test(pack || '') ? pack.slice(4) : null);
+const pkgOf = pack => (/^pkg:/.test(pack || '') && PKGS[pack.slice(4)]) || null;   /* 묶음 패키지 주문 */
 /* 결제 완료 후 돌아갈 곳. 단건은 json=1 이면 JSON, 아니면 /?pay=ok&buy=1 (무엇을 샀는지는 화면이 sessionStorage 에 들고 있다) */
 function doneUrl(o){
-  if (itemOf(o.pack)) return '/?pay=ok&buy=1';
+  if (itemOf(o.pack) || pkgOf(o.pack)) return '/?pay=ok&buy=1';
   return PASSES[o.pack] ? '/?pay=ok&pass=' + o.pack : '/?pay=ok&n=' + (o.coins + o.bonus);
 }
 function finish(req, res, url){
@@ -54,6 +55,17 @@ async function order(req, res){
     const won = coupon ? couponPrice(base) : base;
     await S.db('orders', { method: 'POST', prefer: 'return=minimal', body: { order_id: id, user_id: uid, pack: 'buy:' + m[0], coins: 0, bonus: 0, amount: won, raw: coupon ? { coupon: 'launch50', base } : null } });
     return S.send(res, 200, { ok: true, provider: S.CONF.provider, orderId: id, amount: won, base, coupon: coupon ? COUPON.name : null, orderName: '우니조아 ' + WON_NAMES[m[1]], customerKey: cust });
+  }
+  if (b.pkg){   /* 묶음 패키지: 들어 있는 풀이를 한 번에 결제 */
+    const K = PKG_SALE && Object.prototype.hasOwnProperty.call(PKGS, b.pkg) ? PKGS[b.pkg] : null;
+    if (!K) return S.send(res, 400, { ok: false, err: 'pkg' });
+    const keys = K.items.map(k => 'spend:' + k);
+    const had = await S.db('coin_ledger?user_id=eq.' + uid + '&ikey=in.(' + keys.map(encodeURIComponent).join(',') + ')&select=ikey');
+    if (Array.isArray(had) && had.length >= keys.length) return S.send(res, 409, { ok: false, err: 'owned' });   /* 이미 전부 열었다 */
+    const coupon = couponOn() && !(await S.one('orders?user_id=eq.' + uid + '&status=in.(paid,refunded,canceled)&select=order_id&limit=1'));
+    const won = coupon ? couponPrice(K.p) : K.p;
+    await S.db('orders', { method: 'POST', prefer: 'return=minimal', body: { order_id: id, user_id: uid, pack: 'pkg:' + b.pkg, coins: 0, bonus: 0, amount: won, raw: coupon ? { coupon: 'launch50', base: K.p } : null } });
+    return S.send(res, 200, { ok: true, provider: S.CONF.provider, orderId: id, amount: won, base: K.p, coupon: coupon ? COUPON.name : null, orderName: '우니조아 ' + K.name, customerKey: cust });
   }
   const P = COIN_SALE ? PACKS[b.pack] : null, Q = PASS_SALE ? PASSES[b.pack] : null;
   if (!P && !Q) return S.send(res, 400, { ok: false, err: 'pack' });
@@ -96,9 +108,12 @@ async function confirm(req, res){
 
 /* 주문을 paid 로 바꾸고 엽전·패스를 지급한다 (엽전 원장은 키로 멱등) */
 async function settle(o, patch){
-  const orderId = o.order_id, pass = PASSES[o.pack], item = itemOf(o.pack);
+  const orderId = o.order_id, pass = PASSES[o.pack], item = itemOf(o.pack), pkg = pkgOf(o.pack);
   await S.db('orders?order_id=eq.' + orderId, { method: 'PATCH', prefer: 'return=minimal', body: patch });
-  if (o.user_id && item){   /* 단건: 엽전 0닢 + 구매 기록 키(spend:item). 화면이 같은 item 으로 열면 dup → 차감 없이 열림 */
+  if (o.user_id && pkg){   /* 패키지: 들어 있는 풀이마다 구매 기록 키. 이미 연 것은 원장이 dup 으로 건너뛴다 */
+    for (const k of pkg.items) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'buy', p_why: pkg.name + ' · ' + (WON_NAMES[k] || '콘텐츠'), p_key: 'spend:' + k, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
+  }
+  else if (o.user_id && item){   /* 단건: 엽전 0닢 + 구매 기록 키(spend:item). 화면이 같은 item 으로 열면 dup → 차감 없이 열림 */
     const k = item.split(':')[0];
     await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'buy', p_why: (WON_NAMES[k] || '콘텐츠') + ' ' + o.amount.toLocaleString('ko-KR') + '원 결제', p_key: 'spend:' + item, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
   }

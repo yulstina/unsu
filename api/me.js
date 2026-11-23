@@ -4,7 +4,7 @@
    POST    { consent }    약관·마케팅 동의 기록
    DELETE  { confirm:1 }  회원 탈퇴 */
 const S = require('./_lib/srv');
-const { COUPON, couponOn, couponPrice, EVENT, eventOn, PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE } = require('./_lib/shop');
+const { PKGS, PKG_SALE, COUPON, couponOn, couponPrice, EVENT, eventOn, PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE } = require('./_lib/shop');
 const { passUntil } = require('./_lib/pass');
 
 const SERVER_KEYS = ['unsu_coin', 'unsu_coinlog'];   /* 서버가 기준인 값 — 스냅샷에 저장하지 않는다 */
@@ -24,6 +24,7 @@ function cfg(){
            test: S.CONF.payTest },
     packs: COIN_SALE ? PACKS : null,   /* 엽전 판매는 기본 꺼짐(2026-11-21) */
     won: WON, wonNames: WON_NAMES, wonSale: WON_SALE,
+    pkgs: PKG_SALE ? PKGS : null,   /* 묶음 패키지(원화 단건 한 번에 여러 개) */
     passes: PASS_SALE ? PASSES : null, passDreamMax: PASS_DREAM_MAX,
     adCoin: AD_COIN_ON,
     kakaoJs: process.env.KAKAO_JS_KEY || null,   /* 카카오톡 카드 공유(공개 키). 없으면 공유 시트에 카카오 버튼이 안 뜬다 */
