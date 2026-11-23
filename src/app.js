@@ -219,6 +219,7 @@
   /* =========================================================
      탭 네비게이션
      ========================================================= */
+  if ($('btnGhBack')) $('btnGhBack').onclick = function(){ go('today'); window.scrollTo(0, 0); };
   var VIEWS = { today:$('v-today'), onboard:$('v-onboard'), my:$('v-my'), input:$('v-input'), result:$('v-result'), list:$('v-list'), zodiac:$('v-zodiac'), gunghap:$('v-gunghap'), fill:$('v-fill'), dream:$('v-dream'), shared:$('v-shared'), box:$('v-box'), ask:$('v-ask') };
   var TAB_OF = { today:'today', onboard:'', my:'', input:'saju', result:'saju', list:'saju', zodiac:'today', gunghap:'today', fill:'today', dream:'dream', shared:'', box:'box', ask:'ask' };   /* 2026-11-22: 부적은 홈의 하위 페이지, 하단에 우니에게 묻기 */
   var currentTab = 'today', currentView = 'today', lastSajuView = null;
