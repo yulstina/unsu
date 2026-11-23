@@ -4007,13 +4007,20 @@
      하루 점수는 DAILY.today 그대로(달력·분야별 운세와 같은 값), 학업·건강은 같은 날 기운으로 따로 계산.
      주·달은 그 기간 날마다 점수의 평균 + 기간의 기운(주: 가장 많은 십성, 달: 월주 천간) → 날짜가 같으면 문장도 같다
      ========================================================= */
+  /* 분야 아이콘: 우니조아 파스텔 이모티콘 (얼굴 + 볼터치). 네이버 아이콘과 겹치지 않게 직접 그린 모양 */
+  function ftFace(x, y){
+    var k = '#4b3a63';
+    return '<ellipse cx="' + (x - 5.2) + '" cy="' + (y + 1.8) + '" rx="1.7" ry="1" fill="#ff8fa8" opacity=".55"/><ellipse cx="' + (x + 5.2) + '" cy="' + (y + 1.8) + '" rx="1.7" ry="1" fill="#ff8fa8" opacity=".55"/>' +
+      '<circle cx="' + (x - 2.9) + '" cy="' + y + '" r="1.15" fill="' + k + '"/><circle cx="' + (x + 2.9) + '" cy="' + y + '" r="1.15" fill="' + k + '"/>' +
+      '<path d="M' + (x - 1.5) + ' ' + (y + 1.9) + 'q1.5 1.4 3 0" fill="none" stroke="' + k + '" stroke-width="1.1" stroke-linecap="round"/>';
+  }
   var FT_CATS = [
-    ['total', '총운', '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#8a7cf0" stroke-width="3"/><path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="#ff9a8a" stroke-width="3"/><path d="M19.5 12a7.5 7.5 0 0 1-7.5 7.5" fill="none" stroke="#8fdcaa" stroke-width="3"/><path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" fill="none" stroke="#f6cd5b" stroke-width="3"/>'],
-    ['love', '애정운', '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" fill="#ff6f86"/>'],
-    ['money', '금전운', '<path d="M7 5h10l3.5 4.5L12 20 3.5 9.5z" fill="#3fc6a0"/><path d="M3.5 9.5h17M9 5l3 4.5L15 5M12 9.5V20" fill="none" stroke="#c9f5e6" stroke-width="1.1"/>'],
-    ['work', '직장운', '<rect x="3.5" y="7.5" width="17" height="12" rx="2.5" fill="#f2a65a"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" fill="none" stroke="#f2a65a" stroke-width="1.8"/><path d="M3.5 12.5h17" stroke="#ffe1c2" stroke-width="1.2"/>'],
-    ['study', '학업운', '<path d="M2.5 9.5 12 5l9.5 4.5L12 14z" fill="#9aa3c7"/><path d="M6.5 11.5v4c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-4" fill="#7c86ad"/><path d="M20.5 10v5" stroke="#9aa3c7" stroke-width="1.4"/>'],
-    ['health', '건강운', '<path d="M12 3.5 19 6v5.5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z" fill="#f6b73c"/><path d="M12 8.5v6M9 11.5h6" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>']
+    ['total', '총운', '<path d="M16 3.6l3.4 7 7.6 1.1-5.5 5.3 1.3 7.6L16 21l-6.8 3.6 1.3-7.6L5 11.7l7.6-1.1z" fill="#ffe59a" stroke="#ffd46b" stroke-width="2" stroke-linejoin="round"/>' + ftFace(16, 15.2) + '<circle cx="26.5" cy="5" r="1.3" fill="#fff3c4"/><circle cx="5" cy="24.5" r="1" fill="#fff3c4"/>'],
+    ['love', '애정운', '<path d="M16 27.2s-10.5-6.2-10.5-13.4A5.6 5.6 0 0 1 16 10.4a5.6 5.6 0 0 1 10.5 3.4c0 7.2-10.5 13.4-10.5 13.4z" fill="#ffb7c8" stroke="#ff9db5" stroke-width="1.4" stroke-linejoin="round"/>' + ftFace(16, 16.2) + '<path d="M9.4 12.6a3 3 0 0 1 2.4-1.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".8"/>'],
+    ['money', '금전운', '<circle cx="16" cy="16.5" r="11" fill="#bff0d9" stroke="#93dcbc" stroke-width="1.6"/><rect x="13.8" y="8.4" width="4.4" height="4.4" rx="1" fill="none" stroke="#7ccaa8" stroke-width="1.5"/>' + ftFace(16, 18.2) + '<path d="M8.2 12.4a8.6 8.6 0 0 1 3-3.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".8"/>'],
+    ['work', '직장운', '<path d="M12.4 10.6V8.8a2.2 2.2 0 0 1 2.2-2.2h2.8a2.2 2.2 0 0 1 2.2 2.2v1.8" fill="none" stroke="#f3ad7f" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.4" width="22" height="16" rx="4.5" fill="#ffd3b0" stroke="#f9bc92" stroke-width="1.4"/><rect x="14.6" y="20.6" width="2.8" height="2.4" rx=".8" fill="#f3ad7f"/>' + ftFace(16, 16.2)],
+    ['study', '학업운', '<rect x="7" y="4.8" width="18.5" height="22.4" rx="3.4" fill="#c4d8ff" stroke="#a9c4fb" stroke-width="1.4"/><path d="M11 4.8v22.4" stroke="#a9c4fb" stroke-width="1.6"/><path d="M21.5 4.8v6.4l-1.8-1.3-1.8 1.3V4.8" fill="#ffb7c8"/>' + ftFace(18.2, 17.4)],
+    ['health', '건강운', '<path d="M16 10.4c-3-2.2-9.6-1.4-9.6 6 0 6.2 4.2 11 7.2 11 1.1 0 1.6-.6 2.4-.6s1.3.6 2.4.6c3 0 7.2-4.8 7.2-11 0-7.4-6.6-8.2-9.6-6z" fill="#cdeeb6" stroke="#ade09a" stroke-width="1.4" stroke-linejoin="round"/><path d="M16 10.2c.2-2.8 2.1-4.8 5-5-.2 2.9-2.1 4.8-5 5z" fill="#93d681"/><path d="M15.6 10.4c-.2-1.6-.8-2.8-1.8-3.6" stroke="#b58b6a" stroke-width="1.3" stroke-linecap="round" fill="none"/>' + ftFace(16, 18.4)]
   ];
   var FT_PERIODS = [['d0', '오늘'], ['d1', '내일'], ['wk', '이번 주'], ['mo', '이번 달']];
   var FT_GRP = {
@@ -4082,7 +4089,7 @@
     var P = ftPeriod(me, r, ftSel.p), C = FT_CATS.filter(function(c){ return c[0] === ftSel.c; })[0];
     var more = ftSel.p === 'd0' && { love:'love', money:'money', work:'career' }[ftSel.c];
     return '<div class="ft-tabs" role="tablist" aria-label="운세 기간">' + FT_PERIODS.map(function(p){ return '<button type="button" role="tab" data-ftp="' + p[0] + '" aria-selected="' + (p[0] === ftSel.p) + '">' + p[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c){ return '<button type="button" role="tab" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 24 24">' + c[2] + '</svg></i><span>' + c[1] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c, i){ return '<button type="button" role="tab" class="ftc-' + c[0] + '" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 32 32">' + c[2] + '</svg></i><span>' + c[1] + (c[0] === 'total' ? ' <b>' + P.v.total + '</b>' : '') + '</span></button>'; }).join('') + '</div>' +
       '<div class="ft-body" aria-live="polite"><div class="ft-head"><span><small>' + P.title + ' · ' + P.sub + '</small><b>' + C[1] + '</b></span><em data-tier="' + tierOf(P.v[ftSel.c]) + '">' + P.v[ftSel.c] + '<small>점</small></em></div>' +
       '<p>' + (ftSel.c === 'total' && ftSel.p === 'd0' ? esc(me.name) + '님, ' : '') + P.t[ftSel.c] + '</p>' +
       (more ? '<button type="button" class="ft-more" data-cat="' + more + '">' + C[1] + ' 자세히 보기 · 타고난 그릇과 올해 흐름 ›</button>' : '') + '</div>';
