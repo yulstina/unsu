@@ -2373,12 +2373,8 @@
     h += '<section class="home-hero ' + elc + '"><div class="hh-txt"><div class="hh-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日 ' + f.ten + '의 날</div>' +
       '<h1 class="hh-title">' + f.head + '</h1></div>' +
       '<span class="hh-uni" aria-hidden="true">' + uniImg(drawn ? 'u-gift' : 'u-pouch') + '</span>' +
-      '<div class="hh-sc">' + [['money','w','재물'],['love','l','연애'],['career','j','일']].map(function(c){
-        var v = f.scores[c[1]];
-        return '<button type="button" data-cat="' + c[0] + '" data-tier="' + tierOf(v) + '"' + (c[1] === low[0] ? ' class="lo"' : '') + ' aria-label="' + c[2] + ' ' + v + '점 자세히"><small>' + c[2] + '</small><b>' + v + '</b></button>';
-      }).join('') + '</div>' +
-      '<p class="hh-body">' + esc(me.name) + '님, ' + f.body + '</p>' +
       '<div class="hh-acts"><button class="btn-primary hh-cta' + (drawn ? '' : ' sheen') + '" id="btnGoNum">' + (drawn ? '오늘 부적 다시 보기' : '오늘 부적 열기') + '</button><button type="button" class="hh-share" id="btnTodayShare">' + SH_IC.send + '공유</button></div></section>';
+    h += '<section class="home-sec ft-sec"><div class="hs-head"><h2 class="sec-title">' + esc(me.name) + '님의 운세</h2></div><div class="ft-box" id="ftBox">' + ftHTML(me, r) + '</div></section>';
     h += homeGridHTML();
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + TJ_YEAR + ' 정미년, 미리 열어 봐요</h2></div><div class="hp-car" role="list">' +
       ['tj', 'sal', 'fc', 'ny'].map(function(k){ return homeCardHTML(k, 'car'); }).join('') + '</div></section>';
@@ -2404,6 +2400,7 @@
     $('hmTopics').onclick = function(){ openTopics(me, r); };
     $('hmAsk').onclick = function(){ openChat(me, r); };
     bindHomeP(me, r, body);
+    bindFt(me, r);
     bindDailyBox();
     $('hmDream').onclick = function(){ openDream(); };
     $('dpSet').onclick = function(){ openCoinSheet(); };
@@ -3963,6 +3960,99 @@
   function openTopics(me, r){
     openSheet('<h3 id="sheetTitle">주제별 풀이</h3><p class="helper" style="margin:-8px 0 14px">' + esc(me.name) + '님 사주로 볼 수 있는 풀이를 주제별로 모았어요.</p>' + topicListHTML(me, 'sheet'));
     bindTopics(me, r, $('sheetBody'));
+  }
+  /* =========================================================
+     오늘의 운세 탭 (2026-11-23 소율: 네이버처럼 기간 탭 + 분야 아이콘을 눌러 바로 보기)
+     기간: 오늘 · 내일 · 이번 주 · 이번 달 / 분야: 총운 · 애정 · 금전 · 직장 · 학업 · 건강
+     하루 점수는 DAILY.today 그대로(달력·분야별 운세와 같은 값), 학업·건강은 같은 날 기운으로 따로 계산.
+     주·달은 그 기간 날마다 점수의 평균 + 기간의 기운(주: 가장 많은 십성, 달: 월주 천간) → 날짜가 같으면 문장도 같다
+     ========================================================= */
+  var FT_CATS = [
+    ['total', '총운', '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#8a7cf0" stroke-width="3"/><path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="#ff9a8a" stroke-width="3"/><path d="M19.5 12a7.5 7.5 0 0 1-7.5 7.5" fill="none" stroke="#8fdcaa" stroke-width="3"/><path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" fill="none" stroke="#f6cd5b" stroke-width="3"/>'],
+    ['love', '애정운', '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" fill="#ff6f86"/>'],
+    ['money', '금전운', '<path d="M7 5h10l3.5 4.5L12 20 3.5 9.5z" fill="#3fc6a0"/><path d="M3.5 9.5h17M9 5l3 4.5L15 5M12 9.5V20" fill="none" stroke="#c9f5e6" stroke-width="1.1"/>'],
+    ['work', '직장운', '<rect x="3.5" y="7.5" width="17" height="12" rx="2.5" fill="#f2a65a"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" fill="none" stroke="#f2a65a" stroke-width="1.8"/><path d="M3.5 12.5h17" stroke="#ffe1c2" stroke-width="1.2"/>'],
+    ['study', '학업운', '<path d="M2.5 9.5 12 5l9.5 4.5L12 14z" fill="#9aa3c7"/><path d="M6.5 11.5v4c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-4" fill="#7c86ad"/><path d="M20.5 10v5" stroke="#9aa3c7" stroke-width="1.4"/>'],
+    ['health', '건강운', '<path d="M12 3.5 19 6v5.5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z" fill="#f6b73c"/><path d="M12 8.5v6M9 11.5h6" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>']
+  ];
+  var FT_PERIODS = [['d0', '오늘'], ['d1', '내일'], ['wk', '이번 주'], ['mo', '이번 달']];
+  var FT_GRP = {
+    '비겁':{ total:'나와 비슷한 사람들과 어울리며 힘을 얻는 시기예요. 남과 비교하기보다 내 페이스를 지키는 게 가장 좋은 선택이에요.', love:'친구 같은 편안한 관계가 깊어지는 시기예요. 고집보다 맞장구가 사랑을 지켜요.', money:'지출과 경쟁이 함께 늘어나는 시기예요. 돈거래와 보증은 선을 분명히 그어 두세요.', work:'동료와 함께할 때 성과가 나는 시기예요. 공을 나누면 내 평가도 함께 올라가요.', study:'함께하는 공부가 잘 맞는 시기예요. 경쟁자가 오히려 좋은 자극이 돼요.', health:'체력이 받쳐 주는 시기예요. 다만 승부욕 때문에 무리하지 않게 조심해요.' },
+    '식상':{ total:'아이디어와 말솜씨가 살아나는 시기예요. 표현할수록 운이 따라오니 생각만 하지 말고 꺼내 보세요.', love:'매력이 잘 드러나 새 인연이 생기기 쉬운 시기예요. 먼저 말을 거는 쪽이 유리해요.', money:'재능이 돈으로 이어지는 시기예요. 부업이나 작은 판매를 시작하기 좋아요.', work:'기획, 발표, 영업처럼 보여 주는 일에서 빛나는 시기예요.', study:'이해가 빠르고 정리를 잘하는 시기예요. 배운 걸 말로 설명해 보면 오래 남아요.', health:'기운을 많이 쓰는 시기라 쉽게 지칠 수 있어요. 잠을 충분히 챙겨요.' },
+    '재성':{ total:'실속을 챙기기 좋은 시기예요. 계획해 둔 일을 숫자로 마무리해 보세요.', love:'마음과 현실이 함께 맞는 인연이 가까워지는 시기예요. 만남 계획을 구체적으로 세워 보세요.', money:'돈이 크게 움직이는 시기예요. 들어오는 만큼 지출 계획을 먼저 세워 두세요.', work:'성과가 숫자로 보이는 시기예요. 협상이나 정산을 하기 좋아요.', study:'공부보다 현실 일에 마음이 가기 쉬운 시기예요. 목표 점수를 정해 두면 집중이 돼요.', health:'바쁘게 움직이다 끼니를 거르기 쉬운 시기예요. 식사 시간을 지켜 주세요.' },
+    '관성':{ total:'책임과 인정이 함께 오는 시기예요. 맡은 일을 끝까지 해내면 평가가 올라가요.', love:'관계가 진지해지는 시기예요. 미래 이야기를 꺼내 보기 좋아요.', money:'고정 수입이 안정되는 시기예요. 큰 투자보다 차곡차곡 쌓는 쪽이 이득이에요.', work:'승진, 합격, 발령처럼 자리가 바뀌는 기운이 들어오는 시기예요.', study:'시험과 평가에 강한 시기예요. 기출 문제로 실전 감각을 키워 보세요.', health:'긴장과 스트레스가 쌓이기 쉬운 시기예요. 어깨와 목을 자주 풀어 주세요.' },
+    '인성':{ total:'도움과 배움이 들어오는 시기예요. 어른이나 선배의 조언에 답이 있어요.', love:'편안하게 기댈 수 있는 사람이 곁에 있는 시기예요. 조급함만 내려놓으면 돼요.', money:'돈보다 배움에 투자할수록 남는 시기예요. 자격증, 교육비는 아끼지 마세요.', work:'준비해 온 것이 문서로 결과가 나오는 시기예요. 계약과 서류 일에 좋아요.', study:'공부운이 가장 좋은 시기예요. 새 과목이나 자격증을 시작해 보세요.', health:'몸과 마음이 회복되는 시기예요. 푹 자고 잘 먹는 것만으로 충분해요.' }
+  };
+  var FT_LINE = {
+    study:{ hi:['집중력이 좋아 어려운 부분도 술술 풀려요. 미뤄 둔 공부를 시작해 보세요.', '머리에 쏙쏙 들어오는 흐름이에요. 시험이나 발표 준비에 시간을 더 써 보세요.'], mid:['평소만큼 해내면 충분해요. 복습 위주로 차근차근 가요.', '큰 진도보다 정리가 잘 되는 흐름이에요. 노트를 한번 훑어보세요.'], lo:['집중이 쉽게 흩어져요. 25분 공부, 5분 휴식처럼 짧게 끊어 가세요.', '새로운 걸 외우기보다 아는 걸 다지는 게 좋아요.'] },
+    health:{ hi:['몸이 가볍고 회복이 빨라요. 미뤄 둔 운동을 시작하기 좋아요.', '컨디션이 좋은 흐름이에요. 다만 무리한 일정은 피해 주세요.'], mid:['무난한 컨디션이에요. 물을 자주 마시고 스트레칭을 챙겨요.', '큰 탈은 없지만 저녁에는 일찍 쉬어 주세요.'], lo:['피로가 쌓이기 쉬워요. 카페인은 줄이고 일찍 자요.', '몸이 보내는 신호에 귀 기울여요. 무거운 운동보다 가벼운 산책이 좋아요.'] }
+  };
+  var FT_SB = { '비겁':[70, 82], '식상':[78, 68], '재성':[62, 72], '관성':[76, 64], '인성':[88, 80] };
+  function ftHash(s){ var h = 2166136261; for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
+  function ftBand(v){ return v >= 85 ? 'hi' : v >= 70 ? 'mid' : 'lo'; }
+  var ftCache = {};
+  function ftDay(me, r, d){
+    var key = me.id + '|' + me.y + me.m + me.d + '|' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    if (ftCache[key]) return ftCache[key];
+    var f = DAILY.today(me, r, d), g = TEN_TO_GROUP[f.ten], STR = ['장생','관대','건록','제왕'], WK = ['병','사','묘','절'];
+    var st = STR.indexOf(f.stage) > -1 ? 4 : WK.indexOf(f.stage) > -1 ? -4 : 0, j1 = ftHash(key + '|s'), j2 = ftHash(key + '|h');
+    var study = Math.max(42, Math.min(99, Math.round(FT_SB[g][0] + st + (f.rel === 'chung' ? -6 : 0) + j1 * 12 - 6)));
+    var health = Math.max(42, Math.min(99, Math.round(FT_SB[g][1] + st * 1.5 + (f.rel === 'chung' ? -8 : f.rel === 'hap' ? 3 : 0) + j2 * 12 - 6)));
+    var v = { total:f.total, love:f.scores.l, money:f.scores.w, work:f.scores.j, study:study, health:health };
+    return (ftCache[key] = { d:d, f:f, g:g, v:v });
+  }
+  var WDK = ['일','월','화','수','목','금','토'];
+  function ftPeriod(me, r, pk){
+    var now = nowD(), base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (pk === 'd0' || pk === 'd1'){
+      var dd = new Date(base); if (pk === 'd1') dd.setDate(dd.getDate() + 1);
+      var x = ftDay(me, r, dd), f = x.f, G = FT_GRP[x.g], day = function(s){ return s.replace(/시기/g, '날'); };
+      var pick2 = function(a, k){ return a[Math.floor(ftHash(me.id + '|' + dd.toDateString() + '|' + k) * a.length)]; };
+      return { title:(dd.getMonth() + 1) + '월 ' + dd.getDate() + '일 ' + WDK[dd.getDay()] + '요일', sub:f.pillars.day.hanja + '日 · ' + f.ten + '의 날', v:x.v, t:{
+        total:f.head + '. ' + f.body, love:f.lines.l + ' ' + day(G.love), money:f.lines.w + ' ' + day(G.money), work:f.lines.j + ' ' + day(G.work),
+        study:pick2(FT_LINE.study[ftBand(x.v.study)], 's') + ' ' + day(G.study), health:pick2(FT_LINE.health[ftBand(x.v.health)], 'h') + ' ' + day(G.health) } };
+    }
+    var days = [], grp, ttl, sub;
+    if (pk === 'wk'){
+      var mon = new Date(base); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+      for (var i = 0; i < 7; i++){ var w = new Date(mon); w.setDate(w.getDate() + i); days.push(ftDay(me, r, w)); }
+      var cnt = {}; days.forEach(function(x){ cnt[x.g] = (cnt[x.g] || 0) + 1; });
+      grp = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; })[0];
+      var sun = days[6].d; ttl = (mon.getMonth() + 1) + '월 ' + mon.getDate() + '일 ~ ' + (sun.getMonth() + 1) + '월 ' + sun.getDate() + '일'; sub = '이번 주는 ' + grp + '의 기운이 많아요';
+    } else {
+      var Y = base.getFullYear(), M = base.getMonth(), n = new Date(Y, M + 1, 0).getDate();
+      for (var dd2 = 1; dd2 <= n; dd2++) days.push(ftDay(me, r, new Date(Y, M, dd2)));
+      var mp = MS.calc({ y:Y, m:M + 1, d:15, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.month;
+      grp = TEN_TO_GROUP[MS.tenGod(r.pillars.day.stem, mp.stem)];
+      ttl = Y + '년 ' + (M + 1) + '월'; sub = mp.hanja + '월 · ' + grp + '의 달';
+    }
+    var v = {}, t = {}, lbl = function(x){ return pk === 'wk' ? WDK[x.d.getDay()] + '요일(' + x.d.getDate() + '일)' : x.d.getDate() + '일'; };
+    FT_CATS.forEach(function(c){
+      var k = c[0], avg = Math.round(days.reduce(function(s, x){ return s + x.v[k]; }, 0) / days.length);
+      var srt = days.slice().sort(function(a, b){ return b.v[k] - a.v[k] || a.d - b.d; });
+      var good = pk === 'wk' ? [srt[0]] : srt.slice(0, 3).sort(function(a, b){ return a.d - b.d; }), bad = srt[srt.length - 1];
+      v[k] = avg;
+      t[k] = (pk === 'wk' ? '이번 주는 ' : '이번 달은 ') + FT_GRP[grp][k] +
+        ' ' + c[1] + '이 가장 좋은 날은 ' + good.map(lbl).join(', ') + '이고, 한 박자 쉬어 갈 날은 ' + lbl(bad) + '이에요.';
+    });
+    return { title:ttl, sub:sub, v:v, t:t };
+  }
+  var ftSel = { p:'d0', c:'total' };
+  function ftHTML(me, r){
+    var P = ftPeriod(me, r, ftSel.p), C = FT_CATS.filter(function(c){ return c[0] === ftSel.c; })[0];
+    var more = ftSel.p === 'd0' && { love:'love', money:'money', work:'career' }[ftSel.c];
+    return '<div class="ft-tabs" role="tablist" aria-label="운세 기간">' + FT_PERIODS.map(function(p){ return '<button type="button" role="tab" data-ftp="' + p[0] + '" aria-selected="' + (p[0] === ftSel.p) + '">' + p[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c){ return '<button type="button" role="tab" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 24 24">' + c[2] + '</svg></i><span>' + c[1] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="ft-body" aria-live="polite"><div class="ft-head"><span><small>' + P.title + ' · ' + P.sub + '</small><b>' + C[1] + '</b></span><em data-tier="' + tierOf(P.v[ftSel.c]) + '">' + P.v[ftSel.c] + '<small>점</small></em></div>' +
+      '<p>' + (ftSel.c === 'total' && ftSel.p === 'd0' ? esc(me.name) + '님, ' : '') + P.t[ftSel.c] + '</p>' +
+      (more ? '<button type="button" class="ft-more" data-cat="' + more + '">' + C[1] + ' 자세히 보기 · 타고난 그릇과 올해 흐름 ›</button>' : '') + '</div>';
+  }
+  function bindFt(me, r){
+    var box = $('ftBox'); if (!box) return;
+    var re = function(){ box.innerHTML = ftHTML(me, r); bindFt(me, r); };
+    box.querySelectorAll('[data-ftp]').forEach(function(b){ b.onclick = function(){ ftSel.p = b.dataset.ftp; re(); }; });
+    box.querySelectorAll('[data-ftc]').forEach(function(b){ b.onclick = function(){ ftSel.c = b.dataset.ftc; re(); }; });
+    var m = box.querySelector('.ft-more'); if (m) m.onclick = function(){ openCat(me, r, m.dataset.cat); };
   }
   /* =========================================================
      홈 상품 카드 (2026-11-23 헬로우봇 분석 → 기능 이름 대신 궁금해지는 제목 + 썸네일로 다시 포장)
