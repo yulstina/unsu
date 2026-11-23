@@ -19,16 +19,16 @@ const EARN = {
   invite:  { n: 20,  max: 5 }    /* 초대 수락 선물 */
 };
 /* 엽전으로 여는 상품 가격 — src/app.js 의 COST 와 같아야 한다. 서버는 브라우저가 보낸 금액 대신 이 값으로 차감한다 */
-const PRICES = { cat: 100, dream: 200, gh: 100, ez: 100, tk: 500, tj: 100, cal: 100, lv: 200, chat: 100 };
+const PRICES = { cat: 100, dream: 200, gh: 100, ez: 100, tk: 500, tj: 100, cal: 100, lv: 200, chat: 100, wl: 100, sal: 100 };
 /* 광고 보상 엽전: 실제 보상형 광고(Google Ad Manager)가 연결되고 서버 확인이 붙기 전까지 꺼 둔다 → Vercel 환경변수 AD_COIN_ON=1 로 켠다 */
 const AD_COIN_ON = process.env.AD_COIN_ON === '1';
 /* 우니 패스: 원화 바로 결제하는 기간권. 기간 동안 엽전 콘텐츠를 엽전 없이 열고 광고를 숨긴다(자동 결제 아님).
    AI 를 쓰는 꿈 풀이 리포트만 하루 PASS_DREAM_MAX 번까지. 가격은 src/app.js PASS 와 같이 바꾼다 */
 /* 원화 단건 결제 가격(원). 결제 즉시 그 콘텐츠 하나가 열린다. src/app.js 의 WON 과 같이 바꾼다.
    */
-const WON = { cat: 990, dream: 1900, gh: 990, ez: 990, tk: 4900, tj: 990, cal: 990, lv: 1900, chat: 990 };
+const WON = { cat: 990, dream: 1900, gh: 990, ez: 990, tk: 4900, tj: 990, cal: 990, lv: 1900, chat: 990, wl: 990, sal: 990 };
 /* 결제창·구매 내역에 나오는 상품명 — '로또·당첨·번호 추천' 같은 말은 쓰지 않는다(PG 심사) */
-const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: '궁합 상세 리포트', ez: '쉬운 사주 풀이', tk: '중요한 날 잡기', tj: '2027 토정비결', cal: '월별 운세 달력', lv: '연애·결혼 시기', chat: 'AI 상담 질문권 5회' };
+const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: '궁합 상세 리포트', ez: '쉬운 사주 풀이', tk: '중요한 날 잡기', tj: '2027 토정비결', cal: '월별 운세 달력', lv: '연애·결혼 시기', chat: 'AI 상담 질문권 5회', wl: '내 재물 그릇 리포트', sal: '나에게 든 살 풀이' };
 const COIN_SALE = process.env.COIN_SALE === '1';
 /* 원화로 실제 판매하는 상품 (2026-11-21 GPT 최종 검토: 첫 판매는 3종만 — 사주 이야기책·궁합 상세·중요한 날 잡기).
    나머지 상품은 미리보기 + 무료 적립 엽전으로만 연다. PG 승인 범위가 넓어지면 Vercel 환경변수 WON_SALE=ez,gh,tk,tj 처럼 늘린다 */
