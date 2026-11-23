@@ -8,7 +8,7 @@
    실패·취소는 failUrl(/?pay=fail)로 바로 돌아온다. */
 const crypto = require('crypto');
 const S = require('./_lib/srv');
-const { PACKS, PASSES, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE } = require('./_lib/shop');
+const { PACKS, PASSES, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, COUPON, couponOn, couponPrice } = require('./_lib/shop');
 const ITEM_RE = /^([a-z]+):?([^\s]{0,100})$/;   /* api/coins.js 와 같은 규칙 */
 const itemOf = pack => (/^buy:/.test(pack || '') ? pack.slice(4) : null);
 /* 결제 완료 후 돌아갈 곳. 단건은 json=1 이면 JSON, 아니면 /?pay=ok&buy=1 (무엇을 샀는지는 화면이 sessionStorage 에 들고 있다) */
@@ -45,12 +45,15 @@ async function order(req, res){
   const id = 'wj' + Date.now().toString(36) + crypto.randomBytes(6).toString('hex');
   const cust = 'wj_' + S.sha(uid).slice(0, 32);
   if (b.item){   /* 콘텐츠 하나 단건 결제 */
-    const m = ITEM_RE.exec(String(b.item)), won = m && WON_SALE.includes(m[1]) && WON[m[1]];
-    if (!won) return S.send(res, 400, { ok: false, err: 'item' });
+    const m = ITEM_RE.exec(String(b.item)), base = m && WON_SALE.includes(m[1]) && WON[m[1]];
+    if (!base) return S.send(res, 400, { ok: false, err: 'item' });
     const bought = await S.one('coin_ledger?user_id=eq.' + uid + '&ikey=eq.' + encodeURIComponent('spend:' + m[0]) + '&select=id');
     if (bought) return S.send(res, 409, { ok: false, err: 'owned' });   /* 이미 연 콘텐츠 — 다시 결제하지 않게 */
-    await S.db('orders', { method: 'POST', prefer: 'return=minimal', body: { order_id: id, user_id: uid, pack: 'buy:' + m[0], coins: 0, bonus: 0, amount: won } });
-    return S.send(res, 200, { ok: true, provider: S.CONF.provider, orderId: id, amount: won, orderName: '우니조아 ' + WON_NAMES[m[1]], customerKey: cust });
+    /* 출시 기념 첫 결제 할인: 결제 완료(paid·refunded 포함) 이력이 없는 계정만 */
+    const coupon = couponOn() && !(await S.one('orders?user_id=eq.' + uid + '&status=in.(paid,refunded,canceled)&select=order_id&limit=1'));
+    const won = coupon ? couponPrice(base) : base;
+    await S.db('orders', { method: 'POST', prefer: 'return=minimal', body: { order_id: id, user_id: uid, pack: 'buy:' + m[0], coins: 0, bonus: 0, amount: won, raw: coupon ? { coupon: 'launch50', base } : null } });
+    return S.send(res, 200, { ok: true, provider: S.CONF.provider, orderId: id, amount: won, base, coupon: coupon ? COUPON.name : null, orderName: '우니조아 ' + WON_NAMES[m[1]], customerKey: cust });
   }
   const P = COIN_SALE ? PACKS[b.pack] : null, Q = PASS_SALE ? PASSES[b.pack] : null;
   if (!P && !Q) return S.send(res, 400, { ok: false, err: 'pack' });

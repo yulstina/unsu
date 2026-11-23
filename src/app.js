@@ -1082,17 +1082,20 @@
   function wonOf(k){ var w = SRV.cfg && SRV.cfg.won; return (w && w[k]) || WON[k] || 0; }
   function coinSale(){ return !!(SRV.cfg && SRV.cfg.packs); }
   /* 원화로 실제 파는 상품(서버 shop.js WON_SALE). 첫 판매 3종: 사주 이야기책·궁합 상세·중요한 날 잡기. 나머지는 미리보기 + 무료 엽전 */
-  var WON_SALE = ['ez', 'gh', 'tk', 'chat'];
+  var WON_SALE = Object.keys(WON);   /* 2026-11-23 소율: 엽전이 모자라도 막히지 않게 전 상품 원화 판매 */
   function wonSale(k){ var s = SRV.cfg && SRV.cfg.wonSale; return (s || WON_SALE).indexOf(k) > -1 && !!wonOf(k); }
   function passSale(){ return !!(SRV.cfg && SRV.cfg.passes); }   /* 우니 패스 판매(서버 PASS_SALE=1)일 때만 보인다 */
   /* 잠금 버튼 가격 표시: 원화 판매 상품은 원화, 아니면 엽전 (GPT 검토 P0: 첫 잠금에 원화를 보여 준다) */
+  /* 출시 기념 첫 결제 할인 — 서버(cfg.coupon + user.couponOk)가 켜 줄 때만. 실제 금액은 주문 때 서버가 다시 정한다 */
+  function couponOk(){ return !!(SRV.cfg && SRV.cfg.coupon && SRV.couponOk !== false && (!srvUser() || SRV.couponOk)); }
+  function couponWon(w){ var c = SRV.cfg && SRV.cfg.coupon; return c ? Math.ceil(w * (100 - c.rate) / 100 / 10) * 10 : w; }
   function priceTag(k){ return wonSale(k) ? wonOf(k).toLocaleString() + '원' : COST[k] + '닢'; }   /* 서버 COIN_SALE=1 일 때만 엽전 충전 패키지를 보인다 */
   /* 잠금 화면 버튼: 엽전이 모자랄 때 '990원 바로 열기' */
   function buyLabel(k){ return wonOf(k).toLocaleString() + '원 결제하기'; }
   function passEndStr(){ var d = new Date(SRV.passUntil); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
   /* 광고 보상 엽전은 실제 보상형 광고 + 서버 확인이 붙을 때까지 숨긴다(서버 AD_COIN_ON). 예시 모드는 연출만 보여 준다 */
   function adCoinOn(){ return NS || !!(SRV.cfg && SRV.cfg.adCoin); }
-  function srvOn(){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && (SRV.cfg.login.kakao || SRV.cfg.login.google)); }
+  function srvOn(){ var L = SRV.cfg && SRV.cfg.login; return !!(SRV.cfg && SRV.cfg.on && L && (L.kakao || L.google || L.naver || L.email)); }
   function srvLogin(p){ return !!(SRV.cfg && SRV.cfg.on && SRV.cfg.login && SRV.cfg.login[p]); }
   function srvUser(){ var a = store('unsu_auth'); return !NS && !!(a && a.srv); }
   function api(path, opt){
@@ -1129,7 +1132,10 @@
   function pushConsent(){ var c = getConsent(); if (c) api('/api/me', { method:'POST', body:{ consent:c } }).catch(function(){}); }
   function loginBtnsHTML(){
     var on = srvOn();   /* 서버 로그인이 켜졌으면 실제로 연결된 것만 보여 준다 */
-    return (!on || srvLogin('kakao') ? '<button class="btn-social k" data-login="kakao">카카오로 계속하기</button>' : '') + (!on || srvLogin('google') ? '<button class="btn-social g" data-login="google">Google로 계속하기</button>' : '');
+    return (!on || srvLogin('kakao') ? '<button class="btn-social k" data-login="kakao">카카오로 계속하기</button>' : '') +
+      (!on || srvLogin('naver') ? '<button class="btn-social n" data-login="naver"><span class="bs-ic" aria-hidden="true">N</span>네이버로 계속하기</button>' : '') +
+      (!on || srvLogin('google') ? '<button class="btn-social g" data-login="google">Google로 계속하기</button>' : '') +
+      (!on || srvLogin('email') ? '<button class="btn-social e" data-login="email">이메일로 계속하기</button>' : '');
   }
   /* 서버 회원 정보를 이 기기에 반영 */
   function applySrvUser(u, justLoggedIn){
@@ -1145,7 +1151,7 @@
       store('unsu_coinlog', u.ledger || []);
       store('unsu_gift', 1);
       setSrvCoins(u.coins);
-      SRV.orders = u.orders || [];
+      SRV.orders = u.orders || []; SRV.couponOk = !!u.couponOk;
       SRV.passUntil = +u.passUntil || 0; SRV.owner = !!u.owner;
       if (SRV.cfg && SRV.cfg.passes && SRV.cfg.passes[PASS.id]){ PASS.p = SRV.cfg.passes[PASS.id].p; PASS.days = SRV.cfg.passes[PASS.id].days; }
       if (SRV.cfg && SRV.cfg.passDreamMax) PASS.dream = SRV.cfg.passDreamMax;
@@ -1298,7 +1304,7 @@
   /* 주문서: 상품·금액 → 결제 수단(라디오 목록) → 'N원 결제하기' 하나. 다른 쇼핑·콘텐츠 앱의 결제 화면 구조.
      카드는 한국결제네트웍스(KPN) 결제창, 카카오페이는 카카오페이 결제창으로 넘어간다. 마지막에 고른 수단을 기억한다 */
   function checkoutInfo(k){
-    if (k.item){ var c = k.item.split(':')[0]; return { name:(SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[c]) || (k.rs && k.rs.why) || '콘텐츠', won:wonOf(c), sub:'결제 즉시 열리는 디지털 콘텐츠' }; }
+    if (k.item){ var c = k.item.split(':')[0], w0 = wonOf(c), cp = couponOk(); return { name:(SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[c]) || (k.rs && k.rs.why) || '콘텐츠', won:cp ? couponWon(w0) : w0, was:cp ? w0 : 0, sub:'결제 즉시 열리는 디지털 콘텐츠' + (cp ? ' · ' + SRV.cfg.coupon.name + ' 적용' : '') }; }
     if (k.id === PASS.id) return { name:PASS.name, won:PASS.p, sub:PASS.days + '일 동안 모든 풀이 · 자동 결제 없음' };
     return { name:'엽전 ' + ((k.n || 0) + (k.b || 0)).toLocaleString() + '닢', won:k.p || 0, sub:'엽전 충전' };
   }
@@ -1306,7 +1312,7 @@
     var info = checkoutInfo(k), last = store('unsu_pm') === 'kakao' ? 'kakao' : 'card', test = SRV.cfg.pay.test;
     var pm = function(v, icon, t, s){ return '<label class="co-pm' + (v === last ? ' on' : '') + '"><input type="radio" name="copm" value="' + v + '"' + (v === last ? ' checked' : '') + '><span class="co-ic ' + v + '">' + icon + '</span><span class="co-tx"><b>' + t + '</b><small>' + s + '</small></span><i class="co-dot" aria-hidden="true"></i></label>'; };
     openSheet('<div class="co"><h3 id="sheetTitle">결제하기</h3>' +
-      '<div class="co-order"><small>주문 상품</small><div><b>' + esc(info.name) + '</b><span>' + info.won.toLocaleString() + '원</span></div><p>' + info.sub + '</p></div>' +
+      '<div class="co-order"><small>주문 상품</small><div><b>' + esc(info.name) + '</b><span>' + (info.was ? '<s style="opacity:.6;margin-right:6px;font-weight:500">' + info.was.toLocaleString() + '원</s>' : '') + info.won.toLocaleString() + '원</span></div><p>' + info.sub + '</p></div>' +
       '<div class="co-h">결제 수단</div><div class="co-pms" role="radiogroup" aria-label="결제 수단">' +
       pm('card', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/></svg>', '신용·체크카드', '한국결제네트웍스(KPN) 결제창 · 모든 카드사') +
       pm('kakao', '<b>pay</b>', '카카오페이', '카카오톡에서 비밀번호로 간편하게') + '</div>' +
@@ -1333,7 +1339,7 @@
       SRV.cfg = r.cfg;
       var a = store('unsu_auth');
       if (r.user){
-        var lp = (q.login === 'kakao' || q.login === 'google') ? q.login : '';
+        var lp = /^(kakao|google|naver|email)$/.test(q.login || '') ? q.login : '';
         var hadLocal = !!getMe();
         var fromServer = applySrvUser(r.user, !!lp);
         updateSegCount(); updateTopbar();
@@ -2441,6 +2447,52 @@
     if (isHosted() && !/^(localhost|127\.|192\.168\.)/.test(location.hostname)) return '';
     return '<div class="ad-slot ad-' + kind + '" aria-label="광고 영역 예시"><span class="ad-badge">AD</span><span class="ph"></span><div><b>' + (kind === 'loading' ? '분석 중 광고 영역' : '네이티브 광고 영역') + '</b><small>' + where + ' · ' + (kind === 'loading' ? '애드센스 승인 후 실제 광고로 바뀌어요' : '콘텐츠 카드와 같은 모양으로 1개만') + '</small></div></div>';
   }
+  /* =========================================================
+     새해 복주머니 이벤트 (2026-12-14 ~ 2027-01-31, 서버 cfg.event 가 켜 줄 때만)
+     하루 한 번 열면 무료 엽전 10~100닢 — 양은 서버가 뽑는다(/api/coins kind 'bok')
+     ========================================================= */
+  function bokOn(){ return !NS && !!(SRV.cfg && SRV.cfg.event); }
+  function bokDone(){ return store('unsu_bok') === todayStr(); }
+  function bokBannerHTML(){
+    if (!bokOn()) return '';
+    var done = bokDone(), cp = couponOk();
+    return '<button type="button" class="bok-ban' + (done ? ' done' : '') + '" id="bokBan"><span class="bb-t"><small>2027 새해 복주머니 · 1월 31일까지</small>' +
+      '<b>' + (done ? '오늘 복주머니를 열었어요' : '오늘의 복주머니 열기') + '</b>' +
+      '<em>' + (done ? '내일 또 열 수 있어요' : '하루 한 번, 엽전 10~100닢이 들어 있어요') + (cp ? ' · 첫 결제 50% 할인 중' : '') + '</em></span>' +
+      '<span class="bb-uni" aria-hidden="true">' + uniImg('u-pouch') + '</span></button>';
+  }
+  function openBokSheet(){
+    if (isGuest()){ openLoginSheet('새해 복주머니는 로그인한 계정에 엽전이 쌓여요. 처음 로그인하면 ' + SIGNUP_COINS.toLocaleString() + '닢도 함께 받아요.'); return; }
+    var done = bokDone();
+    openSheet('<div class="bok-sheet"><h3 id="sheetTitle">2027 새해 복주머니</h3>' +
+      '<p class="body-text" style="margin:-4px 0 6px">' + (done ? '오늘 복주머니는 이미 열었어요. 내일 또 만나요.' : '복주머니를 눌러 열어 보세요. 하루 한 번이에요.') + '</p>' +
+      '<div class="bok-pouch" id="bokPouch" role="button" tabindex="0" aria-label="복주머니 열기">' + uniImg('u-pouch') + '</div>' +
+      '<div id="bokOut" aria-live="polite"></div>' +
+      '<p class="helper" style="margin-top:10px">이벤트 기간 2026년 12월 14일 ~ 2027년 1월 31일 · 엽전은 무료 적립 포인트라 현금으로 바꿀 수 없어요.</p>' +
+      '<button class="btn-primary btn-block" data-close style="margin-top:12px">확인</button></div>');
+    if (done) return;
+    var busy = false;
+    var open = function(){
+      if (busy || bokDone()) return; busy = true;
+      var pc = $('bokPouch'); pc.classList.add('shake'); try { if (navigator.vibrate) navigator.vibrate(30); } catch(e){}
+      var show = function(n, msg){
+        setTimeout(function(){
+          $('bokOut').innerHTML = n ? '<div class="bok-prize">+' + n + '닢</div><p class="body-text">새해 복이 한 줌 들어왔어요</p>' : '<p class="body-text">' + msg + '</p>';
+          if (n){ store('unsu_bok', todayStr()); logCoin(n, '새해 복주머니'); coinBurst(n, '새해 복주머니'); }
+          if (currentView === 'today') { var b = $('bokBan'); if (b) b.outerHTML = bokBannerHTML(); if ($('bokBan')) $('bokBan').onclick = openBokSheet; }
+        }, reduceMotion ? 0 : 1100);
+      };
+      if (!srvUser()){ var n = [10,10,10,10,20,20,20,30,50,100][Math.floor(Math.random() * 10)]; store('unsu_coin', getCoins() + n); renderCoin(true); show(n); return; }
+      api('/api/coins', { method:'POST', body:{ kind:'bok', why:'새해 복주머니', key:todayStr() } }).then(function(r){
+        if (typeof r.bal === 'number') setSrvCoins(r);
+        if (r.ok) show(r.n || 0);
+        else if (r.err === 'limit'){ store('unsu_bok', todayStr()); show(0, '오늘 복주머니는 이미 열었어요. 내일 또 만나요.'); }
+        else { busy = false; show(0, r.err === 'event_off' ? '복주머니 이벤트 기간이 아니에요.' : '복주머니를 열지 못했어요. 잠시 뒤 다시 눌러 주세요.'); }
+      }).catch(function(){ busy = false; show(0, '복주머니를 열지 못했어요. 잠시 뒤 다시 눌러 주세요.'); });
+    };
+    $('bokPouch').onclick = open;
+    $('bokPouch').onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } };
+  }
   function renderToday(){
     var body = $('todayBody'), me = getMe();
     if (!me){ renderWelcome(); return; }
@@ -2464,6 +2516,7 @@
       '<h1 class="hh-title">' + f.head + '</h1></div>' +
       '<span class="hh-uni" aria-hidden="true">' + uniImg(drawn ? 'u-gift' : 'u-pouch') + '</span>' +
       '<div class="hh-acts"><button class="btn-primary hh-cta' + (drawn ? '' : ' sheen') + '" id="btnGoNum">' + (drawn ? '오늘 부적 다시 보기' : '오늘 부적 열기') + '</button><button type="button" class="hh-share" id="btnTodayShare">' + SH_IC.send + '공유</button></div></section>';
+    h += bokBannerHTML();
     h += '<section class="home-sec ft-sec"><div class="hs-head"><h2 class="sec-title">' + esc(me.name) + '님의 운세</h2></div><div class="ft-box" id="ftBox">' + ftHTML(me, r) + '</div></section>';
     h += homeGridHTML();
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + TJ_YEAR + ' 정미년, 미리 열어 봐요</h2></div><div class="hp-car" role="list">' +
@@ -2487,6 +2540,7 @@
     h += '<p class="disclaimer">오늘의 운세는 일진과 사주의 관계로 계산한 재미용 콘텐츠예요.</p>';
     body.innerHTML = h;
     $('dpNY').onclick = function(){ openNYSheet(me, r); };
+    if ($('bokBan')) $('bokBan').onclick = openBokSheet;
     $('hmTopics').onclick = function(){ openTopics(me, r); };
     $('hmAsk').onclick = function(){ openChat(me, r); };
     bindHomeP(me, r, body);
@@ -3249,7 +3303,7 @@
      상태 분기: 게스트(정보 없음) / 프로필(기기 저장) / 로그인(동기화 목업) / 예시 모드
      ========================================================= */
   var pendingWelcome = false;
-  var PROV = { kakao:'카카오', google:'Google', apple:'Apple' };
+  var PROV = { kakao:'카카오', google:'Google', naver:'네이버', email:'이메일', apple:'Apple' };
   var OK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var CLOUD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8 6 6 0 0 0-11.6 1.6A3.3 3.3 0 0 0 7 18.5z"/><path d="M9.5 14l2 2 3.5-3.6"/></svg>';
   var PHONE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.8" width="11" height="18.4" rx="2.6"/><path d="M10.5 18h3"/></svg>';
@@ -3319,7 +3373,7 @@
         row('stCoins', SET_IC.coin, '엽전', guest && !NS ? '<em>가입하면 ' + SIGNUP_COINS.toLocaleString() + '닢</em>' : getCoins().toLocaleString() + '닢', 'gold') +
         row('stCoupons', SET_IC.ticket, '쿠폰함', cps + '장') +
         row('stMy', SET_IC.user, '내 정보', '사주·계정 관리') +
-        row('stOrders', SET_IC.doc, '구매 내역', getOrders().length + '건') +
+        row('stOrders', SET_IC.doc, '구매 내역', (srvUser() ? (SRV.orders || []).filter(function(x){ return x.status !== 'failed'; }).length : 0) + '건') +
       '</div>' +
       '<div class="st-group">' +
         row('stNotif', SET_IC.bell, '알림 설정', getNotif().mkt ? '혜택 알림 켬' : '') +
@@ -5004,12 +5058,13 @@
   /* 공통 상품 상세 (2026-11-21 GPT 최종 검토): 받는 내용 → 원화 결제(판매 중인 상품만) / 무료 적립 엽전 사용을 따로 고른다.
      o: { k 가격 키, name, who, items[], coin, art, keep, item 서버 구매 키, rs 결제 뒤 다시 열 곳(resumeBuy), onOpen 엽전으로 연 뒤 } */
   function openChoice(o){
-    var guest = isGuest(), coins = getCoins(), won = wonSale(o.k), w = wonOf(o.k);
+    var guest = isGuest(), coins = getCoins(), won = wonSale(o.k), w0 = wonOf(o.k), cp = won && couponOk() && !passActive(), w = cp ? couponWon(w0) : w0;
     var short = !NS && !passActive() && coins < o.coin;
     openSheet('<div class="pay-sheet"><div class="pay-hero">' + tileArtSVG(o.art || 'book') + '</div>' +
       '<h3 id="sheetTitle">' + o.name + '</h3>' + (o.who ? '<p class="pay-who">' + o.who + '</p>' : '') +
       '<ul class="pay-list">' + o.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
-      (won ? '<div class="pay-price"><b>' + w.toLocaleString() + '원</b></div>' +
+      (won ? (cp ? '<span class="pay-cp">' + esc(SRV.cfg.coupon.name) + (guest ? ' · 가입하면 바로 적용' : ' · 자동 적용') + '</span>' : '') +
+        '<div class="pay-price"><b>' + (cp ? '<span class="was">' + w0.toLocaleString() + '원</span>' : '') + w.toLocaleString() + '원</b></div>' +
         '<button class="btn-primary btn-block" id="payWon">' + (passActive() ? '우니 패스로 열기' : guest ? '로그인하고 ' + w.toLocaleString() + '원 결제하기' : w.toLocaleString() + '원 결제하기') + '</button>' +
         '<p class="helper pay-note">' + (payReady() && SRV.cfg.pay.test ? '<b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요. ' : '') + (payReady() ? '결제 즉시 계정에서 열리는 디지털 콘텐츠예요. 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요. ' : NS ? '예시 모드에서는 결제 없이 열어 볼 수 있어요. ' : '원화 결제는 준비 중이에요. ') + (o.keep ? o.keep + '.' : '') + '</p>'
         : '<p class="helper pay-note" style="margin:0 0 10px">이 리포트는 지금 무료 적립 엽전으로 열 수 있어요. 원화 결제는 준비 중이에요.</p>') +
@@ -5030,20 +5085,20 @@
     if ($('payEarn')) $('payEarn').onclick = function(){ openCoinSheet(); };
   }
   function openOrdersSheet(){
-    var o = getOrders(), ch = srvUser() ? SRV.orders : [];
+    var ch = srvUser() ? (SRV.orders || []).filter(function(x){ return x.status !== 'failed'; }) : [];
     var ST = { paid:'결제 완료', refunded:'환불 완료', canceled:'취소됨', failed:'결제 실패' };
+    /* 2026-11-23 소율: 구매 내역은 원화 결제만. 엽전으로 연 기록은 엽전 주머니(사용 내역)에서 본다 */
     openSheet('<h3 id="sheetTitle">구매 내역</h3>' +
-      (ch.length ? '<div class="st-cap">결제</div><div class="st-group">' + ch.map(function(x){
+      (ch.length ? '<div class="st-group">' + ch.map(function(x){
         var bk = /^buy:([a-z]+)/.exec(x.pack || ''), bn = bk && ((SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[bk[1]]) || '콘텐츠');
         return '<div class="od-row"><div><b>' + (bn || (/^pass/.test(x.pack || '') ? PASS.name : '엽전 ' + (x.coins + x.bonus).toLocaleString() + '닢')) + '</b><small>' + fmtDate(Date.parse(x.approved_at || x.created_at)) + ' · ' + (ST[x.status] || x.status) +
           (x.receipt_url ? ' · <a href="' + esc(x.receipt_url) + '" target="_blank" rel="noopener">영수증</a>' : '') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
-      }).join('') + '</div><div class="st-cap" style="margin-top:14px">엽전으로 연 콘텐츠</div>' : '') +
-      (o.length ? '<div class="st-group">' + o.map(function(x){
-        return '<div class="od-row"><div><b>' + esc(x.name) + '</b><small>' + fmtDate(x.at) + ' · ' + (x.status === 'refund' ? '환불 완료' : x.opened ? '열람함' : '결제 완료 · 열기 전') + '</small></div><span>' + (x.coin ? x.coin.toLocaleString() + '닢' : (x.amount || 0).toLocaleString() + '원') + '</span></div>';
       }).join('') + '</div>'
-      : ch.length ? '<p class="helper">아직 엽전으로 연 콘텐츠가 없어요.</p>' : '<div class="empty-box"><b>아직 구매한 리포트가 없어요</b><p class="helper">유료 상품을 결제하면 여기에 보관돼요. 결제 기록은 전자상거래법에 따라 5년 동안 보관해요.</p></div>') +
+      : '<div class="empty-box"><b>아직 결제한 내역이 없어요</b><p class="helper">원화로 결제하면 여기에 영수증과 함께 남아요. 결제 기록은 전자상거래법에 따라 5년 동안 보관해요.</p></div>') +
+      '<p class="helper" style="margin-top:10px">엽전으로 연 풀이는 <button class="link-btn" id="odCoin">엽전 주머니</button>의 사용 내역에서 볼 수 있어요.</p>' +
       '<p class="helper" style="margin-top:12px">콘텐츠 단건 결제는 결제 즉시 열리는 디지털 콘텐츠라 연 뒤에는 환불이 제한돼요. 오류로 열리지 않았다면 전액 환불해요. <button class="link-btn" data-doc="refund">환불 정책</button></p>' +
       '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
+    if ($('odCoin')) $('odCoin').onclick = function(){ openCoinSheet(); };
   }
   /* 고객센터: 공지 · FAQ · 문의 */
   var NOTICES = [
@@ -5052,7 +5107,7 @@
   ];
   var FAQ = [
     ['태어난 시간을 몰라도 볼 수 있나요?', '네. 시간을 모르면 시주를 빼고 여섯 글자로 풀어요. 정확도는 조금 낮아질 수 있어요.'],
-    ['엽전은 무엇인가요?', '출석·가입 선물·우니 선물로 모으는 우니조아의 무료 포인트예요. 꿈 풀이 리포트, 분야별 운세, 궁합 상세, 쉬운 사주 풀이, 중요한 날 잡기를 열 때 써요. 엽전은 돈으로 사고팔 수 없고 현금으로 바꿀 수 없어요. 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제할 수 있어요.'],
+    ['엽전은 무엇인가요?', '출석·가입 선물·우니 선물로 모으는 우니조아의 무료 포인트예요. 꿈 풀이 리포트, 분야별 운세, 궁합 상세, 쉬운 사주 풀이, 중요한 날 잡기를 열 때 써요. 엽전은 돈으로 사고팔 수 없고 현금으로 바꿀 수 없어요. 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제할 수 있어요. 출시 기념으로 12월 31일까지 계정마다 첫 원화 결제는 50% 할인돼요.'],
     ['신년운세는 유료인가요?', '아니에요. 총평과 1~3월은 바로 무료로 보고, 광고 한 편을 끝까지 보면 4~12월과 2~7장 전체가 무료로 열려요. 한 번 열면 그 사람의 신년운세는 계속 다시 볼 수 있어요.'],
     ['결제한 콘텐츠를 환불할 수 있나요?', '콘텐츠 단건 결제는 결제하자마자 열리는 디지털 콘텐츠라 연 뒤에는 환불이 제한돼요. 결제했는데 오류로 열리지 않았다면 전액 환불해요. 우니 패스는 한 번도 쓰지 않았다면 전액, 쓰기 시작했다면 남은 날짜만큼 환불 정책에 따라 돌려드려요.'],
     ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 구매한 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],
@@ -5120,11 +5175,12 @@
   }
   function doLogin(provider, btn){
     if (NS){ toast('예시 모드에서는 로그인할 수 없어요'); return; }
+    if (srvOn() && provider === 'email'){ openEmailSheet(); return; }
     if (srvOn()){   /* 실제 로그인: 동의 화면 → /auth/<provider>/callback → /?login=<provider> 로 돌아온다 */
       if (btn){ btn.disabled = true; btn.textContent = PROV[provider] + '로 이동 중…'; }
       var rs = Object.assign({}, LOGIN_RESUME || {}); rs.tab = rs.tab || currentTab || 'today'; LOGIN_RESUME = null;
       try { sessionStorage.setItem('wj_back', JSON.stringify(rs)); } catch(e){}
-      location.href = '/auth/' + (provider === 'google' ? 'google' : 'kakao');
+      location.href = '/auth/' + (/^(google|naver)$/.test(provider) ? provider : 'kakao');
       return;
     }
     if (btn){ btn.disabled = true; btn.textContent = '연결 중…'; }
@@ -5144,6 +5200,50 @@
       else if (currentView === 'dream' && $('dmInput') && !$('dmInput').hidden){ renderDreamInput(); }  /* 꿈해몽 입력 중 로그인하면 작성하던 내용 그대로 유지 */
       else go('today');
     }, 900);
+  }
+  /* 이메일 인증번호 로그인: 메일 → 6자리 번호 → 로그인 (비밀번호 없음, 메일 주소는 서버에 저장하지 않음) */
+  function openEmailSheet(){
+    var rs = Object.assign({}, LOGIN_RESUME || {}); rs.tab = rs.tab || currentTab || 'today'; LOGIN_RESUME = null;
+    var mail = '';
+    var ERR = { email:'메일 주소를 다시 확인해 주세요', wait:'잠시 뒤에 다시 보낼 수 있어요', day:'오늘은 더 보낼 수 없어요. 내일 다시 시도해 주세요', mail:'메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요',
+      code:'인증번호가 맞지 않아요', expired:'인증번호 시간이 지났어요. 다시 받아 주세요', tries:'여러 번 틀렸어요. 인증번호를 다시 받아 주세요', off:'지금은 이메일 로그인을 쓸 수 없어요', server:'문제가 생겼어요. 잠시 뒤 다시 시도해 주세요' };
+    function step1(){
+      openSheet('<div class="sheet-fig">' + uniImg('u-wave') + '</div><h3 id="sheetTitle">이메일로 계속하기</h3>' +
+        '<p class="body-text" style="margin:-6px 0 14px">비밀번호 없이, 메일로 받은 인증번호 6자리로 로그인해요.</p>' +
+        '<input class="em-in" id="emIn" type="email" inputmode="email" autocomplete="email" placeholder="메일 주소" value="' + esc(mail) + '">' +
+        '<p class="em-err" id="emErr" role="alert"></p>' +
+        '<button class="btn-primary btn-block" id="emGo" style="margin-top:6px">인증번호 받기</button><button class="text-btn" data-close>취소</button>');
+      var go1 = function(){
+        mail = $('emIn').value.trim(); if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(mail)){ $('emErr').textContent = ERR.email; return; }
+        var b = $('emGo'); b.disabled = true; b.textContent = '보내는 중…';
+        api('/api/auth?a=email', { method:'POST', body:{ email:mail } }).then(function(r){
+          if (r.ok) step2(); else { b.disabled = false; b.textContent = '인증번호 받기'; $('emErr').textContent = (ERR[r.err] || ERR.server) + (r.wait ? ' (' + r.wait + '초)' : ''); }
+        }).catch(function(){ b.disabled = false; b.textContent = '인증번호 받기'; $('emErr').textContent = ERR.server; });
+      };
+      $('emGo').onclick = go1; $('emIn').onkeydown = function(e){ if (e.key === 'Enter') go1(); };
+      setTimeout(function(){ try { $('emIn').focus(); } catch(e){} }, 300);
+    }
+    function step2(){
+      openSheet('<h3 id="sheetTitle">인증번호 입력</h3>' +
+        '<p class="body-text" style="margin:-6px 0 14px"><b>' + esc(mail) + '</b>로 보낸 6자리 번호를 넣어 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.</p>' +
+        '<input class="em-in em-code" id="emCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······">' +
+        '<p class="em-err" id="emErr" role="alert"></p>' +
+        '<button class="btn-primary btn-block" id="emOk" style="margin-top:6px">로그인</button>' +
+        '<button class="text-btn" id="emAgain">인증번호 다시 받기</button>');
+      var go2 = function(){
+        var c = $('emCode').value.replace(/\D/g, ''); if (c.length !== 6){ $('emErr').textContent = '6자리 숫자를 넣어 주세요'; return; }
+        var b = $('emOk'); b.disabled = true; b.textContent = '확인 중…';
+        api('/api/auth?a=verify', { method:'POST', body:{ email:mail, code:c } }).then(function(r){
+          if (r.ok && r.url){ try { sessionStorage.setItem('wj_back', JSON.stringify(rs)); } catch(e){} location.href = r.url; return; }
+          b.disabled = false; b.textContent = '로그인'; $('emErr').textContent = (ERR[r.err] || ERR.server) + (r.left != null ? ' · ' + r.left + '번 남았어요' : '');
+        }).catch(function(){ b.disabled = false; b.textContent = '로그인'; $('emErr').textContent = ERR.server; });
+      };
+      $('emOk').onclick = go2;
+      $('emCode').oninput = function(){ this.value = this.value.replace(/\D/g, '').slice(0, 6); if (this.value.length === 6) go2(); };
+      $('emAgain').onclick = step1;
+      setTimeout(function(){ try { $('emCode').focus(); } catch(e){} }, 300);
+    }
+    step1();
   }
   function doLogout(){
     if (srvUser()){

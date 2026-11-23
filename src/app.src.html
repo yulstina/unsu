@@ -612,7 +612,37 @@
   .sh-kakao{margin-bottom:10px;}
   .btn-social.g{background:#fff;color:#1f1f1f;box-shadow:inset 0 0 0 1px #747775;}
   .btn-social.g:hover{background:#f2f2f2;}
+  .btn-social.n{background:#03C75A;color:#fff;}
+  .btn-social.n:hover{background:#02b351;}
+  .btn-social.e{background:transparent;color:var(--text-headline);box-shadow:inset 0 0 0 1px var(--border-hairline-strong);}
+  .btn-social.e:hover{background:var(--surface-frost);}
+  .btn-social .bs-ic{display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;font-weight:800;}
   .btn-social:disabled{opacity:.6;cursor:wait;}
+  /* 이메일 인증번호 로그인 */
+  .em-in{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid var(--border-hairline-strong);background:var(--surface-frost);color:var(--text-headline);font-size:16px;}
+  .em-in:focus{outline:none;border-color:rgba(214,206,247,.5);}
+  .em-code{letter-spacing:.5em;text-align:center;font-size:22px;font-weight:700;}
+  .em-err{color:#ffb4c0;font-size:calc(13px*var(--fs));min-height:18px;margin:6px 2px 0;}
+  /* 출시 기념 할인 표시 */
+  .pay-price .was{color:var(--text-muted);text-decoration:line-through;font-weight:500;font-size:.72em;margin-right:6px;}
+  .pay-cp{display:inline-block;margin:0 0 8px;padding:4px 10px;border-radius:999px;background:rgba(246,205,91,.14);color:#f6cd5b;font-size:calc(12px*var(--fs));font-weight:700;}
+  /* 새해 복주머니 이벤트 */
+  .bok-ban{position:relative;display:flex;align-items:center;gap:12px;width:100%;margin:14px 0 4px;padding:14px 16px;border:none;border-radius:20px;text-align:left;cursor:pointer;color:#fff;
+    background:radial-gradient(120% 140% at 90% 0%,rgba(246,205,91,.22),transparent 55%),linear-gradient(135deg,#7a2a3c,#4a1f4f 60%,#2b1b4a);box-shadow:inset 0 0 0 1px rgba(246,205,91,.28);overflow:hidden;}
+  .bok-ban .bb-t{flex:1;min-width:0}
+  .bok-ban small{display:block;color:#f6cd5b;font-size:calc(11.5px*var(--fs));font-weight:700;letter-spacing:.04em}
+  .bok-ban b{display:block;font-size:calc(16px*var(--fs));margin-top:2px}
+  .bok-ban em{display:block;font-style:normal;color:rgba(255,255,255,.75);font-size:calc(12.5px*var(--fs));margin-top:2px}
+  .bok-ban .bb-uni{width:62px;height:62px;flex:none}
+  .bok-ban .bb-uni img{width:100%;height:100%;object-fit:contain}
+  .bok-ban.done{opacity:.82}
+  .bok-sheet{text-align:center}
+  .bok-pouch{width:150px;height:150px;margin:6px auto 4px;cursor:pointer;transition:transform .3s}
+  .bok-pouch img{width:100%;height:100%;object-fit:contain}
+  .bok-pouch.shake{animation:bokShake .6s ease-in-out 2}
+  @keyframes bokShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
+  .bok-prize{font-size:calc(34px*var(--fs));font-weight:800;color:#f6cd5b;margin:6px 0 2px}
+  @media (prefers-reduced-motion:reduce){.bok-pouch.shake{animation:none}}
   .mock-note{font-size:calc(11px*var(--fs));color:var(--text-helper);text-align:center;}
   .set-list{display:flex;flex-direction:column;}
   .set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;background:none;border:none;border-bottom:1px solid var(--border-hairline);color:var(--text-body);font-size:calc(14px*var(--fs));padding:14px 2px;cursor:pointer;text-align:left;}

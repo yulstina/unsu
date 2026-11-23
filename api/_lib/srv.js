@@ -5,6 +5,10 @@
      KAKAO_REST_KEY, KAKAO_CLIENT_SECRET     카카오 로그인 (CLIENT_SECRET 은 콘솔에서 켰을 때만)
      KAKAO_ADMIN_KEY                         (선택) 탈퇴 시 카카오 연결 끊기
      KAKAO_JS_KEY                            (선택) 카카오톡 카드 공유 버튼 (콘솔 > 앱 키 > JavaScript 키)
+     NAVER_CLIENT_ID, NAVER_CLIENT_SECRET    (선택) 네이버 로그인
+     RESEND_API_KEY, MAIL_FROM               (선택) 이메일 인증번호 로그인. supabase/002_email_login.sql 을 먼저 실행. MAIL_FROM 예: 우니조아 <login@woonijoa.com>
+     COUPON_OFF                              1 이면 출시 기념 첫 결제 할인을 끈다
+     EVENT_FROM, EVENT_TO                    새해 복주머니 이벤트 기간(ISO, 기본 2026-12-14 ~ 2027-01-31 KST)
      TOSS_CLIENT_KEY, TOSS_SECRET_KEY        토스페이먼츠 (API 개별 연동 키 · test_ck_ / test_sk_ 로 시작하면 테스트 결제)
      PORTONE_STORE_ID, PORTONE_CHANNEL_KEY, PORTONE_API_SECRET   포트원 V2 (둘 다 있으면 포트원 우선). PORTONE_TEST=1 이면 테스트 채널이라 항상 켜짐
      PORTONE_KAKAOPAY_CHANNEL_KEY            (선택) 카카오페이 채널 키. 있으면 결제 버튼이 '카드 / 카카오페이' 둘로 나뉜다. PORTONE_CHANNEL_KEY 는 카드(KPN 등) 채널
@@ -20,6 +24,8 @@ const CONF = {
   db: !!(E.SUPABASE_URL && E.SUPABASE_SERVICE_KEY && E.SESSION_SECRET),
   get kakao(){ return this.db && !!E.KAKAO_REST_KEY; },
   get google(){ return this.db && !!(E.GOOGLE_CLIENT_ID && E.GOOGLE_CLIENT_SECRET); },
+  get naver(){ return this.db && !!(E.NAVER_CLIENT_ID && E.NAVER_CLIENT_SECRET); },
+  get email(){ return this.db && !!E.RESEND_API_KEY && E.EMAIL_LOGIN !== '0'; },
   get toss(){ return this.db && !!(E.TOSS_CLIENT_KEY && E.TOSS_SECRET_KEY); },
   /* 결제가 열려 있는가 — 화면(me.js 의 cfg.pay.on)과 주문 API(pay.js)가 이 한 곳만 본다.
      키가 있고, 비상 스위치(PAY_OFF)가 꺼져 있고, 테스트 키이거나(돈이 안 나감) 라이브 키 + PAY_LIVE=1 + 개업일 이후일 때만 true */

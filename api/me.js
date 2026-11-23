@@ -4,7 +4,7 @@
    POST    { consent }    약관·마케팅 동의 기록
    DELETE  { confirm:1 }  회원 탈퇴 */
 const S = require('./_lib/srv');
-const { PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE } = require('./_lib/shop');
+const { COUPON, couponOn, couponPrice, EVENT, eventOn, PACKS, AD_COIN_ON, PASSES, PASS_DREAM_MAX, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE } = require('./_lib/shop');
 const { passUntil } = require('./_lib/pass');
 
 const SERVER_KEYS = ['unsu_coin', 'unsu_coinlog'];   /* 서버가 기준인 값 — 스냅샷에 저장하지 않는다 */
@@ -13,7 +13,9 @@ function cfg(){
   const ck = process.env.TOSS_CLIENT_KEY || '';
   return {
     on: S.CONF.db,
-    login: { kakao: S.CONF.kakao, google: S.CONF.google },
+    login: { kakao: S.CONF.kakao, google: S.CONF.google, naver: S.CONF.naver, email: S.CONF.email },
+    coupon: couponOn() ? { name: COUPON.name, rate: COUPON.rate, until: COUPON.until } : null,
+    event: eventOn() ? { id: 'bok2027', from: EVENT.from, to: EVENT.to } : null,
     pay: { on: S.CONF.pay, provider: S.CONF.pay ? S.CONF.provider : null,
            clientKey: S.CONF.pay && S.CONF.provider === 'toss' ? ck : null,
            storeId: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_STORE_ID : null,
@@ -52,7 +54,7 @@ module.exports = async (req, res) => {
         snapshot: u.snapshot, snapshotAt: u.snapshot_at ? Date.parse(u.snapshot_at) : 0,
         coins: { free: u.coin_free, paid: u.coin_paid, bal: u.coin_free + u.coin_paid },
         ledger: led.map(x => ({ t: Date.parse(x.created_at), n: x.delta, p: x.delta_paid || 0, k: x.kind, why: x.why || '' })),
-        orders: ord, passUntil: owner ? S.OWNER_UNTIL : pu, owner, customerKey: 'wj_' + S.sha(uid).slice(0, 32)
+        orders: ord, couponOk: couponOn() && !ord.some(o => o.status !== 'failed'), passUntil: owner ? S.OWNER_UNTIL : pu, owner, customerKey: 'wj_' + S.sha(uid).slice(0, 32)
       } });
     }
     if (!uid) return S.send(res, 401, { ok: false, err: 'login' });

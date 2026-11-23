@@ -92,6 +92,14 @@
       "destination": "/api/auth?a=gcallback"
     },
     {
+      "source": "/auth/naver",
+      "destination": "/api/auth?a=naver"
+    },
+    {
+      "source": "/auth/naver/callback",
+      "destination": "/api/auth?a=ncallback"
+    },
+    {
       "source": "/pay/success",
       "destination": "/api/pay?a=confirm"
     },
