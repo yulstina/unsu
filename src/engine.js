@@ -1,5 +1,5 @@
 /* ================= 만세력 엔진 =================
-   - 연주: 입춘 기준 / 월주: 12절(節) 기준 (태양 황경 계산, Meeus 저정밀식 ±1분 내외)
+   - 년주: 입춘 기준 / 월주: 12절(節) 기준 (태양 황경 계산, Meeus 저정밀식 ±1분 내외)
    - 일주: 율리우스일 기반 60갑자 / 시주: 오서둔(五鼠遁)
    - 한국 표준시 변경(1954~61 UTC+8:30) · 서머타임 · 경도(진태양시) 보정
    - 음력→양력: KoreanLunarCalendar (한국천문연구원 데이터, MIT) */
@@ -121,7 +121,7 @@ var MS = (function(){
     var J = jd(sy, sm, sd, utH);
     var lon = sunLon(J);
 
-    /* 연주 */
+    /* 년주 */
     var lichun = findLon(315, jd(sy, 2, 4, 0));
     var sajuYear = J < lichun ? sy - 1 : sy;
     var yStem = mod(sajuYear - 4, 10), yBr = mod(sajuYear - 4, 12);
