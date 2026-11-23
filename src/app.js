@@ -1030,11 +1030,11 @@
   function entryISO(e, r){ return r.solar.y + '-' + pad2(r.solar.m) + '-' + pad2(r.solar.d); }
   function entryTKey(r){ return r.time ? pad2(r.time.h) + pad2(r.time.mi) : 'unknown'; }
   /* 하루 한 가지 '행운 기운' → 행운의 팁 숫자 · 오늘의 행운 숫자 · 결과 화면이 모두 같은 값을 쓴다 */
-  /* 2026-11-22 소율: 부적 숫자 3개 · 꿈 처방 숫자 2개 다시 넣기. PG 심사 중 숨겨야 하면 서버 LUCKY_NUMS=0 */
+  /* 2026-11-22 소율: 부적 숫자(11-23부터 4개) · 꿈 처방 숫자 2개 다시 넣기. PG 심사 중 숨겨야 하면 서버 LUCKY_NUMS=0 */
   function showNums(){ return !(SRV.cfg && SRV.cfg.nums === false); }
   function todayLuck(entry, r){
     var f = DAILY.today(entry, r, nowD());
-    var nums = drawYongNumbers(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|luck', f.luckyEl);
+    var nums = drawYongNumbers(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|luck', f.luckyEl, 4);
     var acts = SMALL_ACT[f.luckyEl], act = acts[seedHash(entryISO(entry, r) + '|' + todayStr() + '|act') % acts.length];
     return { f:f, el:f.luckyEl, nums:nums, act:act };
   }
@@ -4031,6 +4031,7 @@
     openSheet('<div class="fc-sheet"><div class="sheet-fig">' + uniImg('u-calendar') + '</div>' +
       '<h3 id="sheetTitle">' + esc(me.name) + '님의 월별 운세 달력</h3>' +
       '<p class="helper" style="margin:-4px 0 12px">날마다 일진과 내 사주의 관계로 매긴 점수예요. 날짜를 누르면 그날 풀이가 보여요.</p>' +
+      '<p class="fc-trust">점수는 날짜마다 정해져 있어 언제 다시 봐도 같고, 그날 홈의 오늘 운세 점수와도 같아요.' + (isNow ? ' ★ 추천은 이번 달 남은 날 중에서 골라요.' : '') + '</p>' +
       '<div class="tk-months fc-months" role="tablist">' + tabs + '</div>' +
       '<div class="fc-msum"><b>' + y + '년 ' + m + '월 · ' + C.mp.hanja + '月</b>' +
         (locked ? '<p class="tj-blur" aria-hidden="true">' + FC_MON[C.g] + '</p>' : '<p>' + FC_MON[C.g] + ' 이달 평균 ' + C.avg + '점.</p>') + '</div>' +
