@@ -30,6 +30,11 @@ const WON = { cat: 990, dream: 1900, gh: 990, ez: 990, tk: 4900, tj: 990, cal: 9
 /* 결제창·구매 내역에 나오는 상품명 — '로또·당첨·번호 추천' 같은 말은 쓰지 않는다(PG 심사) */
 const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: '궁합 상세 리포트', ez: '쉬운 사주 풀이', tk: '중요한 날 잡기', tj: '2027 토정비결', cal: '월별 운세 달력', lv: '연애·결혼 시기', chat: '우니에게 묻기 하루 무제한 대화권', wl: '내 재물 그릇 리포트', sal: '나에게 든 살 풀이', gw: '나를 돕는 귀인 풀이' };
 const COIN_SALE = process.env.COIN_SALE === '1';
+/* 묶음 패키지(2026-11-24 소율 검토): 여러 풀이를 한 번에 원화 결제 → 결제 즉시 전부 열린다(충전·기간권 아님).
+   items 는 WON 키. 결제가 끝나면 원장에 'spend:<item>' 구매 기록을 하나씩 남긴다. src/app.js PKG 와 같이 바꾼다.
+   판매를 끄려면 Vercel 환경변수 PKG_SALE=0 */
+const PKGS = { prem: { name: '프리미엄 사주 패키지', p: 4900, items: ['ez', 'lv', 'wl', 'tj', 'sal', 'gw'] } };
+const PKG_SALE = process.env.PKG_SALE !== '0';
 /* 원화로 실제 판매하는 상품 (2026-11-21 GPT 최종 검토: 첫 판매는 3종만 — 사주 이야기책·궁합 상세·중요한 날 잡기).
    나머지 상품은 미리보기 + 무료 적립 엽전으로만 연다. PG 승인 범위가 넓어지면 Vercel 환경변수 WON_SALE=ez,gh,tk,tj 처럼 늘린다 */
 /* 2026-11-23 소율: 하루 무제한 대화권(chat)도 원화로 판다
@@ -52,4 +57,4 @@ const EVENT = {
 const eventOn = () => { const t = Date.now(); return t >= EVENT.from && t <= EVENT.to; };
 function bokPrize(rand){ let r = rand * 100; for (const [n, w] of EVENT.prizes){ if ((r -= w) < 0) return n; } return 10; }
 const SPEND_MAX = 5000;
-module.exports = { COUPON, couponOn, couponPrice, EVENT, eventOn, bokPrize, PACKS, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };
+module.exports = { PKGS, PKG_SALE, COUPON, couponOn, couponPrice, EVENT, eventOn, bokPrize, PACKS, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };

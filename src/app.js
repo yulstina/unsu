@@ -1084,7 +1084,12 @@
   /* 원화로 실제 파는 상품(서버 shop.js WON_SALE). 첫 판매 3종: 사주 이야기책·궁합 상세·중요한 날 잡기. 나머지는 미리보기 + 무료 엽전 */
   var WON_SALE = Object.keys(WON);   /* 2026-11-23 소율: 엽전이 모자라도 막히지 않게 전 상품 원화 판매 */
   function wonSale(k){ var s = SRV.cfg && SRV.cfg.wonSale; return (s || WON_SALE).indexOf(k) > -1 && !!wonOf(k); }
-  function passSale(){ return !!(SRV.cfg && SRV.cfg.passes); }   /* 우니 패스 판매(서버 PASS_SALE=1)일 때만 보인다 */
+  function passSale(){ return !!(SRV.cfg && SRV.cfg.passes); }
+  /* 묶음 패키지 (2026-11-24): 풀이 여러 개를 한 번에 원화 결제 → 결제 즉시 전부 열림. 서버 api/_lib/shop.js PKGS 와 같게(서버 값이 오면 그 값을 쓴다).
+     서버가 pkgs 를 내려 줄 때만 판다(PKG_SALE=0 이면 숨김). 예시 모드는 미리보기만 */
+  var PKG = { prem:{ name:'프리미엄 사주 패키지', p:4900, items:['ez', 'lv', 'wl', 'tj', 'sal', 'gw'] } };
+  function pkgOf(id){ var c = SRV.cfg && SRV.cfg.pkgs; return (c && c[id]) || (NS ? PKG[id] : null); }
+  function pkgOwnedBy(id){ return (SRV.orders || []).some(function(o){ var m = /^pkg:(\w+)/.exec(o.pack || ''), K = m && pkgOf(m[1]); return o.status === 'paid' && K && K.items.indexOf(id) > -1; }); }   /* 우니 패스 판매(서버 PASS_SALE=1)일 때만 보인다 */
   /* 잠금 버튼 가격 표시: 원화 판매 상품은 원화, 아니면 엽전 (GPT 검토 P0: 첫 잠금에 원화를 보여 준다) */
   /* 출시 기념 첫 결제 할인 — 서버(cfg.coupon + user.couponOk)가 켜 줄 때만. 실제 금액은 주문 때 서버가 다시 정한다 */
   function couponOk(){ return !!(SRV.cfg && SRV.cfg.coupon && SRV.couponOk !== false && (!srvUser() || SRV.couponOk)); }
@@ -1221,6 +1226,7 @@
   }
   /* 단건 결제가 끝난 콘텐츠를 연다. 서버 원장에 'spend:<item>' 구매 기록이 있어서 spendCoins 가 dup 으로 차감 없이 통과한다 */
   function resumeBuy(rs){
+    if (rs && rs.k === 'pkg'){ var K = pkgOf(rs.pkg); if (K){ K.items.forEach(function(id){ if (product(id) && !owns(id)) addOrder(id, { pkg:rs.pkg }); }); refreshOrders(); toast(K.name + ' 결제 완료 · ' + K.items.length + '가지 풀이가 모두 열렸어요'); if (currentView === 'today') renderToday(); } return; }
     if (!rs || !rs.item) return;
     var e = rs.id ? getList().filter(function(x){ return x.id === rs.id; })[0] : null;
     var open = function(fn){ spendCoins(rs.cost, rs.why, rs.item, fn); };
@@ -1271,18 +1277,19 @@
     var label = btn.innerHTML; btn.disabled = true; btn.textContent = '결제창 여는 중…';
     var reset = function(){ btn.disabled = false; btn.innerHTML = label; };
     var pp = SRV.cfg.pay.provider === 'portone';
-    Promise.all([api('/api/pay?a=order', { method:'POST', body:k.item ? { item:k.item } : { pack:k.id } }), pp ? loadPortone() : loadToss()]).then(function(a){
+    Promise.all([api('/api/pay?a=order', { method:'POST', body:k.item ? { item:k.item } : k.pkg ? { pkg:k.pkg } : { pack:k.id } }), pp ? loadPortone() : loadToss()]).then(function(a){
       var o = a[0];
-      if (!o.ok && o.err === 'owned' && k.item){ closeSheet(); resumeBuy(k.rs); return; }   /* 이미 결제한 콘텐츠 → 그냥 연다 */
+      if (!o.ok && o.err === 'owned' && k.item){ closeSheet(); resumeBuy(k.rs); return; }
+      if (!o.ok && o.err === 'owned' && k.pkg){ closeSheet(); toast('패키지에 든 풀이를 이미 모두 열었어요'); return; }   /* 이미 결제한 콘텐츠 → 그냥 연다 */
       if (!o.ok) throw o;
-      try { sessionStorage.setItem('wj_back', k.item ? JSON.stringify({ tab:currentView || 'today', k:'buy', rs:k.rs }) : 'coin'); } catch(e){}
+      try { sessionStorage.setItem('wj_back', k.item || k.pkg ? JSON.stringify({ tab:currentView || 'today', k:'buy', rs:k.rs }) : 'coin'); } catch(e){}
       if (pp){
         var c = SRV.cfg.pay;
         var kp = k.method === 'kakao' && c.kakaoChannelKey;
         return window.PortOne.requestPayment({ storeId:c.storeId, channelKey:kp ? c.kakaoChannelKey : c.channelKey, paymentId:o.orderId, orderName:o.orderName,
           totalAmount:o.amount, currency:'CURRENCY_KRW', payMethod:kp ? 'EASY_PAY' : 'CARD', redirectUrl:location.origin + '/pay/success' }).then(function(r){
           if (r && r.code){ if (/CANCEL/i.test(r.code + (r.message || ''))) return; var er = new Error(r.message || r.code); throw er; }
-          if (k.item){   /* PC 단건: 페이지를 떠나지 않고 서버 확인 → 그 자리에서 연다 */
+          if (k.item || k.pkg){   /* PC 단건·패키지: 페이지를 떠나지 않고 서버 확인 → 그 자리에서 연다 */
             try { sessionStorage.removeItem('wj_back'); } catch(e){}
             return api('/pay/success?json=1&paymentId=' + encodeURIComponent(o.orderId)).then(function(c){
               if (!c.ok){ toast('결제가 완료되지 않았어요' + (c.code ? ' (' + c.code + ')' : '') + '. 다시 시도해 주세요'); return; }
@@ -1305,6 +1312,7 @@
      카드는 한국결제네트웍스(KPN) 결제창, 카카오페이는 카카오페이 결제창으로 넘어간다. 마지막에 고른 수단을 기억한다 */
   function checkoutInfo(k){
     if (k.item){ var c = k.item.split(':')[0], w0 = wonOf(c), cp = couponOk(); return { name:(SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[c]) || (k.rs && k.rs.why) || '콘텐츠', won:cp ? couponWon(w0) : w0, was:cp ? w0 : 0, sub:'결제 즉시 열리는 디지털 콘텐츠' + (cp ? ' · ' + SRV.cfg.coupon.name + ' 적용' : '') }; }
+    if (k.pkg){ var K = pkgOf(k.pkg), cq = couponOk(); return { name:K.name, won:cq ? couponWon(K.p) : K.p, was:cq ? K.p : 0, sub:K.items.length + '가지 풀이 · 결제 즉시 모두 열림' + (cq ? ' · ' + SRV.cfg.coupon.name + ' 적용' : '') }; }
     if (k.id === PASS.id) return { name:PASS.name, won:PASS.p, sub:PASS.days + '일 동안 모든 풀이 · 자동 결제 없음' };
     return { name:'엽전 ' + ((k.n || 0) + (k.b || 0)).toLocaleString() + '닢', won:k.p || 0, sub:'엽전 충전' };
   }
@@ -2557,7 +2565,7 @@
     var REC = { w:['wl', '재물', '내 재물 그릇은 얼마나 클까?', '평생 돈 흐름 · 크게 들어오는 시기 3번'], l:['lv', '연애', '인연은 언제 가까워질까?', '10년 연애·결혼 그래프 · ' + TJ_YEAR + '년 인연 달'], j:['job', '일', '나에게 꼭 맞는 일은 뭘까?', '타고난 재능과 잘 맞는 분야'] }[low[0]];
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + esc(me.name) + '님께 지금 필요한 풀이</h2></div>' +
       '<button type="button" class="hp-pick" data-hp="' + REC[0] + '">' + uniImg(HOME_P[REC[0]].pose, 'hpk-uni') + '<span class="hpk-t"><small>오늘 ' + REC[1] + ' ' + f.scores[low[0]] + '점 · ' + (f.scores[low[0]] < 60 ? '조금 약한 날' : '오늘 가장 낮은 분야') + '</small><b>' + REC[2] + '</b><em>' + REC[3] + '</em></span><span class="chev" aria-hidden="true">›</span></button></section>';
-    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">깊이 보는 풀이</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div><div class="hp-list">' +
+    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">깊이 보는 풀이</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div>' + pkgBannerHTML('prem') + '<div class="hp-list">' +
       ['book', 'gh', 'gw', 'tk', 'lv'].map(function(k){ return homeCardHTML(k, 'row'); }).join('') + '</div></section>';
     h += adSlotHTML('오늘의 운세를 본 뒤');
     var z = getZodiac(r.solar.m, r.solar.d);
@@ -2577,6 +2585,7 @@
     $('hmTopics').onclick = function(){ openTopics(me, r); };
     $('hmAsk').onclick = function(){ openChat(me, r); };
     bindHomeP(me, r, body);
+    bindPkg(body);
     bindFt(me, r);
     bindDailyBox();
     $('hmDream').onclick = function(){ openDream(); };
@@ -5089,8 +5098,39 @@
       ez:{ id:'ez', name:'사주 이야기책 2~6장', coin:COST.ez, art:'book', keep:'구입한 뒤 계정에서 계속 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달'] }
     })[id];
   }
+  function refreshOrders(){ if (!srvUser()) return; api('/api/me').then(function(r){ if (r && r.user){ SRV.orders = r.user.orders || SRV.orders; SRV.couponOk = !!r.user.couponOk; } }).catch(function(){}); }
+  /* 묶음 패키지 상세: 들어 있는 풀이 · 따로 살 때 합계 → 패키지 가격 한 번 결제 */
+  function pkgBannerHTML(id){
+    var K = pkgOf(id); if (!K) return '';
+    var left = K.items.filter(function(x){ return !owns(x); });
+    if (!left.length || passActive()) return '';
+    var sum = K.items.reduce(function(a, x){ return a + wonOf(x); }, 0);
+    return '<button type="button" class="pkg-ban" data-pkg="' + id + '"><span class="pkg-t"><small>' + K.items.length + '가지 풀이를 한 번에</small><b>' + esc(K.name) + '</b><em><s>' + sum.toLocaleString() + '원</s> ' + K.p.toLocaleString() + '원</em></span>' + uniImg('u-gift', 'pkg-uni') + '</button>';
+  }
+  function bindPkg(root){ root.querySelectorAll('[data-pkg]').forEach(function(b){ b.onclick = function(){ openPkgSheet(b.dataset.pkg); }; }); }
+  function openPkgSheet(id){
+    var K = pkgOf(id); if (!K) return;
+    var guest = isGuest(), cp = couponOk(), w = cp ? couponWon(K.p) : K.p;
+    var sum = K.items.reduce(function(a, x){ return a + wonOf(x); }, 0), had = K.items.filter(owns);
+    var rs = { k:'pkg', pkg:id };
+    openSheet('<div class="pay-sheet pkg-sheet"><div class="short-fig">' + uniImg('u-gift') + '</div><h3 id="sheetTitle">' + esc(K.name) + '</h3>' +
+      '<p class="pay-who">' + K.items.length + '가지 풀이를 한 번 결제로 모두 열어요</p>' +
+      '<ul class="pkg-list">' + K.items.map(function(x){ var P = product(x); return '<li><b>' + esc(P ? P.name : x) + '</b><span>' + (owns(x) ? '<i>열림</i>' : wonOf(x).toLocaleString() + '원') + '</span></li>'; }).join('') + '</ul>' +
+      (cp ? '<span class="pay-cp">' + esc(SRV.cfg.coupon.name) + (guest ? ' · 가입하면 바로 적용' : ' · 자동 적용') + '</span>' : '') +
+      '<div class="pay-price"><b><span class="was">' + (cp ? K.p : sum).toLocaleString() + '원</span>' + w.toLocaleString() + '원</b>' + (cp ? '<small> · 따로 사면 ' + sum.toLocaleString() + '원</small>' : '') + '</div>' +
+      (had.length ? '<p class="helper pay-note">이미 연 풀이 ' + had.length + '개가 들어 있어요. 남은 풀이만 필요하면 하나씩 여는 게 더 저렴할 수 있어요.</p>' : '') +
+      '<button class="btn-primary btn-block" id="pkgGo"' + (payReady() || guest || NS ? '' : ' disabled') + '>' + (guest ? '로그인하고 ' + w.toLocaleString() + '원 결제하기' : NS ? '예시 모드에서는 결제할 수 없어요' : payReady() ? w.toLocaleString() + '원 결제하기' : '결제 준비 중 · ' + w.toLocaleString() + '원') + '</button>' +
+      '<p class="helper pay-note">' + (payReady() && SRV.cfg.pay.test ? '<b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요. ' : '') + '한 번 결제하는 상품이에요(자동 결제·충전 아님). 결제 즉시 계정에서 모두 열리는 디지털 콘텐츠라, 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요. 저장한 모든 사람의 풀이를 계속 볼 수 있어요.</p>' +
+      '<button class="text-btn" data-close>닫기</button></div>');
+    $('pkgGo').onclick = function(){
+      if (NS){ toast('예시 모드에서는 결제할 수 없어요'); return; }
+      if (guest){ openLoginSheet(K.name + ' ' + w.toLocaleString() + '원이에요. 로그인한 뒤 결제해요.'); return; }
+      if (!payReady()) return;
+      startCharge({ pkg:id, rs:rs }, this);
+    };
+  }
   function liveOrders(){ return getOrders().filter(function(o){ return o.status !== 'refund'; }); }
-  function owns(id){ return liveOrders().some(function(o){ return o.id === id || (o.id === 'set' && (id === 'ny' || id === 'ez')); }); }
+  function owns(id){ return pkgOwnedBy(id) || liveOrders().some(function(o){ return o.id === id || (o.id === 'set' && (id === 'ny' || id === 'ez')); }); }
   function addOrder(id, extra){
     var P = product(id), o = getOrders();
     var rec = { id:id, name:P.name, coin:P.coin, at:Date.now(), status:'paid', opened:true };
@@ -5116,6 +5156,7 @@
       (won ? (cp ? '<span class="pay-cp">' + esc(SRV.cfg.coupon.name) + (guest ? ' · 가입하면 바로 적용' : ' · 자동 적용') + '</span>' : '') +
         '<div class="pay-price"><b>' + (cp ? '<span class="was">' + w0.toLocaleString() + '원</span>' : '') + w.toLocaleString() + '원</b></div>' +
         '<button class="btn-primary btn-block" id="payWon">' + (passActive() ? '우니 패스로 열기' : guest ? '로그인하고 ' + w.toLocaleString() + '원 결제하기' : w.toLocaleString() + '원 결제하기') + '</button>' +
+        (PKG.prem.items.indexOf(o.k) > -1 && !passActive() ? pkgBannerHTML('prem') : '') +
         '<p class="helper pay-note">' + (payReady() && SRV.cfg.pay.test ? '<b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요. ' : '') + (payReady() ? '결제 즉시 계정에서 열리는 디지털 콘텐츠예요. 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요. ' : NS ? '예시 모드에서는 결제 없이 열어 볼 수 있어요. ' : '원화 결제는 준비 중이에요. ') + (o.keep ? o.keep + '.' : '') + '</p>'
         : '<p class="helper pay-note" style="margin:0 0 10px">이 리포트는 지금 무료 적립 엽전으로 열 수 있어요. 원화 결제는 준비 중이에요.</p>') +
       '<div class="pay-coin"><div><b>적립 엽전 ' + o.coin.toLocaleString() + '닢 사용</b><small>' + (guest ? '처음 로그인하면 ' + SIGNUP_COINS.toLocaleString() + '닢을 받아요' : NS ? '예시 모드' : '보유 ' + coins.toLocaleString() + '닢' + (short ? ' · ' + (o.coin - coins).toLocaleString() + '닢 부족' : '')) + '</small></div>' +
@@ -5133,6 +5174,7 @@
       spendCoins(o.coin, o.name, o.item, o.onOpen, o.rs);
     };
     if ($('payEarn')) $('payEarn').onclick = function(){ openCoinSheet(); };
+    bindPkg($('sheetBody'));
   }
   function openOrdersSheet(){
     var ch = srvUser() ? (SRV.orders || []).filter(function(x){ return x.status !== 'failed'; }) : [];
@@ -5140,7 +5182,7 @@
     /* 2026-11-23 소율: 구매 내역은 원화 결제만. 엽전으로 연 기록은 엽전 주머니(사용 내역)에서 본다 */
     openSheet('<h3 id="sheetTitle">구매 내역</h3>' +
       (ch.length ? '<div class="st-group">' + ch.map(function(x){
-        var bk = /^buy:([a-z]+)/.exec(x.pack || ''), bn = bk && ((SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[bk[1]]) || '콘텐츠');
+        var bk = /^buy:([a-z]+)/.exec(x.pack || ''), pk = /^pkg:(\w+)/.exec(x.pack || ''), bn = bk ? ((SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[bk[1]]) || '콘텐츠') : pk ? ((pkgOf(pk[1]) || {}).name || '패키지') : null;
         return '<div class="od-row"><div><b>' + (bn || (/^pass/.test(x.pack || '') ? PASS.name : '엽전 ' + (x.coins + x.bonus).toLocaleString() + '닢')) + '</b><small>' + fmtDate(Date.parse(x.approved_at || x.created_at)) + ' · ' + (ST[x.status] || x.status) +
           (x.receipt_url ? ' · <a href="' + esc(x.receipt_url) + '" target="_blank" rel="noopener">영수증</a>' : '') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
       }).join('') + '</div>'
