@@ -1952,6 +1952,33 @@
   function dmLabel(list, k){ var x = list.filter(function(i){ return i[0] === k; })[0]; return x ? x[1] : ''; }
   function dmNeedName(){ return dmCtx.theme === 'person' && dmCtx.who && dmCtx.who !== 'stranger' && !dmCtx.named; }
   function dmReady(){ return dmCtx.theme && (dmCtx.theme !== 'person' || (dmCtx.who && !dmNeedName())); }
+  /* 받침에 따라 이/가 */
+  function subj(w){ var c = String(w).charCodeAt(String(w).length - 1); return w + ((c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? '이' : '가'); }
+  /* 꿈 이야기 예시: 누가 나왔는지에 맞춰 자연스러운 장면과 기분을 보여 준다 */
+  var DM_EX_WHO = {
+    family:   ['엄마', '꿈에 나와서 내 손을 꼭 잡아 줬어요. 따뜻하고 마음이 놓였어요.'],
+    lover:    ['그 사람', '꿈에 나와서 나를 보고 환하게 웃어 줬어요. 깨고 나서도 설렜어요.'],
+    ex:       ['전 애인', '꿈에 나와서 아무 말 없이 나를 바라봤어요. 마음이 좀 복잡했어요.'],
+    friend:   ['친구', '꿈에 나와서 같이 여행을 갔어요. 즐겁고 편안했어요.'],
+    celeb:    ['좋아하는 배우', '꿈에 나와서 나한테 사인을 해 줬어요. 신기하고 기뻤어요.'],
+    ancestor: ['할머니', '꿈에 나와서 괜찮다고 웃어 주셨어요. 눈물이 날 만큼 반가웠어요.'],
+    stranger: ['모르는 사람', '꿈에 나와서 길을 알려 줬어요. 낯설었지만 마음이 편했어요.']
+  };
+  var DM_EX_THEME = {
+    animal: '하얀 강아지가 꼬리를 흔들며 나한테 달려왔어요. 반갑고 기분이 좋았어요.',
+    nature: '맑은 강물이 집 앞까지 차올랐는데 하나도 무섭지 않았어요.',
+    money:  '길에서 금반지를 주웠어요. 꿈에서 정말 기뻤어요.',
+    place:  '처음 보는 넓은 집으로 이사했어요. 햇빛이 잘 들어서 마음이 편했어요.',
+    event:  '누가 쫓아와서 계속 도망쳤는데 끝까지 잡히지 않았어요. 깨고 나서도 숨이 찼어요.',
+    etc:    '맑은 강에서 큰 잉어를 잡았는데 배 속에서 금반지가 나왔어요. 꿈에서 정말 기뻤어요.'
+  };
+  function dmExample(){
+    if (dmCtx.theme === 'person'){
+      var w = DM_EX_WHO[dmCtx.who] || DM_EX_WHO.stranger;
+      return '예) ' + subj(dmCtx.name || w[0]) + ' ' + w[1];
+    }
+    return '예) ' + (DM_EX_THEME[dmCtx.theme] || DM_EX_THEME.etc);
+  }
   function dmChatHTML(){
     var av = '<span class="dmc-av">' + petSVG('happy', getPet().lv, 'mini') + '</span>';
     function uni(t, sub){ return '<div class="dmc-row">' + av + '<div class="dmc-b">' + t + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>'; }
@@ -1982,7 +2009,7 @@
     if (ready){
       h += '<div class="card dm-card"><label class="dm-lab" for="dmText">내 꿈 이야기</label>' +
         '<div class="dmc-ctx">' + '<span>' + dmLabel(DM_THEMES, dmCtx.theme) + '</span>' + (dmCtx.who ? '<span>' + dmLabel(DM_WHO, dmCtx.who) + (dmCtx.name ? ' · ' + esc(dmCtx.name) : '') + '</span>' : '') + '</div>' +
-        '<textarea class="text-input dm-text" id="dmText" maxlength="' + DM.max + '" rows="5" placeholder="' + (dmCtx.name ? esc(dmCtx.name) + '이(가) 꿈에 나와서 나한테 웃어 줬어요. 너무 설렜어요.' : '예) 맑은 강에서 큰 잉어를 잡았는데 배 속에서 금반지가 나왔어요. 꿈에서 정말 기뻤어요.') + '">' + esc(draft) + '</textarea>' +
+        '<textarea class="text-input dm-text" id="dmText" maxlength="' + DM.max + '" rows="5" placeholder="' + esc(dmExample()) + '">' + esc(draft) + '</textarea>' +
         '<div class="dm-meta"><span class="helper">꿈속 기분까지 적으면 더 자세히 풀려요</span><span class="dm-count" id="dmCount">0/' + DM.max + '</span></div>' +
         '<p class="field-hint" id="dmHint" role="alert"></p></div>' +
         '<div class="dm-warn" role="note"><details><summary>' + LOCK_SVG + '꿈풀이 전에 꼭 읽어 주세요 ›</summary><ul>' +
@@ -4933,7 +4960,7 @@
       akChips(CHAT_EX[askTopic].map(function(x){ return [x, function(){ chatAsk(me, r, askTopic, x); }]; }).concat([['직접 쓸게요', function(){ akChips([]); q.focus(); }, 'ghost']]));
     }
     renderAsk.after = function(topic){
-      akSay([akB('이 고민이랑 같이 보면 좋은 풀이예요.') + akRecs(me, topic)], function(){
+      akSay([akB('이 고민이라면 이 풀이도 같이 보면 좋아요.') + akRecs(me, topic)], function(){
         box.querySelectorAll('[data-akrec]').forEach(function(b){ if (b.onclick) return; b.onclick = function(){
           var k = b.dataset.akrec; if (k === 'fill'){ go('num'); window.scrollTo(0, 0); return; }
           var fn = topicActs(me, r)[k]; if (fn) fn();
@@ -4956,40 +4983,51 @@
     q.placeholder = can ? '우니에게 고민을 적어 보세요' : '대화권이 있으면 계속 물어볼 수 있어요';
     if ($('akLeft')) $('akLeft').textContent = akMeta();
   }
-  /* 우니 말풍선을 하나씩(타이핑 표시 → 말풍선). instant 면 바로. 화면을 다시 그리면(akSeq 바뀜) 멈춘다 */
+  /* 우니 말풍선을 하나씩(타이핑 표시 → 말풍선). instant 면 바로. 화면을 다시 그리면(akSeq 바뀜) 멈춘다.
+     가벼운 효과 모드여도 차례대로 보여 준다(애니메이션만 CSS 에서 끈다). */
   function akSay(parts, done, instant){
     var seq = akSeq, lg = $('chatLog'); if (!lg) return;
-    var fast = instant || reduceMotion || document.documentElement.getAttribute('data-perf') === 'lite';
     var g = document.createElement('div'); g.className = 'ak-g bot first';
     g.innerHTML = '<span class="ak-av">' + uniImg('u-calm') + '</span><b class="ak-who">우니</b>';
     lg.appendChild(g);
     var i = 0;
     (function next(){
       if (seq !== akSeq) return;
-      if (i >= parts.length){ g.insertAdjacentHTML('beforeend', '<time>' + akT() + '</time>'); akScroll(); if (done) done(); return; }
-      if (fast){ g.insertAdjacentHTML('beforeend', parts[i++]); next(); return; }
-      g.insertAdjacentHTML('beforeend', '<p class="ak-b typing" aria-label="우니가 쓰는 중"><i></i><i></i><i></i></p>'); akScroll();
+      if (i >= parts.length){ g.insertAdjacentHTML('beforeend', '<time>' + akT() + '</time>'); if (done) done(); return; }
+      if (instant){ g.insertAdjacentHTML('beforeend', parts[i++]); if (i >= parts.length) akScroll(g); next(); return; }
+      var len = String(parts[i]).replace(/<[^>]+>/g, '').length;
+      g.insertAdjacentHTML('beforeend', '<p class="ak-b typing" aria-label="우니가 쓰는 중"><i></i><i></i><i></i></p>'); akScroll(g);
       setTimeout(function(){
         if (seq !== akSeq) return;
         var t = g.querySelector('.typing'); if (t) t.remove();
-        g.insertAdjacentHTML('beforeend', parts[i++]); g.lastElementChild.classList.add('ak-in'); akScroll();
-        next();
-      }, Math.min(1100, 380 + String(parts[i]).replace(/<[^>]+>/g, '').length * 9));
+        g.insertAdjacentHTML('beforeend', parts[i++]); g.lastElementChild.classList.add('ak-in'); akScroll(g);
+        setTimeout(next, i < parts.length ? 450 : 150);   /* 말풍선 사이에 잠깐 숨 고르기 */
+      }, Math.min(1500, 600 + len * 8));
     })();
   }
-  function akUser(text){ var lg = $('chatLog'); if (!lg) return; akChips([]); lg.insertAdjacentHTML('beforeend', akMe(text)); akScroll(); }
+  function akUser(text){ var lg = $('chatLog'); if (!lg) return; akChips([]); akHold = false; lg.insertAdjacentHTML('beforeend', akMe(text)); akScroll(); }
   function akChips(list){
     var qr = $('akQr'); if (!qr) return;
     qr.innerHTML = list.map(function(c, i){ return '<button type="button" class="ak-chip' + (c[2] ? ' ' + c[2] : '') + '" data-akc="' + i + '">' + esc(c[0]) + '</button>'; }).join('');
     qr.querySelectorAll('[data-akc]').forEach(function(b){ b.onclick = function(){ list[+b.dataset.akc][1](); }; });
-    if (list.length) akScroll();
+    if (list.length){ var bots = document.querySelectorAll('#chatLog .ak-g.bot'); akScroll(bots[bots.length - 1]); }
   }
-  /* 문서 맨 끝(푸터)까지 내리지 않고, 입력창 바로 위에 마지막 말풍선이 오도록 맞춘다 */
-  function akScroll(){ requestAnimationFrame(function(){
+  /* 새 말풍선이 입력창 바로 위에 보이게 맞춘다. 단, 지금 우니가 말하는 묶음(anchor)의 첫 줄이 화면 위로 밀려 올라가지 않게 멈추고,
+     사용자가 위로 올려 지난 대화를 읽는 중이면 따라 내리지 않는다 */
+  var akHold = false;
+  window.addEventListener('wheel', function(e){ if (e.deltaY < 0 && $('chatLog')) akHold = true; }, { passive:true });
+  window.addEventListener('touchmove', function(){ if ($('chatLog')) akHold = true; }, { passive:true });
+  function akScroll(anchor){ requestAnimationFrame(function(){
     var disc = document.querySelector('.ak-disc'), dock = $('akBar'); if (!disc || !dock) return;
     var tb = document.querySelector('.tabbar'), gap = (tb ? tb.getBoundingClientRect().height : 80) + 24;
     var top = window.scrollY + disc.getBoundingClientRect().top - window.innerHeight + gap;
-    if (top > window.scrollY) window.scrollTo({ top:top, behavior:reduceMotion ? 'auto' : 'smooth' });
+    if (akHold){
+      /* 사용자가 직접 바닥 근처로 돌아오면 다시 따라간다 */
+      if (top - window.scrollY > 160) return;
+      akHold = false;
+    }
+    if (anchor){ var hd = document.querySelector('.topbar'), hh = (hd ? hd.getBoundingClientRect().height : 56) + 12; top = Math.min(top, window.scrollY + anchor.getBoundingClientRect().top - hh); }
+    if (top > window.scrollY + 2) window.scrollTo({ top:top, behavior:reduceMotion ? 'auto' : 'smooth' });
   }); }
   /* 하루 무제한 대화권 카드(채팅 안 말풍선) */
   function akPassCard(){
