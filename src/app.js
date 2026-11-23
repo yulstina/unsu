@@ -3942,8 +3942,8 @@
       }).join('') + '</div>';
     }).join('') + '</div>';
   }
-  function bindTopics(me, r, root){
-    var A = {
+  function topicActs(me, r){
+    return {
       gh:function(){ go('gunghap'); window.scrollTo(0, 0); }, lv:function(){ openLoveTiming(me, r); },
       fc:function(){ openFortuneCal(me, r, 0); }, tk:function(){ openTaekil(me, r); },
       ny:function(){ openNYSheet(me, r); }, tj:function(){ openTojeong(me, r); },
@@ -3951,6 +3951,9 @@
       zodiac:function(){ var z = getZodiac(r.solar.m, r.solar.d); myZ = z.name; renderZGrid(); openZodiac(z, entryISO(me, r)); show('zodiac'); },
       dream:function(){ openDream(); }
     };
+  }
+  function bindTopics(me, r, root){
+    var A = topicActs(me, r);
     root.querySelectorAll('[data-tp]').forEach(function(b){ b.onclick = function(){ var fn = A[b.dataset.tp]; if (!fn) return; closeSheet(); fn(); }; });
   }
   function openTopics(me, r){
@@ -4134,57 +4137,157 @@
   function chatDay(){ var c = store('unsu_chat_day'); return c && c.d === todayStr() ? c.n : 0; }
   function chatCredits(){ var c = store('unsu_chat_cr'); return typeof c === 'number' ? c : 0; }
   function chatLeftFree(){ return passActive() ? Math.max(0, CHAT_PASS_MAX - chatDay()) : Math.max(0, CHAT_FREE - chatDay()); }
-  function chatCtx(me, r){
-    var f = DAILY.today(me, r, nowD()), dS = r.pillars.day.stem, P = r.pillars;
-    var ys = MS.calc({ y:TJ_YEAR, m:6, d:15, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.year;
-    return {
-      name:String(me.name || '').slice(0, 12), gender:me.gender === 'F' ? '여성' : '남성', age:nowD().getFullYear() - r.solar.y,
-      pillars:[P.year, P.month, P.day, P.hour].filter(Boolean).map(function(p){ return p.hanja; }).join(' '),
-      ilgan:MS.STEM_K[dS] + '(' + MS.STEM_H[dS] + ') ' + MS.EL_K[MS.STEM_EL[dS]],
-      el:MS.EL_K.map(function(k, i){ return k + r.cnt[i]; }).join(' '), yong:MS.EL_K[r.yong],
-      today:f.head + ' (' + f.ten + '의 날, 재물 ' + f.scores.w + ' 연애 ' + f.scores.l + ' 직업 ' + f.scores.j + ')',
-      year:TJ_YEAR + '년 ' + ys.hanja + ' · ' + MS.tenGod(dS, ys.stem) + '의 해'
-    };
+  /* 서버가 원국을 엔진으로 다시 계산하도록 생년월일 원본을 보낸다(2026-11-23 AI 재설계: LLM이 원국을 계산하지 않게) */
+  function chatBirth(me){
+    return { y:me.y, m:me.m, d:me.d, cal:me.cal, leap:!!me.leap, hour:me.unknown ? null : me.hour, minute:me.unknown ? null : me.minute, unknown:!!me.unknown, gender:me.gender, corr:me.corr !== false };
   }
   function chatLog(){ var l = store('unsu_chat_log'); return Array.isArray(l) ? l : []; }
-  /* 2026-11-22 소율: 우니에게 묻기는 하단 탭의 한 페이지. 우니를 크게, 답은 '우니의 쪽지' 카드로(말풍선 채팅 앱처럼 보이지 않게) */
-  var askTopic = 'love';
-  function openChat(me, r, topic){ if (topic) askTopic = topic; closeSheet(); renderAsk(); if (currentView !== 'ask') show('ask'); else { var a = $('askIn'); if (a) a.scrollIntoView({ block:'center' }); } }
-  function askHeroHTML(me){
-    var joa = askTopic === 'love' || askTopic === 'people';
-    return '<section class="ask-hero"><div class="ah-stage" aria-hidden="true"><span class="ah-halo"></span><span class="ah-orbit"><i></i><i></i><i></i></span>' +
-      uniImg('u-thinking', 'ah-uni') + (joa ? uniImg('uj-hug', 'ah-joa') : '') + '</div>' +
-      '<div class="ah-txt"><div class="ah-k">사주 AI 해석</div><h1>우니에게 묻기</h1><p>' + (me ? esc(me.name) + '님의 여덟 글자를 아는 우니가<br>고민 하나에 한 장씩 답을 써 줘요.' : '내 사주를 아는 우니가<br>고민 하나에 한 장씩 답을 써 줘요.') + '</p></div></section>';
+
+  /* ---------- 우니에게 묻기 = 채팅 화면 (2026-11-23 소율: '헬로우봇처럼 채팅으로' — 구조만 참고, 그림·캐릭터·문구는 우니조아 것) ----------
+     우니 말풍선이 이어서 나오고(타이핑 표시) → 고민 주제 칩 → 예시 질문 칩/직접 입력 → 답은 문단마다 말풍선 → 같이 보면 좋은 풀이 카드 → 다음 칩.
+     대화 기록(unsu_chat_log)은 이 기기에만 저장. 무료 횟수·질문권 규칙은 그대로. */
+  var askTopic = 'love', akSeq = 0;
+  var CHAT_EX = {
+    love:['그 사람과 잘 될까요?', '올해 연애운은 어때요?', '헤어진 사람과 다시 만날 수 있을까요?'],
+    work:['올해 이직해도 괜찮을까요?', '저한테 맞는 일은 뭘까요?', '이번 면접 잘 볼 수 있을까요?'],
+    money:['올해 돈이 좀 모일까요?', '제가 돈이 새는 습관이 있을까요?', '부업을 시작해도 될까요?'],
+    people:['자꾸 서운한 친구, 어떻게 할까요?', '직장 사람들과 잘 지내는 법이 있을까요?', '가족과 자주 부딪혀요'],
+    day:['오늘 조심할 게 있을까요?', '오늘 고백해도 될까요?', '오늘 중요한 미팅이 있어요'],
+    etc:['요즘 마음이 많이 지쳐요', '올해 저한테 가장 중요한 건 뭘까요?', '제 사주의 가장 큰 장점은 뭐예요?']
+  };
+  var CHAT_RECS = { love:['lv','gh','fc'], work:['tk','job','ny'], money:['tj','ny','fc'], people:['gh','book','fill'], day:['fill','fc','tk'], etc:['book','ny','dream'] };
+  function openChat(me, r, topic){ if (topic) askTopic = topic; closeSheet(); renderAsk(); if (currentView !== 'ask') show('ask'); }
+  function akT(t){ var d = t ? new Date(t) : new Date(), h = d.getHours(); return (h < 12 ? '오전 ' : '오후 ') + ((h % 12) || 12) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function akBot(inner, first){ return '<div class="ak-g bot' + (first ? ' first' : '') + '">' + (first ? '<span class="ak-av">' + uniImg('u-calm') + '</span><b class="ak-who">우니</b>' : '') + inner + '</div>'; }
+  function akB(html){ return '<p class="ak-b">' + html + '</p>'; }
+  function akMe(text, t){ return '<div class="ak-g me"><p class="ak-b">' + esc(text) + '</p><time>' + akT(t) + '</time></div>'; }
+  function akParas(a){ return String(a || '').split(/\n\s*\n/).map(function(x){ return x.trim(); }).filter(Boolean).map(function(x){ return akB(esc(x).replace(/\n/g, '<br>')); }); }
+  /* 내 원국 미니 카드: 시·일·월·년 순서, 오행 색 */
+  function akSajuCard(me, r){
+    var P = r.pillars, cols = [['hour','시'],['day','일'],['month','월'],['year','년']].map(function(k){
+      var p = P[k[0]];
+      return '<span class="ak-pc' + (k[0] === 'day' ? ' me' : '') + '"><small>' + k[1] + '</small>' + (p ? '<i style="--c:' + EL_HEX[p.sEl] + '">' + p.sh + '</i><i style="--c:' + EL_HEX[p.bEl] + '">' + p.bh + '</i>' : '<i class="no">?</i><i class="no">?</i>') + '</span>';
+    }).join('');
+    var dS = P.day.stem;
+    return '<div class="ak-saju" aria-label="' + esc(me.name) + '님 사주 원국"><div class="ak-pcs">' + cols + '</div><p><b>' + MS.STEM_K[dS] + MS.EL_K[MS.STEM_EL[dS]] + ' 일간</b> · ' + r.strength + ' · 힘이 되는 기운 <b style="color:' + EL_HEX[r.yong] + '">' + MS.EL_K[r.yong] + '</b></p></div>';
   }
+  function akRecs(me, topic){
+    var all = {}; topicGroups().forEach(function(g){ g[1].forEach(function(x){ all[x[0]] = x; }); });
+    all.fill = ['fill', 'u-pouch', '오늘의 행운 부적', '오늘 내 기운에 맞는 색·방향·아이템', '무료'];
+    return '<div class="ak-recs">' + (CHAT_RECS[topic] || CHAT_RECS.etc).map(function(k){
+      var x = all[k]; if (!x) return '';
+      return '<button type="button" class="ak-rc" data-akrec="' + k + '"><span class="ak-rc-art">' + uniImg(x[1]) + '</span><b>' + x[2] + '</b><small>' + x[3] + '</small>' + (x[4] ? '<em>' + x[4] + '</em>' : '') + '<span class="ak-rc-go">보러 가기</span></button>';
+    }).join('') + '</div>';
+  }
+  function akMeta(){
+    var free = chatLeftFree(), cr = chatCredits();
+    return passActive() ? '패스 · 오늘 ' + free + '번' : free ? '오늘 무료 ' + free + '번' : cr ? '질문권 ' + cr + '번' : '무료 질문 끝';
+  }
+  function akCan(){ return chatLeftFree() > 0 || chatCredits() > 0; }
   function renderAsk(){
     var me = getMe(), box = $('askBody'); if (!box) return;
+    akSeq++;
     if (!me){
-      box.innerHTML = (NS ? demoBarHTML() : '') + askHeroHTML(null) + '<div class="card ask-empty"><p class="body-text">생년월일을 알려 주면 우니가 사주를 읽고 연애, 일, 돈, 사람 고민에 답해요. 하루 한 번은 무료예요.</p><button class="btn-primary btn-block sheen" id="askStart">내 사주 등록하고 물어보기</button></div>';
+      box.innerHTML = (NS ? demoBarHTML() : '') + '<div class="ak ak-guest"><div class="ak-stream">' +
+        akBot(uniImg('u-wave', 'ak-sticker') + akB('안녕하세요! 저는 우니예요.') + akB('생년월일을 알려 주면 사주를 펼쳐 보고 연애, 일, 돈, 사람 고민에 답해 드릴게요. 하루 한 번은 무료예요.'), true) +
+        '</div><button class="btn-primary btn-block sheen" id="askStart">내 사주 등록하고 우니와 이야기하기</button></div>';
       $('askStart').onclick = function(){ startOnboarding('new'); };
+      bindDemoBar();
       return;
     }
     var r = compute(me); if (r.error){ box.innerHTML = ''; return; }
-    var topic = askTopic;
-    var log = chatLog().filter(function(x){ return x.who === me.id; }).slice(-6), free = chatLeftFree(), cr = chatCredits();
-    var can = free > 0 || cr > 0;
-    var T = {}; CHAT_TOPICS.forEach(function(t){ T[t[0]] = t[1]; });
-    box.innerHTML = (NS ? demoBarHTML() : '') + askHeroHTML(me) +
-      '<div class="chat-sheet ask-page">' +
-      '<div class="chat-topics" role="radiogroup" aria-label="고민 주제">' + CHAT_TOPICS.map(function(t){ return '<button type="button" role="radio" data-ct="' + t[0] + '" aria-checked="' + (t[0] === topic) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="chat-in ask-in" id="askIn"><textarea id="chatQ" maxlength="200" rows="3" placeholder="예: 올해 이직해도 괜찮을까요?"></textarea><button class="btn-primary" id="chatGo">' + (can ? '우니에게 묻기' : '질문권 받기') + '</button></div>' +
-      '<p class="helper chat-meta">' + (passActive() ? '우니 패스 · 오늘 ' + free + '번 남았어요' : free ? '오늘 무료 질문 ' + free + '번 남았어요' : cr ? '질문권 ' + cr + '번 남았어요' : '오늘 무료 질문을 다 썼어요 · 질문권 ' + CHAT_PACK + '회 ' + COST.chat + '닢') + (cr && free ? ' · 질문권 ' + cr + '번' : '') + '</p>' +
-      '<div class="chat-log ask-log" id="chatLog">' + (log.length ? log.slice().reverse().map(function(x){ return '<article class="ask-note"><div class="an-q"><small>' + (T[x.topic] || '고민') + '</small>' + esc(x.q) + '</div><div class="an-a">' + uniImg('u-calm', 'an-uni') + '<p>' + esc(x.a).replace(/\n/g, '<br>') + '</p></div></article>'; }).join('')
-        : '<article class="ask-note an-hello"><div class="an-a">' + uniImg('u-wave', 'an-uni') + '<p>안녕하세요, ' + esc(me.name) + '님! 연애, 일, 돈, 사람 고민 무엇이든 한 가지씩 물어봐 주세요. 사주에 비춰서 솔직하게 답해 드릴게요.</p></div></article>') + '</div>' +
-      '<p class="disclaimer">AI가 사주를 바탕으로 만든 재미용 답변이에요. 건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 사주 요약은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p></div>';
+    var log = chatLog().filter(function(x){ return x.who === me.id; }).slice(-8);
+    var now = new Date();
+    box.innerHTML = (NS ? demoBarHTML() : '') +
+      '<div class="ak">' +
+      '<header class="ak-head"><span class="ak-hav">' + uniImg('u-thinking') + '<i aria-hidden="true"></i></span><div><b>우니</b><small>' + esc(me.name) + '님 사주를 읽고 있어요</small></div><span class="ak-left" id="akLeft">' + akMeta() + '</span></header>' +
+      '<div class="ak-stream" id="chatLog" aria-live="polite">' +
+      (log.length ? '<div class="ak-day"><span>지난 이야기</span></div>' + log.map(function(x){ return akMe(x.q, x.t) + akBot(akParas(x.a).join(''), true); }).join('') : '') +
+      '<div class="ak-day"><span>' + (now.getMonth() + 1) + '월 ' + now.getDate() + '일</span></div>' +
+      '</div>' +
+      '<div class="ak-dock"><div class="ak-qr" id="akQr" role="group" aria-label="빠른 답장"></div>' +
+      '<form class="ak-bar" id="akBar" autocomplete="off"><textarea id="chatQ" maxlength="200" rows="1" placeholder="우니에게 고민을 적어 보세요" aria-label="질문"></textarea><button class="ak-send" id="chatGo" aria-label="보내기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button></form></div>' +
+      '<p class="disclaimer ak-disc">AI가 사주를 바탕으로 만든 재미용 답변이에요. 건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 생년월일은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p>' +
+      '</div>';
     bindDemoBar();
-    document.querySelectorAll('[data-ct]').forEach(function(b){ b.onclick = function(){ topic = askTopic = b.dataset.ct; var h = box.querySelector('.ask-hero'); if (h) h.outerHTML = askHeroHTML(me); document.querySelectorAll('[data-ct]').forEach(function(x){ x.setAttribute('aria-checked', x === b); }); }; });
-    $('chatGo').onclick = function(){
-      if (!can){ chatBuy(me, r, topic); return; }
-      var q = $('chatQ').value.replace(/\s+/g, ' ').trim();
-      if (q.length < 4){ toast('질문을 조금만 더 자세히 적어 주세요'); $('chatQ').focus(); return; }
-      chatAsk(me, r, topic, q);
+    var q = $('chatQ');
+    q.oninput = function(){ q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 120) + 'px'; };
+    q.onkeydown = function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); $('akBar').requestSubmit ? $('akBar').requestSubmit() : $('chatGo').click(); } };
+    $('akBar').onsubmit = function(e){
+      e.preventDefault();
+      if (!akCan()){ chatBuy(me, r, askTopic); return; }
+      var v = q.value.replace(/\s+/g, ' ').trim();
+      if (v.length < 4){ toast('질문을 조금만 더 자세히 적어 주세요'); q.focus(); return; }
+      chatAsk(me, r, askTopic, v);
     };
+    akInputState();
+    if (log.length) akSay([akB('또 궁금한 게 있으면 편하게 물어봐 주세요. 어떤 이야기를 할까요?')], function(){ akTopics(); }, true);
+    else akSay([uniImg('u-wave', 'ak-sticker'), akB('안녕하세요, ' + esc(me.name) + '님! 저는 우니예요.'), akB(esc(me.name) + '님 사주를 먼저 펼쳐 봤어요.') + akSajuCard(me, r), akB('이 여덟 글자를 보면서 고민에 답해 드릴게요. 요즘 제일 마음 쓰이는 게 뭐예요?')], function(){ akTopics(); });
+    function akTopics(){
+      akChips(CHAT_TOPICS.map(function(t){ return [t[1], function(){ askTopic = t[0]; akUser(t[1]); akSay([akB({ love:'연애 이야기군요.', work:'일 이야기군요.', money:'돈 이야기군요.', people:'사람 사이 이야기군요.', day:'오늘 하루가 궁금하군요.', etc:'어떤 고민이든 좋아요.' }[t[0]] + ' 이런 걸 많이 물어봐요. 골라도 되고, 아래에 직접 적어도 돼요.')], akExamples); }]; }));
+    }
+    function akExamples(){
+      if (!akCan()){ akOut(); return; }
+      akChips(CHAT_EX[askTopic].map(function(x){ return [x, function(){ chatAsk(me, r, askTopic, x); }]; }).concat([['직접 쓸게요', function(){ akChips([]); q.focus(); }, 'ghost']]));
+    }
+    renderAsk.after = function(topic){
+      akSay([akB('이 고민이랑 같이 보면 좋은 풀이예요.') + akRecs(me, topic)], function(){
+        box.querySelectorAll('[data-akrec]').forEach(function(b){ if (b.onclick) return; b.onclick = function(){
+          var k = b.dataset.akrec; if (k === 'fill'){ go('num'); window.scrollTo(0, 0); return; }
+          var fn = topicActs(me, r)[k]; if (fn) fn();
+        }; });
+        if (!akCan()){ akOut(); return; }
+        akChips([['더 물어볼래요', function(){ akChips([]); q.focus(); }], ['다른 고민', function(){ akUser('다른 고민도 있어요'); akSay([akB('좋아요. 어떤 이야기를 할까요?')], akTopics); }], ['예시 더 보기', akExamples, 'ghost']]);
+      });
+    };
+    function akOut(){
+      akInputState();
+      akSay([akB('오늘 무료 질문은 다 썼어요. 내일 다시 한 번 무료로 물어볼 수 있어요.'), akB('지금 더 묻고 싶다면 질문권 ' + CHAT_PACK + '회를 받을 수 있어요.')], function(){
+        akChips([['질문권 ' + CHAT_PACK + '회 받기 · ' + priceTag('chat'), function(){ chatBuy(me, r, askTopic); }], ['내일 할게요', function(){ akChips([]); akUser('내일 다시 올게요'); akSay([akB('좋아요, 내일 기다릴게요. 그동안 오늘의 행운 부적도 열어 보세요.') + akRecs(me, 'day')], function(){ box.querySelectorAll('[data-akrec]').forEach(function(b){ if (b.onclick) return; b.onclick = function(){ var k = b.dataset.akrec; if (k === 'fill'){ go('num'); window.scrollTo(0, 0); return; } var fn = topicActs(me, r)[k]; if (fn) fn(); }; }); }); }, 'ghost']]);
+      });
+    }
+    renderAsk.out = akOut;
   }
+  function akInputState(){
+    var q = $('chatQ'), can = akCan(); if (!q) return;
+    q.placeholder = can ? '우니에게 고민을 적어 보세요' : '질문권이 있으면 이어서 물어볼 수 있어요';
+    if ($('akLeft')) $('akLeft').textContent = akMeta();
+  }
+  /* 우니 말풍선을 하나씩(타이핑 표시 → 말풍선). instant 면 바로. 화면을 다시 그리면(akSeq 바뀜) 멈춘다 */
+  function akSay(parts, done, instant){
+    var seq = akSeq, lg = $('chatLog'); if (!lg) return;
+    var fast = instant || reduceMotion || document.documentElement.getAttribute('data-perf') === 'lite';
+    var g = document.createElement('div'); g.className = 'ak-g bot first';
+    g.innerHTML = '<span class="ak-av">' + uniImg('u-calm') + '</span><b class="ak-who">우니</b>';
+    lg.appendChild(g);
+    var i = 0;
+    (function next(){
+      if (seq !== akSeq) return;
+      if (i >= parts.length){ g.insertAdjacentHTML('beforeend', '<time>' + akT() + '</time>'); akScroll(); if (done) done(); return; }
+      if (fast){ g.insertAdjacentHTML('beforeend', parts[i++]); next(); return; }
+      g.insertAdjacentHTML('beforeend', '<p class="ak-b typing" aria-label="우니가 쓰는 중"><i></i><i></i><i></i></p>'); akScroll();
+      setTimeout(function(){
+        if (seq !== akSeq) return;
+        var t = g.querySelector('.typing'); if (t) t.remove();
+        g.insertAdjacentHTML('beforeend', parts[i++]); g.lastElementChild.classList.add('ak-in'); akScroll();
+        next();
+      }, Math.min(1100, 380 + String(parts[i]).replace(/<[^>]+>/g, '').length * 9));
+    })();
+  }
+  function akUser(text){ var lg = $('chatLog'); if (!lg) return; akChips([]); lg.insertAdjacentHTML('beforeend', akMe(text)); akScroll(); }
+  function akChips(list){
+    var qr = $('akQr'); if (!qr) return;
+    qr.innerHTML = list.map(function(c, i){ return '<button type="button" class="ak-chip' + (c[2] ? ' ' + c[2] : '') + '" data-akc="' + i + '">' + esc(c[0]) + '</button>'; }).join('');
+    qr.querySelectorAll('[data-akc]').forEach(function(b){ b.onclick = function(){ list[+b.dataset.akc][1](); }; });
+    if (list.length) akScroll();
+  }
+  /* 문서 맨 끝(푸터)까지 내리지 않고, 입력창 바로 위에 마지막 말풍선이 오도록 맞춘다 */
+  function akScroll(){ requestAnimationFrame(function(){
+    var disc = document.querySelector('.ak-disc'), dock = $('akBar'); if (!disc || !dock) return;
+    var tb = document.querySelector('.tabbar'), gap = (tb ? tb.getBoundingClientRect().height : 80) + 24;
+    var top = window.scrollY + disc.getBoundingClientRect().top - window.innerHeight + gap;
+    if (top > window.scrollY) window.scrollTo({ top:top, behavior:reduceMotion ? 'auto' : 'smooth' });
+  }); }
   function chatBuy(me, r, topic){
     if (isGuest()){ openLoginSheet('로그인하면 엽전 ' + SIGNUP_COINS.toLocaleString() + '닢을 드려요. 질문권 ' + CHAT_PACK + '회는 ' + COST.chat + '닢이에요.'); return; }
     var item = 'chat:' + Date.now().toString(36);
@@ -4193,20 +4296,27 @@
   var chatBusy = false;
   function chatAsk(me, r, topic, q){
     if (chatBusy) return; chatBusy = true;
-    var lg = $('chatLog'), go = $('chatGo');
-    lg.insertAdjacentHTML('afterbegin', '<article class="ask-note" id="chatTyping"><div class="an-q"><small>방금</small>' + esc(q) + '</div><div class="an-a">' + uniImg('u-thinking', 'an-uni') + '<p class="cb typing"><i></i><i></i><i></i></p></div></article>');
-    go.disabled = true; $('chatQ').value = '';
+    var go = $('chatGo'), qi = $('chatQ'), seq = akSeq;
+    akUser(q); qi.value = ''; qi.style.height = ''; go.disabled = true;
+    var lg = $('chatLog');
+    lg.insertAdjacentHTML('beforeend', akBot('<p class="ak-b typing" aria-label="우니가 사주를 보는 중"><i></i><i></i><i></i></p><small class="ak-note">' + esc(me.name) + '님 여덟 글자를 다시 보는 중…</small>', true).replace('class="ak-g bot first"', 'class="ak-g bot first" id="chatTyping"'));
+    akScroll();
     var hist = chatLog().filter(function(x){ return x.who === me.id; }).slice(-2).map(function(x){ return { q:x.q, a:String(x.a).slice(0, 400) }; });
     var useFree = chatLeftFree() > 0;
-    fetch('/api/chat', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ q:q, topic:topic, ctx:chatCtx(me, r), hist:hist }) })
+    function fail(msg){ chatBusy = false; if ($('chatTyping')) $('chatTyping').remove(); if ($('chatGo')) $('chatGo').disabled = false; toast(msg); }
+    fetch('/api/chat', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ q:q, topic:topic, name:String(me.name || '').slice(0, 12), birth:chatBirth(me), hist:hist }) })
       .then(function(res){ return res.json().then(function(j){ return { ok:res.ok, j:j }; }); })
       .then(function(o){
+        if (!o.ok || !o.j.answer){ fail(o.j && o.j.error === 'personal_info' ? '전화번호 같은 개인정보는 빼고 물어봐 주세요' : o.j && o.j.error === 'banned_word' ? '고운 말로 다시 물어봐 주세요' : o.j && o.j.error === 'rate' ? '조금만 쉬었다가 다시 물어봐 주세요' : '지금은 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요'); return; }
         chatBusy = false;
-        if (!o.ok || !o.j.answer){ $('chatTyping').remove(); go.disabled = false; toast(o.j && o.j.error === 'personal_info' ? '전화번호 같은 개인정보는 빼고 물어봐 주세요' : o.j && o.j.error === 'banned_word' ? '고운 말로 다시 물어봐 주세요' : '지금은 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요'); return; }
         if (o.j.source === 'local'){} else if (useFree) store('unsu_chat_day', { d:todayStr(), n:chatDay() + 1 }); else store('unsu_chat_cr', Math.max(0, chatCredits() - 1));
-        var l = chatLog(); l.push({ who:me.id, t:Date.now(), topic:topic, q:q, a:o.j.answer }); if (l.length > 40) l = l.slice(-40); store('unsu_chat_log', l);
-        openChat(me, r, topic);
-      }, function(){ chatBusy = false; if ($('chatTyping')) $('chatTyping').remove(); go.disabled = false; toast('연결이 불안정해요. 잠시 뒤 다시 물어봐 주세요'); });
+        var tp = CHAT_EX[o.j.topic] ? o.j.topic : topic; askTopic = tp;
+        var l = chatLog(); l.push({ who:me.id, t:Date.now(), topic:tp, q:q, a:o.j.answer }); if (l.length > 40) l = l.slice(-40); store('unsu_chat_log', l);
+        if (seq !== akSeq || !$('chatTyping')) return;
+        $('chatTyping').remove(); if ($('chatGo')) $('chatGo').disabled = false;
+        akInputState();
+        akSay(akParas(o.j.answer), function(){ if (renderAsk.after) renderAsk.after(tp); });
+      }, function(){ fail('연결이 불안정해요. 잠시 뒤 다시 물어봐 주세요'); });
   }
   function product(id){
     return ({
