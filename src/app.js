@@ -4638,27 +4638,6 @@
     qr.querySelectorAll('[data-akc]').forEach(function(b){ b.onclick = function(){ list[+b.dataset.akc][1](); }; });
     if (list.length) akScroll();
   }
-  /* PC 마우스 드래그 가로 스크롤 (터치는 기본 스크롤). 드래그한 뒤에는 클릭이 눌리지 않게 막는다 */
-  (function(){
-    var SEL = '.ak-recs, .ak-qr, .tk-months', el = null, x0 = 0, s0 = 0, moved = false;
-    document.addEventListener('mousedown', function(e){
-      if (e.button !== 0) return;
-      var t = e.target.closest && e.target.closest(SEL); if (!t || t.scrollWidth <= t.clientWidth + 2) return;
-      el = t; x0 = e.clientX; s0 = t.scrollLeft; moved = false;
-    });
-    document.addEventListener('mousemove', function(e){
-      if (!el) return;
-      var dx = e.clientX - x0;
-      if (!moved && Math.abs(dx) < 5) return;
-      if (!moved){ moved = true; el.classList.add('dragging'); }
-      el.scrollLeft = s0 - dx; e.preventDefault();
-    });
-    function end(){ if (!el) return; var t = el; el = null; t.classList.remove('dragging'); if (moved) setTimeout(function(){ moved = false; }, 0); }
-    document.addEventListener('mouseup', end);
-    document.addEventListener('mouseleave', end);
-    document.addEventListener('click', function(e){ if (moved && e.target.closest && e.target.closest(SEL)){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
-    document.addEventListener('dragstart', function(e){ if (e.target.closest && e.target.closest(SEL)) e.preventDefault(); });
-  })();
   /* 문서 맨 끝(푸터)까지 내리지 않고, 입력창 바로 위에 마지막 말풍선이 오도록 맞춘다 */
   function akScroll(){ requestAnimationFrame(function(){
     var disc = document.querySelector('.ak-disc'), dock = $('akBar'); if (!disc || !dock) return;
