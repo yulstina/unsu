@@ -2532,6 +2532,15 @@
   .ft-head em[data-tier="mint"]{color:#ffb49e;}
   .ft-body p{margin:0;font-size:calc(14px*var(--fs));line-height:1.75;color:var(--text-body);}
   .ft-more{align-self:flex-start;margin-top:2px;padding:0;border:0;background:none;color:var(--h-cta);font:inherit;font-size:calc(13px*var(--fs));font-weight:600;cursor:pointer;}
+  /* 가로 줄 마우스 끌기 */
+  @media (hover:hover) and (pointer:fine){ .hp-car,.tk-months,.ak-recs,.ak-qr,.ft-tabs,.ge-chips,.scroller{cursor:grab;} }
+  .hs-drag{scroll-snap-type:none !important;scroll-behavior:auto !important;cursor:grabbing !important;-webkit-user-select:none;user-select:none;}
+  .hs-drag *{pointer-events:none;}
+  .hp-car,.tk-months,.ak-recs,.ak-qr,.ft-tabs{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+  /* 조아 포즈 */
+  .gh-react{display:flex;justify-content:center;margin-top:8px;}
+  .gh-react .uni-png{width:96px;height:auto;}
+  .invite-card .inv-joa{display:block;width:92px;height:auto;margin:6px auto -4px;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
