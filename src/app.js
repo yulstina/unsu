@@ -1146,7 +1146,7 @@
       store('unsu_gift', 1);
       setSrvCoins(u.coins);
       SRV.orders = u.orders || [];
-      SRV.passUntil = +u.passUntil || 0;
+      SRV.passUntil = +u.passUntil || 0; SRV.owner = !!u.owner;
       if (SRV.cfg && SRV.cfg.passes && SRV.cfg.passes[PASS.id]){ PASS.p = SRV.cfg.passes[PASS.id].p; PASS.days = SRV.cfg.passes[PASS.id].days; }
       if (SRV.cfg && SRV.cfg.passDreamMax) PASS.dream = SRV.cfg.passDreamMax;
       if (u.consent && !getConsent()) store('unsu_consent', u.consent);
@@ -1259,6 +1259,16 @@
   }
   /* k: { id } 패스·엽전 패키지 / { item, rs } 콘텐츠 하나 단건. rs = 결제 뒤 다시 열 곳(resumeBuy) */
   function startCharge(k, btn){
+    var pc = SRV.cfg && SRV.cfg.pay;
+    /* 카카오페이 채널이 있으면 결제 수단을 먼저 고른다(버튼 자리에 '카드 / 카카오페이' 두 개) */
+    if (pc && pc.provider === 'portone' && pc.kakaoChannelKey && !k.method){
+      var nx = btn.nextElementSibling; if (nx && nx.classList.contains('pay-methods')) return;
+      btn.hidden = true;
+      btn.insertAdjacentHTML('afterend', '<div class="pay-methods"><button type="button" class="btn-primary" data-pm="card">카드 결제</button><button type="button" class="btn-kakaopay" data-pm="kakao"><b>pay</b> 카카오페이</button></div>');
+      var box = btn.nextElementSibling;
+      box.querySelectorAll('[data-pm]').forEach(function(b){ b.onclick = function(){ startCharge(Object.assign({}, k, { method:b.dataset.pm }), b); }; });
+      return;
+    }
     var label = btn.innerHTML; btn.disabled = true; btn.textContent = '결제창 여는 중…';
     var reset = function(){ btn.disabled = false; btn.innerHTML = label; };
     var pp = SRV.cfg.pay.provider === 'portone';
@@ -1269,8 +1279,9 @@
       try { sessionStorage.setItem('wj_back', k.item ? JSON.stringify({ tab:currentView || 'today', k:'buy', rs:k.rs }) : 'coin'); } catch(e){}
       if (pp){
         var c = SRV.cfg.pay;
-        return window.PortOne.requestPayment({ storeId:c.storeId, channelKey:c.channelKey, paymentId:o.orderId, orderName:o.orderName,
-          totalAmount:o.amount, currency:'CURRENCY_KRW', payMethod:'CARD', redirectUrl:location.origin + '/pay/success' }).then(function(r){
+        var kp = k.method === 'kakao' && c.kakaoChannelKey;
+        return window.PortOne.requestPayment({ storeId:c.storeId, channelKey:kp ? c.kakaoChannelKey : c.channelKey, paymentId:o.orderId, orderName:o.orderName,
+          totalAmount:o.amount, currency:'CURRENCY_KRW', payMethod:kp ? 'EASY_PAY' : 'CARD', redirectUrl:location.origin + '/pay/success' }).then(function(r){
           if (r && r.code){ if (/CANCEL/i.test(r.code + (r.message || ''))) return; var er = new Error(r.message || r.code); throw er; }
           if (k.item){   /* PC 단건: 페이지를 떠나지 않고 서버 확인 → 그 자리에서 연다 */
             try { sessionStorage.removeItem('wj_back'); } catch(e){}
@@ -1295,10 +1306,11 @@
     var q = {}; try { new URLSearchParams(location.search).forEach(function(v, k){ q[k] = v; }); } catch(e){}
     var back = null, rs = null; try { back = sessionStorage.getItem('wj_back'); sessionStorage.removeItem('wj_back'); } catch(e){}
     if (back && back.charAt(0) === '{'){ try { rs = JSON.parse(back); back = rs.tab || 'today'; } catch(e){ back = null; } }
-    if (q.login || q.pay){ try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){} }
+    if (q.login || q.pay || q.owner){ try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){} }
     if (NS || !/^https?:$/.test(location.protocol)) return;
-    api('/api/me').then(function(r){
+    api('/api/me' + (q.owner ? '?owner=' + encodeURIComponent(q.owner) : '')).then(function(r){
       if (!r.cfg || !r.cfg.on) return;
+      if (q.owner) setTimeout(function(){ toast(r.user && r.user.owner ? '운영자 계정이에요 · 모든 풀이가 결제 없이 열려요' : q.owner === 'off' ? '운영자 모드를 껐어요' : r.user ? '운영자 열쇠가 맞지 않아요' : '로그인한 뒤 다시 열어 주세요'); }, 600);
       SRV.cfg = r.cfg;
       var a = store('unsu_auth');
       if (r.user){
@@ -1541,6 +1553,7 @@
   /* 우니 패스 카드 — 충전소 맨 위. 원화로 바로 결제(엽전 충전을 거치지 않음) */
   function passCardHTML(){
     if (!passActive() && !passSale()) return '';
+    if (SRV.owner) return '<div class="pass-card on"><div class="pc-top"><span class="pc-badge">운영자</span><b>운영자 계정</b></div><p class="pc-sub">모든 풀이를 결제 없이 열어 볼 수 있어요.</p></div>';
     if (passActive()) return '<div class="pass-card on"><div class="pc-top"><span class="pc-badge">이용 중</span><b>' + PASS.name + '</b></div>' +
       '<p class="pc-sub">' + passEndStr() + '까지 엽전 없이 전부 열고, 광고 없이 봐요.</p></div>';
     var full = COST.cat * 4 + COST.dream + COST.gh + COST.ez + COST.tk;
@@ -4490,6 +4503,8 @@
      /api/chat 이 내 사주 요약을 근거로 짧게 답한다(키가 없거나 막히면 서버가 사주 규칙으로 답을 만든다).
      하루 1번 무료 · 질문권 5회 = 100닢(990원) · 우니 패스는 하루 10번까지 */
   var CHAT_FREE = 1, CHAT_PACK = 5, CHAT_PASS_MAX = 10;
+  /* 질문권 판매: AI 키를 넣기 전(규칙 답변)에는 팔지 않는다(2026-11-23 소율). 키를 넣고 답이 괜찮으면 true */
+  var CHAT_SALE = false;
   var CHAT_TOPICS = [['love','연애'],['work','일·직장'],['money','돈'],['people','인간관계'],['day','오늘 하루'],['etc','그 밖에']];
   function chatDay(){ var c = store('unsu_chat_day'); return c && c.d === todayStr() ? c.n : 0; }
   function chatCredits(){ var c = store('unsu_chat_cr'); return typeof c === 'number' ? c : 0; }
@@ -4572,7 +4587,7 @@
     q.onkeydown = function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); $('akBar').requestSubmit ? $('akBar').requestSubmit() : $('chatGo').click(); } };
     $('akBar').onsubmit = function(e){
       e.preventDefault();
-      if (!akCan()){ chatBuy(me, r, askTopic); return; }
+      if (!akCan()){ if (CHAT_SALE) chatBuy(me, r, askTopic); else toast('오늘 무료 질문은 다 썼어요. 내일 다시 물어봐 주세요'); return; }
       var v = q.value.replace(/\s+/g, ' ').trim();
       if (v.length < 4){ toast('질문을 조금만 더 자세히 적어 주세요'); q.focus(); return; }
       chatAsk(me, r, askTopic, v);
@@ -4599,8 +4614,8 @@
     };
     function akOut(){
       akInputState();
-      akSay([akB('오늘 무료 질문은 다 썼어요. 내일 다시 한 번 무료로 물어볼 수 있어요.'), akB('지금 더 묻고 싶다면 질문권 ' + CHAT_PACK + '회를 받을 수 있어요.')], function(){
-        akChips([['질문권 ' + CHAT_PACK + '회 받기 · ' + priceTag('chat'), function(){ chatBuy(me, r, askTopic); }], ['내일 할게요', function(){ akChips([]); akUser('내일 다시 올게요'); akSay([akB('좋아요, 내일 기다릴게요. 그동안 오늘의 행운 부적도 열어 보세요.') + akRecs(me, 'day')], function(){ box.querySelectorAll('[data-akrec]').forEach(function(b){ if (b.onclick) return; b.onclick = function(){ var k = b.dataset.akrec; if (k === 'fill'){ go('num'); window.scrollTo(0, 0); return; } var fn = topicActs(me, r)[k]; if (fn) fn(); }; }); }); }, 'ghost']]);
+      akSay([akB('오늘 무료 질문은 다 썼어요. 내일 다시 한 번 무료로 물어볼 수 있어요.')].concat(CHAT_SALE ? [akB('지금 더 묻고 싶다면 질문권 ' + CHAT_PACK + '회를 받을 수 있어요.')] : []), function(){
+        akChips((CHAT_SALE ? [['질문권 ' + CHAT_PACK + '회 받기 · ' + priceTag('chat'), function(){ chatBuy(me, r, askTopic); }]] : []).concat([['내일 할게요', function(){ akChips([]); akUser('내일 다시 올게요'); akSay([akB('좋아요, 내일 기다릴게요. 그동안 오늘의 행운 부적도 열어 보세요.') + akRecs(me, 'day')], function(){ box.querySelectorAll('[data-akrec]').forEach(function(b){ if (b.onclick) return; b.onclick = function(){ var k = b.dataset.akrec; if (k === 'fill'){ go('num'); window.scrollTo(0, 0); return; } var fn = topicActs(me, r)[k]; if (fn) fn(); }; }); }); }, 'ghost']]));
       });
     }
     renderAsk.out = akOut;
@@ -4666,7 +4681,7 @@
       .then(function(o){
         if (!o.ok || !o.j.answer){ fail(o.j && o.j.error === 'personal_info' ? '전화번호 같은 개인정보는 빼고 물어봐 주세요' : o.j && o.j.error === 'banned_word' ? '고운 말로 다시 물어봐 주세요' : o.j && o.j.error === 'rate' ? '조금만 쉬었다가 다시 물어봐 주세요' : '지금은 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요'); return; }
         chatBusy = false;
-        if (o.j.source === 'local'){} else if (useFree) store('unsu_chat_day', { d:todayStr(), n:chatDay() + 1 }); else store('unsu_chat_cr', Math.max(0, chatCredits() - 1));
+        if (useFree) store('unsu_chat_day', { d:todayStr(), n:chatDay() + 1 }); else store('unsu_chat_cr', Math.max(0, chatCredits() - 1));
         var tp = CHAT_EX[o.j.topic] ? o.j.topic : topic; askTopic = tp;
         var l = chatLog(); l.push({ who:me.id, t:Date.now(), topic:tp, q:q, a:o.j.answer }); if (l.length > 40) l = l.slice(-40); store('unsu_chat_log', l);
         if (seq !== akSeq || !$('chatTyping')) return;

@@ -7,7 +7,9 @@
      KAKAO_JS_KEY                            (선택) 카카오톡 카드 공유 버튼 (콘솔 > 앱 키 > JavaScript 키)
      TOSS_CLIENT_KEY, TOSS_SECRET_KEY        토스페이먼츠 (API 개별 연동 키 · test_ck_ / test_sk_ 로 시작하면 테스트 결제)
      PORTONE_STORE_ID, PORTONE_CHANNEL_KEY, PORTONE_API_SECRET   포트원 V2 (둘 다 있으면 포트원 우선). PORTONE_TEST=1 이면 테스트 채널이라 항상 켜짐
+     PORTONE_KAKAOPAY_CHANNEL_KEY            (선택) 카카오페이 채널 키. 있으면 결제 버튼이 '카드 / 카카오페이' 둘로 나뉜다. PORTONE_CHANNEL_KEY 는 카드(KPN 등) 채널
      PAY_LIVE                                실결제 스위치. 라이브 키(live_ck_)는 PAY_LIVE=1 이고 개업일(2026-12-04 KST) 이후일 때만 켜진다. 테스트 키는 항상 켜짐
+     OWNER_KEY                               (선택) 운영자 계정 열쇠. 로그인한 채로 /?owner=열쇠 로 한 번 들어오면 그 기기에서 모든 콘텐츠가 결제 없이 열린다
      PAY_OFF                                 비상 스위치. 1 이면 키가 있어도 결제를 전부 '준비 중'으로 되돌린다
    하나라도 비어 있으면 그 기능만 꺼지고, 앱은 예전처럼 기기 저장 모드로 동작한다. */
 const crypto = require('crypto');
@@ -77,6 +79,22 @@ function addCookie(res, c){ const prev = res.getHeader('Set-Cookie'); res.setHea
 const setSession = (req, res, uid) => addCookie(res, cookie(req, COOKIE, makeSession(uid), MAX_AGE));
 const clearSession = (req, res) => addCookie(res, cookie(req, COOKIE, '', 0));
 
+/* ---- 운영자 계정: OWNER_KEY 를 아는 사람이 로그인한 채로 한 번 열쇠를 넣으면, 그 계정+기기에 1년짜리 서명 쿠키를 준다.
+   열쇠를 바꾸면(OWNER_KEY 교체) 예전 쿠키는 전부 무효 ---- */
+const OWNER_COOKIE = 'wj_o', OWNER_UNTIL = Date.parse('2099-12-31T00:00:00+09:00');
+const ownerSig = uid => sign('owner:' + uid + ':' + sha(E.OWNER_KEY || '').slice(0, 12));
+function isOwner(req, uid){
+  if (!E.OWNER_KEY || !uid || !E.SESSION_SECRET) return false;
+  const c = readCookies(req)[OWNER_COOKIE], want = ownerSig(uid);
+  return !!c && c.length === want.length && crypto.timingSafeEqual(Buffer.from(c), Buffer.from(want));
+}
+function ownerKeyOk(k){
+  const a = Buffer.from(String(k || '')), b = Buffer.from(String(E.OWNER_KEY || ''));
+  return !!E.OWNER_KEY && a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+const setOwner = (req, res, uid) => addCookie(res, cookie(req, OWNER_COOKIE, ownerSig(uid), 365 * 86400));
+const clearOwner = (req, res) => addCookie(res, cookie(req, OWNER_COOKIE, '', 0));
+
 /* ---- 기타 ---- */
 function origin(req){
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -98,4 +116,4 @@ function sameOrigin(req){
 }
 const sha = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 
-module.exports = { CONF, db, rpc, one, sessionUid, setSession, clearSession, origin, kstDay, send, redirect, body, sameOrigin, sha, readCookies, cookie, addCookie };
+module.exports = { CONF, db, rpc, one, sessionUid, setSession, clearSession, origin, kstDay, send, redirect, body, sameOrigin, sha, readCookies, cookie, addCookie, isOwner, ownerKeyOk, setOwner, clearOwner, OWNER_UNTIL };
