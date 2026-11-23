@@ -8,15 +8,15 @@ var SHARE = (function(){
   function pad2(n){ return (n < 10 ? '0' : '') + n; }
   function seedHash(str){ var h = 0; for (var i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0; return h >>> 0; }
   function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  /* 행운 숫자: 오늘 나에게 필요한 오행의 끝자리(목 3·8 / 화 2·7 / 토 5·0 / 금 4·9 / 수 1·6)로 끝나는 1~50 사이 숫자 3개.
+  /* 행운 숫자: 오늘 나에게 필요한 오행의 끝자리(목 3·8 / 화 2·7 / 토 5·0 / 금 4·9 / 수 1·6)로 끝나는 1~50 사이 숫자 n개(기본 3, 부적은 4 — 2026-11-23 소율).
      번호 조합을 만드는 기능이 아니라 '오늘의 행운 세트'에 곁들이는 작은 힌트다 */
-  function drawYong(seedStr, el){
+  function drawYong(seedStr, el, n){
     var rand = mulberry32(seedHash(seedStr));
     var digits = EL_TEXT[el].num.map(function(n){ return n % 10; });
     var pool = [];
     for (var i = 1; i <= 50; i++) if (digits.indexOf(i % 10) > -1) pool.push(i);
     var out = [];
-    for (var a = 0; a < 3; a++){ var ix = Math.floor(rand() * pool.length); out.push({ n:pool[ix], y:true }); pool.splice(ix, 1); }
+    for (var a = 0, cnt = n || 3; a < cnt && pool.length; a++){ var ix = Math.floor(rand() * pool.length); out.push({ n:pool[ix], y:true }); pool.splice(ix, 1); }
     return out.sort(function(p, q){ return p.n - q.n; });
   }
   function unb64u(s){

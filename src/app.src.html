@@ -2342,6 +2342,29 @@
   .tab-uni:active .tu-ball img{transform:scale(.94);}
   body.tb-min .tu-ball{bottom:10px;}
   @media (prefers-reduced-motion:reduce){.tu-ball img{transition:none}}
+  /* 2026-11-23 소율: 가운데 우니 공 테두리 = 연보라 빛 + 반짝임. transform·opacity만 움직임 (PERF lite·reduced-motion이면 멈춤) */
+  .tu-ball{isolation:isolate;box-shadow:0 0 0 3px #15112a,0 0 0 4.5px #c9b8ff,0 0 14px 3px rgba(190,168,255,.55),0 10px 24px rgba(0,0,0,.45);}
+  .tab-uni.active .tu-ball{box-shadow:0 0 0 3px #15112a,0 0 0 4.5px #e4dbff,0 0 20px 6px rgba(206,190,255,.75),0 10px 26px rgba(124,98,230,.5);}
+  .tu-ball::before{content:"";position:absolute;inset:-6px;border-radius:50%;padding:3px;z-index:1;pointer-events:none;
+    background:conic-gradient(from 0deg,rgba(255,255,255,0) 0deg,#fff 30deg,#c9b8ff 70deg,rgba(201,184,255,0) 130deg,rgba(201,184,255,0) 190deg,#f1ebff 220deg,#b49cff 260deg,rgba(180,156,255,0) 320deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    animation:tuSpin 3.6s linear infinite;will-change:transform;}
+  .tu-ball::after{content:"";position:absolute;inset:-9px;border-radius:50%;z-index:-1;pointer-events:none;
+    box-shadow:0 0 22px 7px rgba(196,176,255,.6);animation:tuGlow 2.4s ease-in-out infinite;}
+  .tu-sp{position:absolute;width:9px;height:9px;z-index:2;pointer-events:none;opacity:0;
+    background:radial-gradient(circle,#fff 0 18%,rgba(255,255,255,0) 22%),linear-gradient(#fff,#fff) center/1.6px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 1.6px no-repeat;
+    filter:drop-shadow(0 0 3px #cbb9ff);animation:tuTw 2.8s ease-in-out infinite;}
+  .tu-sp.sp1{top:-6px;right:2px;}
+  .tu-sp.sp2{left:-7px;top:24px;width:7px;height:7px;animation-delay:.9s;}
+  .tu-sp.sp3{right:-6px;bottom:8px;width:6px;height:6px;animation-delay:1.8s;}
+  @keyframes tuSpin{to{transform:rotate(360deg)}}
+  @keyframes tuGlow{0%,100%{opacity:.45}50%{opacity:1}}
+  @keyframes tuTw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}45%{opacity:1;transform:scale(1) rotate(45deg)}70%{opacity:0;transform:scale(.4) rotate(90deg)}}
+  html[data-perf="lite"] .tu-ball::before,html[data-perf="lite"] .tu-ball::after,html[data-perf="lite"] .tu-sp{animation:none;}
+  html[data-perf="lite"] .tu-ball::after{opacity:.8;}
+  html[data-perf="lite"] .tu-sp{display:none;}
+  @media (prefers-reduced-motion:reduce){.tu-ball::before,.tu-ball::after{animation:none}.tu-ball::after{opacity:.8}.tu-sp{display:none}}
+  .fc-trust{margin:-6px 0 12px;font-size:12.5px;line-height:1.5;color:var(--text-dim,#b9b3d6);}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -2555,7 +2578,7 @@
   <div class="tabbar-inner"><i class="tab-lens" aria-hidden="true"></i>
     <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>홈</span></button>
     <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
-    <button class="tab tab-uni" data-tab="ask" aria-label="우니에게 묻기"><i class="tu-ball" aria-hidden="true"><img src="img/u-thinking.webp" width="64" height="64" alt="" draggable="false"></i></button>
+    <button class="tab tab-uni" data-tab="ask" aria-label="우니에게 묻기"><i class="tu-ball" aria-hidden="true"><img src="img/u-thinking.webp" width="64" height="64" alt="" draggable="false"><s class="tu-sp sp1"></s><s class="tu-sp sp2"></s><s class="tu-sp sp3"></s></i></button>
     <button class="tab" data-tab="dream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.2A7.8 7.8 0 0 1 9.8 4.5a7.8 7.8 0 1 0 9.7 9.7z"/><path d="M16.2 4.2l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/></svg><span>꿈해몽</span></button>
     <button class="tab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg><span>보관함</span></button>
   </div>
