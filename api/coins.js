@@ -5,7 +5,8 @@
      브라우저가 보낸 n 이 서버 가격과 다르면(옛 화면·조작) 차감하지 않고 'price' 로 돌려보낸다
    key 는 같은 적립이 두 번 전송돼도 한 번만 반영되도록 브라우저가 만든 값 */
 const S = require('./_lib/srv');
-const { EARN, PRICES, AD_COIN_ON, PASS_DREAM_MAX, SPEND_MAX } = require('./_lib/shop');
+const crypto = require('crypto');
+const { EARN, PRICES, AD_COIN_ON, PASS_DREAM_MAX, SPEND_MAX, eventOn, bokPrize } = require('./_lib/shop');
 const { passUntil } = require('./_lib/pass');
 const ITEM_RE = /^([a-z]+):?([^\s]{0,100})$/;
 
@@ -33,6 +34,11 @@ module.exports = async (req, res) => {
         if (r.err !== 'limit') return S.send(res, 409, r);
       }
     } catch (e) { console.error('coins pass', e.message); }
+  } else if (kind === 'bok'){   /* 새해 복주머니: 기간 안 하루 1번, 양은 서버가 뽑는다 */
+    if (!eventOn()) return S.send(res, 403, { ok: false, err: 'event_off' });
+    const n = bokPrize(crypto.randomInt(0, 1e6) / 1e6);
+    args = { p_delta: n, p_daily_max: 1 };
+    ikey = 'bok:' + S.kstDay();
   } else if (kind === 'ad' && !AD_COIN_ON){
     return S.send(res, 403, { ok: false, err: 'ad_off' });
   } else if (EARN[kind]){
@@ -40,6 +46,7 @@ module.exports = async (req, res) => {
   } else return S.send(res, 400, { ok: false, err: 'kind' });
   try {
     const r = await S.rpc('coin_apply', Object.assign({ p_user: uid, p_kind: kind, p_why: why, p_key: ikey, p_day: S.kstDay(), p_paid: 0 }, args));
+    if (r.ok && kind === 'bok') r.n = args.p_delta;
     return S.send(res, r.ok ? 200 : 409, r);
   } catch (e) { console.error('coins', e.message); return S.send(res, 500, { ok: false, err: 'server' }); }
 };

@@ -32,11 +32,24 @@ const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: 
 const COIN_SALE = process.env.COIN_SALE === '1';
 /* 원화로 실제 판매하는 상품 (2026-11-21 GPT 최종 검토: 첫 판매는 3종만 — 사주 이야기책·궁합 상세·중요한 날 잡기).
    나머지 상품은 미리보기 + 무료 적립 엽전으로만 연다. PG 승인 범위가 넓어지면 Vercel 환경변수 WON_SALE=ez,gh,tk,tj 처럼 늘린다 */
-/* 2026-11-23 소율: 하루 무제한 대화권(chat)도 원화로 판다 */
-const WON_SALE = (process.env.WON_SALE || 'ez,gh,tk,chat').split(',').map(s => s.trim()).filter(k => WON[k]);
+/* 2026-11-23 소율: 하루 무제한 대화권(chat)도 원화로 판다
+   2026-11-23 소율: 엽전이 모자라면 막히지 않게 — 가격이 있는 모든 상품을 원화로 바로 열 수 있게 한다(기본값 = WON 전부) */
+const WON_SALE = (process.env.WON_SALE || Object.keys(WON).join(',')).split(',').map(s => s.trim()).filter(k => WON[k]);
 /* 우니 패스 판매: 첫 출시엔 끔(환불·한도 조건 확정 후 PASS_SALE=1) */
 const PASS_SALE = process.env.PASS_SALE === '1';
 const PASSES = { pass30: { days: 30, p: 12900, name: '우니 패스 30일' } };
 const PASS_DREAM_MAX = 1;
+/* 출시 기념 첫 결제 할인(2026-11-23 소율): 계정당 첫 원화 결제 1번, 기간 안에만. 서버가 금액을 정한다(10원 단위 올림) */
+const COUPON = { rate: 50, until: Date.parse('2026-12-31T23:59:59+09:00'), name: '출시 기념 첫 결제 50%' };
+const couponOn = () => process.env.COUPON_OFF !== '1' && Date.now() <= COUPON.until;
+const couponPrice = won => Math.ceil(won * (100 - COUPON.rate) / 100 / 10) * 10;
+/* 새해 복주머니 이벤트: 기간 안에 하루 1번, 무료 엽전을 서버가 뽑는다 */
+const EVENT = {
+  from: Date.parse(process.env.EVENT_FROM || '2026-12-14T00:00:00+09:00'),
+  to: Date.parse(process.env.EVENT_TO || '2027-01-31T23:59:59+09:00'),
+  prizes: [[10, 40], [20, 30], [30, 15], [50, 10], [100, 5]]   /* [엽전, 가중치%] */
+};
+const eventOn = () => { const t = Date.now(); return t >= EVENT.from && t <= EVENT.to; };
+function bokPrize(rand){ let r = rand * 100; for (const [n, w] of EVENT.prizes){ if ((r -= w) < 0) return n; } return 10; }
 const SPEND_MAX = 5000;
-module.exports = { PACKS, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };
+module.exports = { COUPON, couponOn, couponPrice, EVENT, eventOn, bokPrize, PACKS, WON, WON_NAMES, WON_SALE, PASS_SALE, COIN_SALE, EARN, PRICES, AD_COIN_ON, PASSES, PASS_DREAM_MAX, SPEND_MAX };
