@@ -1061,7 +1061,7 @@
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
   /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
      값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
-  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100, cal:100, lv:200, chat:100, wl:100, sal:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
+  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100, cal:100, lv:200, chat:100, wl:100, sal:100, gw:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
   var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
@@ -1078,7 +1078,7 @@
   /* 원화 단건 결제 (2026-11-21 소율 결정): PG 심사 때문에 엽전은 팔지 않고, 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제한다.
      엽전은 출석·가입·선물로 모으는 무료 적립 포인트. 가격은 서버 api/_lib/shop.js WON 과 같게(서버 값이 오면 그 값을 쓴다).
      */
-  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990, cal:990, lv:1900, chat:990, wl:990, sal:990 };
+  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990, cal:990, lv:1900, chat:990, wl:990, sal:990, gw:990 };
   function wonOf(k){ var w = SRV.cfg && SRV.cfg.won; return (w && w[k]) || WON[k] || 0; }
   function coinSale(){ return !!(SRV.cfg && SRV.cfg.packs); }
   /* 원화로 실제 파는 상품(서버 shop.js WON_SALE). 첫 판매 3종: 사주 이야기책·궁합 상세·중요한 날 잡기. 나머지는 미리보기 + 무료 엽전 */
@@ -1642,7 +1642,7 @@
       useRow('', '중요한 날 잡기', 'tk', '목적 하나 · 1년 달력') + useRow('', '궁합 상세', 'gh', '두 사람 · 계속 보기') +
       useRow('', '사주 이야기책 2~6장', 'ez', '저장한 사람 모두') + useRow('', '2027 토정비결', 'tj', '한 사람 · 계속 보기') +
       useRow('', '월별 운세 달력', 'cal', '12개월 · 달마다 흐름') + useRow('', '연애·결혼 시기', 'lv', '한 사람 · 계속 보기') +
-      useRow('', '내 재물 그릇', 'wl', '한 사람 · 계속 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 계속 보기') +
+      useRow('', '내 재물 그릇', 'wl', '한 사람 · 계속 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 계속 보기') + useRow('', '나를 돕는 귀인 풀이', 'gw', '한 사람 · 계속 보기') +
       useRow('', '우니에게 묻기 하루 무제한', 'chat', '오늘 자정까지 · 하루 1번은 무료') + '</div>' +
       (guestC ? '<div class="cs-guest"><p>엽전은 로그인한 계정에 쌓여요. 처음 로그인하면 <b>' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요.</p><button class="btn-primary btn-block" id="csLogin">로그인하고 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button></div>' : '') +
       '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
@@ -1661,7 +1661,7 @@
       var k = b.dataset.use, me = getMe();
       if (!me){ closeSheet(); startOnboarding('new'); return; }
       var r = compute(me); if (r.error) return;
-      var A = topicActs(me, r), fn = { dream:A.dream, cat:function(){ openTopics(me, r); }, tk:A.tk, gh:A.gh, ez:A.book, tj:A.tj, cal:A.fc, lv:A.lv, wl:A.wl, sal:A.sal, chat:function(){ chatBuy(me, r, askTopic); } }[k];
+      var A = topicActs(me, r), fn = { dream:A.dream, cat:function(){ openTopics(me, r); }, tk:A.tk, gh:A.gh, ez:A.book, tj:A.tj, cal:A.fc, lv:A.lv, wl:A.wl, sal:A.sal, gw:A.gw, chat:function(){ chatBuy(me, r, askTopic); } }[k];
       if (!fn) return;
       if (k !== 'chat' && k !== 'cat') closeSheet();
       fn();
@@ -2126,7 +2126,19 @@
     var acts = SMALL_ACT[el];
     return { X:X, el:el, mine:mine, color:E.color, dir:E.dir, caution:d.caution || X.c,
       act:acts[seedHash(String(d.id || d.at || '') + '|rx') % acts.length],
-      nums:drawYongNumbers(String(d.id || d.at || '') + '|rx|' + el, el).slice(0, 2).map(function(o){ return o.n; }) };
+      nums:dreamNums(d) };
+  }
+  /* 2026-11-23 소율: 꿈 숫자는 꿈속 상징 하나마다 하나씩(상징이 하나면 숫자 하나), 최대 3개(4개 이상은 안 씀).
+     상징 낱말 + 꿈 id 로 씨앗을 만들어 1~50 에서 고른다 — 같은 꿈은 다시 열어도 같은 숫자 */
+  function dreamNums(d){
+    var base = String(d.id || d.at || ''), syms = (d.symbols || []).slice(0, 3), out = [], used = {};
+    if (!syms.length) syms = [{ word:d.catName || '꿈' }];
+    syms.forEach(function(sy){
+      var n = 1 + Math.floor(mulberry32(seedHash(base + '|dn|' + sy.word))() * 50), g = 0;
+      while (used[n] && g++ < 60) n = n % 50 + 1;
+      used[n] = 1; out.push({ n:n, w:sy.word });
+    });
+    return out;
   }
   function rxCardHTML(d){
     var q = dreamRx(d);
@@ -2137,7 +2149,7 @@
         '<div class="tl-row"><span class="k">좋은 방향</span><b>' + q.dir + '</b></div>' +
         '<div class="tl-row"><span class="k">좋은 색</span><b>' + q.color + '</b></div>' +
         '<div class="tl-row tl-wide"><span class="k">오늘 해볼 일</span><b>' + q.act + '</b></div>' +
-        (showNums() ? '<div class="tl-row tl-wide tl-nums"><span class="k">좋은 숫자</span><b class="tl-numtxt">' + q.nums.join(' · ') + '</b></div>' : '') +
+        (showNums() ? '<div class="tl-row tl-wide tl-nums"><span class="k">좋은 숫자</span><b class="tl-numtxt">' + q.nums.map(function(o){ return o.n + '<small class="dm-nw"> ' + esc(o.w) + '</small>'; }).join(' · ') + '</b></div>' : '') +
       '</div>' +
       (q.mine ? '' : '<p class="helper">내 사주를 등록하면 방향, 색, 해볼 일이 나에게 필요한 기운으로 바뀌어요.</p>') + '</div>';
   }
@@ -2460,7 +2472,7 @@
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + esc(me.name) + '님께 지금 필요한 풀이</h2></div>' +
       '<button type="button" class="hp-pick" data-hp="' + REC[0] + '">' + uniImg(HOME_P[REC[0]].pose, 'hpk-uni') + '<span class="hpk-t"><small>오늘 ' + REC[1] + ' ' + f.scores[low[0]] + '점 · ' + (f.scores[low[0]] < 60 ? '조금 약한 날' : '오늘 가장 낮은 분야') + '</small><b>' + REC[2] + '</b><em>' + REC[3] + '</em></span><span class="chev" aria-hidden="true">›</span></button></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">깊이 보는 풀이</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div><div class="hp-list">' +
-      ['book', 'gh', 'tk', 'lv'].map(function(k){ return homeCardHTML(k, 'row'); }).join('') + '</div></section>';
+      ['book', 'gh', 'gw', 'tk', 'lv'].map(function(k){ return homeCardHTML(k, 'row'); }).join('') + '</div></section>';
     h += adSlotHTML('오늘의 운세를 본 뒤');
     var z = getZodiac(r.solar.m, r.solar.d);
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">가볍게 해보기</h2><span class="hs-meta">모두 무료</span></div><div class="hp-free">' +
@@ -3050,7 +3062,7 @@
     if ($('bxStart')) $('bxStart').onclick = function(){ startOnboarding('new'); };
     if ($('bxList')) $('bxList').onclick = function(){ renderList(); show('list'); };
     document.querySelectorAll('[data-bx]').forEach(function(b){ b.onclick = function(){ store('unsu_numbox', getBoxAll().filter(function(x){ return x.id !== b.dataset.bx; })); renderBox(); toast('지웠어요'); }; });
-    document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(), id = b.dataset.rp; if (id === 'gh'){ go('gunghap'); return; } if (!me) return; var r = compute(me), O = { wl:openWealth, sal:openSal, lv:openLoveTiming, tj:openTojeong }; if (O[id]) O[id](me, r); else if (id === 'cal') openFortuneCal(me, r, 0); else if (id === 'ez') openStory(me, r, 0); else openResult(me, r, true); }; });
+    document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(), id = b.dataset.rp; if (id === 'gh'){ go('gunghap'); return; } if (!me) return; var r = compute(me), O = { wl:openWealth, sal:openSal, gw:openGuin, lv:openLoveTiming, tj:openTojeong }; if (O[id]) O[id](me, r); else if (id === 'cal') openFortuneCal(me, r, 0); else if (id === 'ez') openStory(me, r, 0); else openResult(me, r, true); }; });
     document.querySelectorAll('[data-rptk]').forEach(function(b){ b.onclick = function(){ var k = b.dataset.rptk.split('|'), e = getList().filter(function(x){ return x.id === k[0]; })[0]; if (e) openTaekil(e, compute(e), k[1]); }; });
     document.querySelectorAll('[data-rpny]').forEach(function(b){ b.onclick = function(){ var e = getList().filter(function(x){ return x.id === b.dataset.rpny; })[0]; if (e) openNYSheet(e, compute(e)); }; });
     document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ var d = getDreams().filter(function(x){ return x.id === b.dataset.dm; })[0]; if (d){ show('dream'); renderDreamResult(d, false); } }; });
@@ -4012,6 +4024,7 @@
       ['관계', [['gh', 'uj-hands', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'joa-love', '인연이 오는 해와 달', '10년 연애·결혼 시기', '']]],
       ['날짜', [['fc', 'u-calendar', '사랑·돈·일 골든타이밍', '월별 운세 달력 · 이번 달 좋은 날', '무료'], ['tk', 'u-calendar', '중요한 날 잡기', '이사·개업·계약·면접 날짜', '두 달 무료']]],
       ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '내 사주 × 정미년 기운 · 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '음력 생일로 뽑는 한 해 괘 · 옛 풀이', ''], ['sal', 'u-thinking', '나에게 든 살 풀이', '도화·역마·홍염… 강점과 푸는 법', '1개 무료']]],
+      ['사람', [['gw', 'wooni-joa', '나를 돕는 귀인', '어떤 띠·일간이 나를 돕고 언제 올까', '1개 무료']]],
       ['돈', [['wl', 'u-money', '내 재물 그릇', '평생 돈 흐름 · 크게 들어오는 시기 3번', '1장 무료']]],
       ['더 깊이', [['book', 'u-book', '사주 이야기책', '우니가 읽어 주는 내 사주', '1장 무료'], ['chat', 'u-thinking', '우니에게 묻기', '사주 AI 해석 · 고민을 내 사주로 답해요', '하루 1번 무료'], ['job', 'u-work', '나에게 맞는 직업', '타고난 재능과 맞는 분야', '']]],
       ['가볍게 보기', [['zodiac', 'u-zodiac', '별자리 운세', '오늘의 별자리', '무료'], ['dream', 'u-sleep', '꿈해몽', '길몽일까? 오늘의 처방', '무료']]]
@@ -4029,7 +4042,7 @@
       gh:function(){ go('gunghap'); window.scrollTo(0, 0); }, lv:function(){ openLoveTiming(me, r); },
       fc:function(){ openFortuneCal(me, r, 0); }, tk:function(){ openTaekil(me, r); },
       ny:function(){ openNYSheet(me, r); }, tj:function(){ openTojeong(me, r); },
-      wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); },
+      wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); }, gw:function(){ openGuin(me, r); },
       book:function(){ openStory(me, r, 0); }, chat:function(){ openChat(me, r); }, job:function(){ openCat(me, r, 'job'); },
       zodiac:function(){ var z = getZodiac(r.solar.m, r.solar.d); myZ = z.name; renderZGrid(); openZodiac(z, entryISO(me, r)); show('zodiac'); },
       dream:function(){ openDream(); }
@@ -4162,6 +4175,7 @@
     fc:{ k:TJ_YEAR + ' 달력', t:'사랑·돈·일<br>골든타이밍', s:'좋은 달과 조심할 달 찾기', pose:'u-calendar', th:'blue', free:'이번 달 무료', p:'cal' },
     ny:{ k:TJ_YEAR + ' 신년운세', t:'정미년<br>내 한 해', s:'12개월 흐름 · 키워드', pose:'u-newyear', th:'gold', free:'총평 무료', p:'' },
     wl:{ k:'NEW · 평생 리포트', t:'내 재물<br>그릇', s:'평생 돈 흐름 · 들어오는 시기 3번', pose:'u-money', th:'gold', free:'1장 무료', p:'wl' },
+    gw:{ k:'NEW · 귀인', t:'나를 돕는 귀인 풀이', s:'도와줄 띠·일간 · 2027 귀인 오는 달', pose:'wooni-joa', th:'teal', free:'1개 무료', p:'gw', tag:'천을·천덕·문창…' },
     book:{ t:'사주 이야기책', s:'내 사주를 6장 이야기로', pose:'u-book', th:'violet', free:'1장 무료', p:'ez' },
     gh:{ t:'우리 둘 3단 궁합', s:'성격 · 연애 · 결혼 궁합', pose:'wooni-joa', th:'rose', free:'점수 무료', p:'gh' },
     tk:{ t:'중요한 날 잡기', s:'개업 · 이사 · 계약 좋은 날', pose:'u-work', th:'gold', free:'두 달 무료', p:'tk' },
@@ -4196,7 +4210,7 @@
   function bindHomeP(me, r, root){
     var A = {
       saju:function(){ go('saju'); window.scrollTo(0, 0); }, lv:function(){ openLoveTiming(me, r); }, gh:function(){ go('gunghap'); window.scrollTo(0, 0); },
-      wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); }, tj:function(){ openTojeong(me, r); }, fc:function(){ openFortuneCal(me, r, 0); },
+      wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); }, gw:function(){ openGuin(me, r); }, tj:function(){ openTojeong(me, r); }, fc:function(){ openFortuneCal(me, r, 0); },
       tk:function(){ openTaekil(me, r); }, job:function(){ openCat(me, r, 'job'); }, all:function(){ openTopics(me, r); },
       ny:function(){ openNYSheet(me, r); }, book:function(){ openStory(me, r, 0); }
     };
@@ -4208,6 +4222,7 @@
   var HOME_PD = {
     wl:{ h:'내 재물 그릇은 얼마나 클까?', d:'사주 속 재물·재능의 별과 10년마다 바뀌는 대운으로 평생 돈 흐름을 읽어요. 돈이 모이는 방식과 크게 들어오는 시기 3번을 알려 드려요.', m:['6장', '구성'], fr:['1장', '무료로 읽기'], toc:['내 재물 그릇의 모양', '돈이 들어오는 길 · 새는 길', '평생 재물 흐름 그래프', '크게 들어오는 시기 3번', '나에게 맞는 돈 버는 방식', TJ_YEAR + '년 재물 처방'], nf:1, cta:'1장 무료로 읽어 보기' },
     sal:{ h:'내 사주에는 어떤 살이 들었을까?', d:'도화·홍염·역마·화개·백호·괴강·양인·원진까지 내 사주에 든 살을 찾고, 살마다 강점과 조심할 점, 복으로 바꾸는 살풀이를 알려 드려요.', m:['8가지', '살 확인'], fr:['1개', '무료로 읽기'], toc:['내 사주에 든 살 한눈에', '첫 번째 살 풀이', '나머지 살의 강점 · 조심할 점', '살마다 살풀이', TJ_YEAR + '년 정미년에 들어오는 살'], nf:2, cta:'무료로 내 살 확인하기' },
+    gw:{ h:'나를 돕는 귀인은 누구일까?', d:'천을·천덕·월덕·문창·학당·태극·암록·금여 가운데 내 사주에 든 귀인을 찾아 옛풀이와 요즘풀이로 읽어요. 나를 돕는 띠·일간·성향과 ' + TJ_YEAR + '년 귀인이 오는 달까지 알려 드려요.', m:['8가지', '귀인 확인'], fr:['1개', '무료로 읽기'], toc:['내 사주에 든 귀인 한눈에', '첫 번째 귀인 풀이', '나머지 귀인 · 옛풀이와 요즘풀이', '나를 돕는 사람 · 띠·일간·성향', TJ_YEAR + '년 귀인이 오는 달 · 방향·장소'], nf:2, cta:'무료로 내 귀인 확인하기' },
     tj:{ h:TJ_YEAR + '년 내 한 해 토정비결', d:'음력 생년월일과 ' + TJ_YEAR + '년 간지로 괘를 지어 한 해를 풀어요. 총평과 1~3월은 무료예요.', m:['12달', '구성'], fr:['총평', '무료로 읽기'], toc:['한 해 괘와 총평', '1~3월 달마다 한 줄', '상반기 · 하반기 풀이', '4~12월 달마다 한 줄', '좋은 달 · 조심할 달 · 한 해 처방'], nf:2, cta:'총평 무료로 보기' },
     fc:{ h:'사랑·돈·일 골든타이밍', d:'오늘의 운세와 같은 계산으로 날마다 점수를 매겨 달력에 담았어요. 이번 달은 무료, 다음 달부터 12개월은 잠금이에요.', m:['12개월', '달력'], fr:['이번 달', '무료로 보기'], toc:['이번 달 날마다 점수', '좋은 날 · 조심할 날', '다음 달부터 12개월', '달마다 흐름 한 줄'], nf:2, cta:'이번 달 무료로 보기' },
     lv:{ h:'인연은 언제 가까워질까?', d:'해마다 들어오는 기운과 배우자 자리(일지)로 10년 동안 연애운·결혼운을 그래프로 보여 드려요.', m:['10년', '그래프'], fr:['요약', '무료로 읽기'], toc:['나의 연애 스타일', '배우자 자리', '올해 인연운', '10년 연애·결혼 그래프', '인연이 가장 가까운 해 · ' + TJ_YEAR + '년 인연 달', '나와 잘 맞는 사람'], nf:3, cta:'요약 무료로 보기' },
@@ -4590,11 +4605,131 @@
     if ($('btnSalBuy')) $('btnSalBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('sal', { who:nm + '님', onPaid:function(){ openSal(me, r); } }); }, 260); };
   }
 
+  /* ---------- 나를 돕는 귀인 풀이 (item 'gw', 2026-11-23 소율: 1·2·3만) ----------
+     1. 내 사주에 든 귀인 — 귀인마다 옛풀이/요즘풀이
+     2. 나를 돕는 사람 — 띠(천을귀인 자리 + 일지 육합), 일간(용신·정인), 성향
+     3. 2027 귀인 오는 달 — 월지가 천을귀인 자리이거나 월간이 용신인 달 + 방향·장소
+     무료: 첫 번째 귀인 하나. 나머지는 100닢 / 990원 */
+  var GW_INFO = {
+    '천을귀인':{ h:'天乙', k:'하늘이 보낸 가장 큰 귀인', old:'옛 책은 천을귀인을 ‘귀인 중의 으뜸’이라 했어요. 이 별이 든 사람은 흉한 일을 만나도 누군가 나타나 구해 주고, 관재와 병도 비켜 간다고 봤어요.', now:'막히는 순간에 꼭 손을 내미는 사람이 생기는 사주예요. 혼자 끙끙대기보다 먼저 도움을 청할 때 운이 열려요.', who:'윗사람, 선배, 오래 알던 어른' },
+    '천덕귀인':{ h:'天德', k:'하늘의 덕이 지켜 주는 별', old:'천덕은 하늘의 덕이라, 이 별이 든 사람은 재앙이 와도 저절로 풀리고 평생 큰 화를 입지 않는다고 했어요.', now:'운이 나쁠 때도 바닥까지 떨어지지 않는 안전망이 있어요. 평소에 베푼 친절이 위기 때 그대로 돌아와요.', who:'마음씨 좋은 이웃, 뜻밖의 은인' },
+    '월덕귀인':{ h:'月德', k:'달의 덕으로 부드럽게 풀리는 별', old:'월덕은 달의 덕이라 천덕과 짝을 이뤄 화를 복으로 바꾼다고 했어요. 성품이 온화하고 집안이 평안하다고 봤어요.', now:'갈등이 생겨도 크게 번지지 않고 말로 풀리는 편이에요. 중재자 역할을 맡으면 사람이 따라와요.', who:'가족, 동료, 같은 편이 되어 주는 친구' },
+    '문창귀인':{ h:'文昌', k:'글과 공부로 돕는 별', old:'문창은 글의 별이라 총명하고 글재주가 뛰어나 과거에 급제한다고 했어요. 흉살을 만나도 학문으로 푼다고 봤어요.', now:'배우고 쓰는 일에서 도움이 와요. 시험, 자격증, 글쓰기, 발표 자리에서 좋은 스승과 기회를 만나요.', who:'선생님, 멘토, 책과 강의' },
+    '학당귀인':{ h:'學堂', k:'배움의 집에 앉은 별', old:'학당은 배움의 집이라, 어려서부터 글을 좋아하고 이름이 난다고 했어요. 학자나 선생의 팔자로 봤어요.', now:'가르치고 배우는 관계에서 복이 커요. 스터디, 모임, 커뮤니티에서 평생 갈 사람을 만나요.', who:'함께 공부하는 사람, 제자, 후배' },
+    '태극귀인':{ h:'太極', k:'끝과 시작을 잇는 별', old:'태극은 만물의 처음과 끝이라, 이 별이 든 사람은 복과 수명을 함께 누리고 신비한 일에 밝다고 했어요.', now:'직감이 좋고, 일이 꼬였을 때 처음부터 다시 짜는 힘이 있어요. 끝난 인연이 다시 이어져 돕는 일도 많아요.', who:'다시 연락 온 옛 인연, 깊은 대화가 통하는 사람' },
+    '암록':{ h:'暗祿', k:'보이지 않게 들어오는 녹', old:'암록은 숨은 녹봉이라, 남모르게 재물이 들어오고 어려울 때 숨은 도움이 생긴다고 했어요.', now:'티 나지 않게 챙겨 주는 사람이 있어요. 소개, 추천, 입소문처럼 뒤에서 오는 기회가 많아요.', who:'나를 추천해 주는 사람, 조용한 후원자' },
+    '금여':{ h:'金輿', k:'황금 수레를 타는 별', old:'금여는 황금 수레라, 좋은 배우자를 만나고 집안의 도움으로 편안히 산다고 했어요.', now:'곁에 있는 사람 덕을 보는 사주예요. 배우자, 연인, 동업자가 든든한 수레가 되어 줘요.', who:'배우자, 연인, 오래 함께할 파트너' }
+  };
+  var GW_ORDER = ['천을귀인', '천덕귀인', '월덕귀인', '문창귀인', '학당귀인', '태극귀인', '암록', '금여'];
+  var GW_PERSON = [
+    '새 일을 먼저 벌이고 끌어 주는 사람. 계획이 많고 앞을 내다보는 타입이에요.',
+    '밝고 말이 시원한 사람. 분위기를 띄우고 나를 사람들 앞에 세워 줘요.',
+    '느긋하고 믿음직한 사람. 약속을 꼭 지키고 흔들릴 때 중심을 잡아 줘요.',
+    '똑 부러지고 원칙이 분명한 사람. 결정을 대신 정리해 주고 일을 마무리해 줘요.',
+    '조용하지만 생각이 깊은 사람. 말을 잘 들어 주고 넓게 보는 조언을 해 줘요.'
+  ];
+  var GW_PLACE = [
+    '공원, 서점, 강의실처럼 배우고 걷는 곳',
+    '공연장, 모임, 사람이 북적이는 밝은 곳',
+    '집 근처 단골 가게, 가족 모임, 오래 다닌 곳',
+    '회의실, 은행, 정리된 사무 공간',
+    '카페, 물가, 조용히 이야기 나누는 곳'
+  ];
+  var GW_POS = { year:'연주', month:'월주', day:'일주', hour:'시주' };
+  function gwCalc(me, r){
+    var P = r.pillars, keys = ['year', 'month', 'day', 'hour'].filter(function(k){ return P[k]; }), dS = P.day.stem, mB = P.month.br, list = [];
+    function brAt(b){ return keys.filter(function(k){ return P[k].br === b; }); }
+    function stAt(s){ return keys.filter(function(k){ return P[k].stem === s; }); }
+    function add(n, at){ if (at.length && !list.some(function(x){ return x.name === n; })) list.push({ name:n, at:at }); }
+    var CE = [[1,7],[0,8],[11,9],[11,9],[1,7],[0,8],[1,7],[2,6],[5,3],[5,3]][dS];
+    add('천을귀인', keys.filter(function(k){ return CE.indexOf(P[k].br) > -1; }));
+    /* 천덕: 월지마다 [천간=s/지지=b, 값] */
+    var CD = [['b',5],['s',6],['s',3],['b',8],['s',8],['s',7],['b',11],['s',0],['s',9],['b',2],['s',2],['s',1]][mB];
+    add('천덕귀인', CD[0] === 's' ? stAt(CD[1]) : brAt(CD[1]));
+    var WD = [8,6,2,0,8,6,2,0,8,6,2,0][mB];   /* 申子辰→壬, 巳酉丑→庚, 寅午戌→丙, 亥卯未→甲 */
+    add('월덕귀인', stAt(WD));
+    add('문창귀인', brAt([5,6,8,9,8,9,11,0,2,3][dS]));
+    add('학당귀인', brAt([11,6,2,9,2,9,5,0,8,3][dS]));
+    var TG = [[0,6],[0,6],[3,9],[3,9],[4,10,1,7],[4,10,1,7],[2,11],[2,11],[5,8],[5,8]][dS];
+    add('태극귀인', keys.filter(function(k){ return TG.indexOf(P[k].br) > -1; }));
+    add('암록', brAt([11,10,8,7,8,7,5,4,2,1][dS]));
+    add('금여', brAt([4,5,7,8,7,8,10,11,1,2][dS]));
+    list.sort(function(a, b){ return GW_ORDER.indexOf(a.name) - GW_ORDER.indexOf(b.name); });
+    /* 2. 나를 돕는 사람 */
+    var HAP = [1,0,11,10,9,8,7,6,5,4,3,2];
+    var ttis = CE.map(function(b){ return { b:b, why:'천을귀인 자리' }; });
+    if (CE.indexOf(HAP[P.day.br]) < 0) ttis.push({ b:HAP[P.day.br], why:'내 일지와 합' });
+    var yEl = r.yong, inEl = (MS.STEM_EL[dS] + 4) % 5;
+    var yStems = [yEl * 2, yEl * 2 + 1];
+    var jeongIn = inEl * 2 + (dS % 2 === 0 ? 1 : 0);   /* 정인: 나를 낳는 오행 중 음양이 다른 천간 */
+    /* 3. 2027 귀인 오는 달 */
+    var months = [];
+    for (var m = 1; m <= 12; m++){
+      var mp = MS.calc({ y:TJ_YEAR, m:m, d:20, cal:'solar', unknownTime:true, gender:'M', lonCorr:false }).pillars.month, v = 0, why = [];
+      if (CE.indexOf(mp.br) > -1){ v += 3; why.push('천을귀인 자리(' + MS.BR_K[mp.br] + ')가 들어와요'); }
+      if (MS.STEM_EL[mp.stem] === yEl){ v += 2; why.push('나를 돕는 ' + MS.EL_K[yEl] + ' 기운이 들어와요'); }
+      if (mp.br === HAP[P.day.br]){ v += 2; why.push('내 일지와 합이 들어 마음 맞는 사람이 생겨요'); }
+      if (MS.STEM_EL[mp.stem] === inEl){ v += 1; why.push('나를 받쳐 주는 인성 기운이 들어와요'); }
+      if (v) months.push({ m:m, v:v, why:why, p:mp });
+    }
+    months.sort(function(a, b){ return b.v - a.v || a.m - b.m; });
+    var top = months.slice(0, 3).sort(function(a, b){ return a.m - b.m; });
+    var yearGui = CE.indexOf(7) > -1;   /* 2027 丁未 — 未가 천을귀인 자리 */
+    return { list:list, ttis:ttis, yEl:yEl, inEl:inEl, yStems:yStems, jeongIn:jeongIn, top:top, yearGui:yearGui, CE:CE };
+  }
+  var gwMode = 'new';
+  function gwCardHTML(g){
+    var I = GW_INFO[g.name];
+    return '<div class="tj-sec sal-card gw-card"><h4><span class="gw-seal" aria-hidden="true">' + I.h + '</span><span class="gw-n">' + g.name + '</span><small>' + I.k + ' · ' + g.at.map(function(a){ return GW_POS[a]; }).join('·') + '</small></h4>' +
+      '<div class="sal-v sal-old"><p>' + I.old + '</p></div>' +
+      '<div class="sal-v sal-new"><p>' + I.now + '</p></div>' +
+      '<p class="gw-who"><b>이런 사람으로 와요</b> ' + I.who + '</p></div>';
+  }
+  function openGuin(me, r){
+    setTimeout(function(){ bond('today'); }, 900);
+    var G = gwCalc(me, r), open = owns('gw') || passActive(), nm = esc(me.name), L = G.list;
+    var sec = function(n, t, body){ return '<div class="tj-sec gw-sec"><h4><em>' + n + '</em>' + t + '</h4>' + body + '</div>'; };
+    var h = '<div class="sal-sheet gw-sheet" data-mode="' + gwMode + '"><div class="sheet-fig">' + uniImg('wooni-joa') + '</div>' +
+      '<h3 id="sheetTitle">' + nm + '님을 돕는 귀인</h3>' +
+      '<p class="helper" style="margin:-4px 0 12px">귀인(貴人)은 내 사주에 든 ‘도와주는 별’이에요. 어떤 사람이, 언제, 어디서 오는지 알려 드려요.</p>' +
+      '<div class="sal-mode" role="tablist" aria-label="풀이 방식"><button type="button" role="tab" data-gwm="old" aria-selected="' + (gwMode === 'old') + '">옛풀이<small>옛 명리 책 그대로</small></button><button type="button" role="tab" data-gwm="new" aria-selected="' + (gwMode === 'new') + '">요즘풀이<small>지금 생활로 바꿔서</small></button></div>' +
+      '<div class="sal-chips gw-chips">' + (L.length ? L.map(function(g, i){ return '<span class="' + (i === 0 || open ? 'on' : '') + '">' + g.name + '</span>'; }).join('') : '<span>원국에 든 귀인 없음</span>') + '</div>';
+    h += '<h4 class="gw-part"><em>1</em>내 사주에 든 귀인</h4>';
+    if (!L.length) h += '<div class="tj-sec"><p>' + nm + '님 원국에는 귀인 별이 드러나 있지 않아요. 이런 사주는 남에게 귀인이 되어 주면서 운을 쌓는 타입이에요. 대신 해마다 들어오는 귀인의 달을 잘 잡으면 돼요.</p></div>';
+    else h += gwCardHTML(L[0]);
+    var ttiTxt = G.ttis.map(function(t){ return '<span class="gw-tti"><b>' + MS.BR_ANIMAL[t.b] + '띠</b><small>' + t.why + '</small></span>'; }).join('');
+    var p2 = sec(2, '나를 돕는 사람',
+      '<p class="gw-k">띠</p><div class="gw-ttis">' + ttiTxt + '</div>' +
+      '<p class="gw-k">일간</p><p><b>' + MS.STEM_K[G.yStems[0]] + '·' + MS.STEM_K[G.yStems[1]] + ' (' + MS.EL_K[G.yEl] + ') 일간</b>은 ' + nm + '님에게 모자란 ' + MS.EL_K[G.yEl] + ' 기운을 채워 줘요. 함께 있으면 일이 술술 풀려요.</p>' +
+      '<p><b>' + MS.STEM_K[G.jeongIn] + ' (' + MS.EL_K[G.inEl] + ') 일간</b>은 정인, 곧 어머니 같은 자리예요. 말없이 받쳐 주고 내 편이 되어 줘요.</p>' +
+      '<p class="gw-k">성향</p><p>' + GW_PERSON[G.yEl] + '</p>');
+    var p3 = sec(3, TJ_YEAR + '년 귀인이 오는 달',
+      (G.yearGui ? '<p class="gw-hl">' + TJ_YEAR + '년 정미(丁未)년은 未가 ' + nm + '님의 천을귀인 자리예요. 한 해 내내 도와주는 사람이 가까이 있어요.</p>' : '') +
+      (G.top.length ? '<ul class="gw-months">' + G.top.map(function(x){ return '<li><b>' + x.m + '월</b><span>' + x.why[0] + '</span></li>'; }).join('') + '</ul>' : '<p>올해는 귀인이 크게 몰리는 달이 없어요. 대신 꾸준히 만나는 사람에게서 도움이 와요.</p>') +
+      '<div class="gw-dp"><div><small>귀인이 오는 방향</small><b>' + EL_TEXT[G.yEl].dir + '</b></div><div><small>만나기 좋은 곳</small><b>' + GW_PLACE[G.yEl] + '</b></div></div>');
+    if (open){
+      h += L.slice(1).map(gwCardHTML).join('') + p2 + p3 + adSlotHTML('귀인 풀이를 본 뒤');
+    } else {
+      h += '<div class="tj-sec tj-locked"><h4>' + (L.length > 1 ? '남은 귀인 ' + (L.length - 1) + '개 · ' : '') + '나를 돕는 사람 · ' + TJ_YEAR + '년 귀인 오는 달 ' + LOCK_SVG + '</h4>' +
+        '<div class="sal-chips tj-blur" aria-hidden="true">' + L.slice(1).map(function(g){ return '<span>' + g.name + '</span>'; }).join('') + '<span>○○띠</span><span>○·○ 일간</span><span>○월 · ○월 · ○월</span><span>방향 · 장소</span></div></div>' +
+        '<div class="tj-buy"><b>나를 돕는 띠·일간·성향과 ' + TJ_YEAR + '년 귀인이 오는 달까지</b>' + passLinkHTML() + '<button class="btn-primary btn-block sheen" id="btnGwBuy">귀인 풀이 전체 보기 · ' + priceTag('gw') + '</button></div>';
+    }
+    h += '<p class="disclaimer">귀인은 옛 명리의 신살 기준으로 봤어요. 재미로 보고, 좋은 인연을 알아보는 데만 가볍게 쓰세요.</p>' +
+      '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button></div>';
+    openSheet(h);
+    $('sheetBody').querySelectorAll('[data-gwm]').forEach(function(t){ t.onclick = function(){
+      gwMode = t.dataset.gwm; $('sheetBody').querySelector('.gw-sheet').dataset.mode = gwMode;
+      $('sheetBody').querySelectorAll('[data-gwm]').forEach(function(x){ x.setAttribute('aria-selected', x === t); });
+    }; });
+    if ($('btnGwBuy')) $('btnGwBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('gw', { who:nm + '님', onPaid:function(){ openGuin(me, r); } }); }, 260); };
+  }
+
   /* ---------- 풀이 전 '우니가 분석 중' 로딩 (2026-11-23 소율: 결과가 너무 빨리 나오면 믿음이 안 간다) ----------
      세션마다 (풀이 · 사람 · 열림 여부) 처음 한 번만 1.8초 보여 준다. 같은 화면 안에서 달·목적을 바꿀 때는 다시 안 나온다.
      줄임 모션·라이트 모드는 0.9초. */
   var loadSeen = {};
   var LOAD_STEPS = {
+    gw:['여덟 글자에서 귀인 별 찾기', '나를 돕는 띠·일간 맞춰 보기', TJ_YEAR + '년 달마다 귀인 자리 대 보기'],
     sal:['여덟 글자에서 신살 찾기', '살마다 자리(연·월·일·시) 맞춰 보기', '2027년 정미년 기운 겹쳐 보기'],
     tj:['태어난 해·달·날 괘 세우기', '상반기·하반기 흐름 읽기', '달마다 한 줄 풀이 정리'],
     wl:['재성(재물 별) 자리 찾기', '대운 10년마다 재물 흐름 계산', '돈이 들어오는 길과 새는 길 정리'],
@@ -4625,6 +4760,7 @@
     };
   }
   openSal = withLoad('sal', '살 풀이', openSal, function(){ return owns('sal') || passActive(); });
+  openGuin = withLoad('gw', '귀인 풀이', openGuin, function(){ return owns('gw') || passActive(); });
   openTojeong = withLoad('tj', '2027 토정비결', openTojeong, function(){ return owns('tj') || passActive(); });
   openWealth = withLoad('wl', '재물 그릇', openWealth, function(){ return owns('wl') || passActive(); });
   openLoveTiming = withLoad('lv', '연애·결혼 시기', openLoveTiming, function(){ return owns('lv') || passActive(); });
@@ -4845,6 +4981,7 @@
       tj:{ id:'tj', name:'2027 토정비결', coin:COST.tj, art:'book', keep:'저장한 모든 사람의 토정비결을 계속 볼 수 있어요', items:['상반기·하반기 풀이','4~12월 달마다 한 줄','좋은 달과 조심할 달, 한 해 처방'] },
       wl:{ id:'wl', name:'내 재물 그릇 2~6장', coin:COST.wl, art:'book', keep:'저장한 모든 사람의 재물 그릇을 계속 볼 수 있어요', items:['돈이 들어오는 길과 새는 길','평생 재물 흐름(대운 10년 단위)과 크게 들어오는 시기 3번','나에게 맞는 돈 버는 방식과 2027년 재물 처방'] },
       sal:{ id:'sal', name:'나에게 든 살 풀이', coin:COST.sal, art:'book', keep:'저장한 모든 사람의 살 풀이를 계속 볼 수 있어요', items:['내 사주에 든 모든 살 · 옛풀이와 요즘풀이로 나눠 보기','살마다 복으로 바꾸는 살풀이','2027년 정미년에 새로 들어오는 살'] },
+      gw:{ id:'gw', name:'나를 돕는 귀인 풀이', coin:COST.gw, art:'book', keep:'저장한 모든 사람의 귀인 풀이를 계속 볼 수 있어요', items:['내 사주에 든 모든 귀인 · 옛풀이와 요즘풀이','나를 돕는 띠·일간·성향','2027년 귀인이 오는 달과 방향·장소'] },
       ez:{ id:'ez', name:'사주 이야기책 2~6장', coin:COST.ez, art:'book', keep:'구입한 뒤 계정에서 계속 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달'] }
     })[id];
   }
