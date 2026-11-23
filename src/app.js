@@ -1463,20 +1463,23 @@
     $('sheetWrap').hidden = true; document.body.style.overflow = '';
     if (sheetReturn && sheetReturn.focus) sheetReturn.focus();
   }
+  var HSCROLL = '.hp-car,.tk-months,.ak-recs,.ak-qr,.ft-tabs,.ge-chips,.scroller';
   /* 시트를 손가락으로 아래로 끌어내려 닫기 (맨 위에서 아래로 당기거나, 손잡이 영역을 끌면 동작) */
   (function(){
-    var sh = $('sheet'), bd = $('sheetBackdrop'), y0 = 0, t0 = 0, dy = 0, drag = false, armed = false, lastY = 0, lastT = 0, vel = 0;
+    var sh = $('sheet'), bd = $('sheetBackdrop'), y0 = 0, x0 = 0, t0 = 0, dy = 0, drag = false, armed = false, lastY = 0, lastT = 0, vel = 0;
     function setY(v){ sh.style.transform = v ? 'translateY(' + v + 'px)' : ''; bd.style.opacity = v ? String(Math.max(0.15, 1 - v / 420)) : ''; }
     sh.addEventListener('touchstart', function(e){
       if (e.touches.length !== 1 || $('sheetWrap').hidden) return;
       var t = e.touches[0], r = sh.getBoundingClientRect();
       var onGrip = t.clientY - r.top < 56, inField = e.target.closest && e.target.closest('input,textarea,select,[contenteditable]');
-      armed = !inField && (onGrip || sh.scrollTop <= 0); drag = false; dy = 0; vel = 0;
-      y0 = lastY = t.clientY; t0 = lastT = Date.now();
+      var inRow = e.target.closest && e.target.closest(HSCROLL);
+      armed = !inField && !inRow && (onGrip || sh.scrollTop <= 0); drag = false; dy = 0; vel = 0;
+      y0 = lastY = t.clientY; x0 = t.clientX; t0 = lastT = Date.now();
     }, { passive:true });
     sh.addEventListener('touchmove', function(e){
       if (!armed) return;
       var y = e.touches[0].clientY, d = y - y0;
+      if (!drag && Math.abs(e.touches[0].clientX - x0) > Math.abs(d)){ armed = false; return; }   /* 옆으로 미는 건 시트 닫기가 아님 */
       if (!drag){
         if (d > 6 && (sh.scrollTop <= 0 || y0 - sh.getBoundingClientRect().top < 56)){ drag = true; sh.style.transition = 'none'; }
         else if (d < -6 || sh.scrollTop > 0){ armed = false; return; }
@@ -1497,6 +1500,39 @@
       } else { setY(0); setTimeout(function(){ sh.style.transition = ''; }, 260); }
     }
     sh.addEventListener('touchend', end); sh.addEventListener('touchcancel', end);
+  })();
+  /* 가로 카드·칩 줄: PC에서도 마우스로 끌어서 넘기기 (터치는 브라우저 기본 스크롤) */
+  (function(){
+    var st = null, moved = false;
+    document.addEventListener('pointerdown', function(e){
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      var row = e.target.closest && e.target.closest(HSCROLL);
+      if (!row || row.scrollWidth <= row.clientWidth + 2) return;
+      st = { row:row, x:e.clientX, left:row.scrollLeft, id:e.pointerId }; moved = false;
+    });
+    document.addEventListener('pointermove', function(e){
+      if (!st || e.pointerId !== st.id) return;
+      var dx = e.clientX - st.x;
+      if (!moved){
+        if (Math.abs(dx) < 6) return;
+        moved = true; st.row.classList.add('hs-drag');
+        try { st.row.setPointerCapture(e.pointerId); } catch(_){}
+      }
+      st.row.scrollLeft = st.left - dx;
+      e.preventDefault();
+    });
+    function up(){
+      if (!st) return;
+      var row = st.row; st = null;
+      if (moved){
+        row.classList.remove('hs-drag');   /* 스냅 다시 켜면 가까운 카드에 붙는다 */
+        setTimeout(function(){ moved = false; }, 0);
+      }
+    }
+    document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+    /* 끌고 난 직후의 클릭은 무시 (카드가 열리지 않게) */
+    document.addEventListener('click', function(e){ if (moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+    document.addEventListener('dragstart', function(e){ if (e.target.closest && e.target.closest(HSCROLL)) e.preventDefault(); });
   })();
   $('sheetBackdrop').onclick = closeSheet;
   $('sheet').addEventListener('click', function(e){ if (e.target.closest('[data-close]')) closeSheet(); });
@@ -3108,6 +3144,7 @@
       '<div class="poster-corner l">宮合<br>MATCH</div><div class="poster-corner r">' + ra.pillars.day.hanja + ' × ' + rb.pillars.day.hanja + '</div>' +
       '<div class="gh-figs">' + figSVG(ra.animal, MS.EL_KEY[ra.pillars.day.sEl]) + '<span class="link"></span>' + figSVG(rb.animal, MS.EL_KEY[rb.pillars.day.sEl]) + '</div>' +
       '<div class="gh-score"><div class="num">' + m.score + '<small>점</small></div><div class="gr">' + m.grade + '</div><p class="poster-sub" style="max-width:20em">' + esc(A.name) + '님과 ' + esc(B.name) + '님은 ' + m.summary + '</p></div>' +
+      '<div class="gh-react">' + (m.score >= 80 ? uniImg('wooni-joa', '', '하이파이브하는 우니와 조아') : m.score < 60 ? uniImg('joa-a', '', '토라진 조아') : uniImg('joa', '', '웃는 조아')) + '</div>' +
       '</div></div>';
     var comp = m.comp.length ? m.comp.map(function(c){ var giver = c.who === 'A' ? A : B, taker = c.to === 'A' ? A : B; return esc(giver.name) + '님이 ' + esc(taker.name) + '님에게 부족한 ' + MS.EL_K[c.el] + '(' + MS.EL_H[c.el] + ') 기운을 채워 줘요.'; }).join(' ') : '두 사람의 오행 구성이 비슷해 서로의 빈 곳을 채우기보다 같은 방향으로 함께 가는 관계예요.';
     h += '<div class="card"><div class="sec-head"><h2 class="sec-title">궁합 요약</h2><span class="sec-meta">무료</span></div><div class="gh-badges">' +
@@ -3943,7 +3980,7 @@
   /* 주제별 풀이 (2026-11-22 GPT 최종 시안): 관계 · 날짜 · 연간 운세 · 더 깊이 · 가볍게 보기 */
   function topicGroups(){
     return [
-      ['관계', [['gh', 'uj-hands', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'uj-hug', '인연이 오는 해와 달', '10년 연애·결혼 시기', '']]],
+      ['관계', [['gh', 'uj-hands', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'joa-love', '인연이 오는 해와 달', '10년 연애·결혼 시기', '']]],
       ['날짜', [['fc', 'u-calendar', '사랑·돈·일 골든타이밍', '월별 운세 달력 · 이번 달 좋은 날', '무료'], ['tk', 'u-calendar', '중요한 날 잡기', '이사·개업·계약·면접 날짜', '두 달 무료']]],
       ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '내 사주 × 정미년 기운 · 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '음력 생일로 뽑는 한 해 괘 · 옛 풀이', ''], ['sal', 'u-thinking', '나에게 든 살 풀이', '도화·역마·홍염… 강점과 푸는 법', '1개 무료']]],
       ['돈', [['wl', 'u-money', '내 재물 그릇', '평생 돈 흐름 · 크게 들어오는 시기 3번', '1장 무료']]],
@@ -3983,13 +4020,20 @@
      하루 점수는 DAILY.today 그대로(달력·분야별 운세와 같은 값), 학업·건강은 같은 날 기운으로 따로 계산.
      주·달은 그 기간 날마다 점수의 평균 + 기간의 기운(주: 가장 많은 십성, 달: 월주 천간) → 날짜가 같으면 문장도 같다
      ========================================================= */
+  /* 분야 아이콘: 우니조아 파스텔 이모티콘 (얼굴 + 볼터치). 네이버 아이콘과 겹치지 않게 직접 그린 모양 */
+  function ftFace(x, y){
+    var k = '#4b3a63';
+    return '<ellipse cx="' + (x - 5.2) + '" cy="' + (y + 1.8) + '" rx="1.7" ry="1" fill="#ff8fa8" opacity=".55"/><ellipse cx="' + (x + 5.2) + '" cy="' + (y + 1.8) + '" rx="1.7" ry="1" fill="#ff8fa8" opacity=".55"/>' +
+      '<circle cx="' + (x - 2.9) + '" cy="' + y + '" r="1.15" fill="' + k + '"/><circle cx="' + (x + 2.9) + '" cy="' + y + '" r="1.15" fill="' + k + '"/>' +
+      '<path d="M' + (x - 1.5) + ' ' + (y + 1.9) + 'q1.5 1.4 3 0" fill="none" stroke="' + k + '" stroke-width="1.1" stroke-linecap="round"/>';
+  }
   var FT_CATS = [
-    ['total', '총운', '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#8a7cf0" stroke-width="3"/><path d="M12 4.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="#ff9a8a" stroke-width="3"/><path d="M19.5 12a7.5 7.5 0 0 1-7.5 7.5" fill="none" stroke="#8fdcaa" stroke-width="3"/><path d="M12 19.5A7.5 7.5 0 0 1 4.5 12" fill="none" stroke="#f6cd5b" stroke-width="3"/>'],
-    ['love', '애정운', '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" fill="#ff6f86"/>'],
-    ['money', '금전운', '<path d="M7 5h10l3.5 4.5L12 20 3.5 9.5z" fill="#3fc6a0"/><path d="M3.5 9.5h17M9 5l3 4.5L15 5M12 9.5V20" fill="none" stroke="#c9f5e6" stroke-width="1.1"/>'],
-    ['work', '직장운', '<rect x="3.5" y="7.5" width="17" height="12" rx="2.5" fill="#f2a65a"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" fill="none" stroke="#f2a65a" stroke-width="1.8"/><path d="M3.5 12.5h17" stroke="#ffe1c2" stroke-width="1.2"/>'],
-    ['study', '학업운', '<path d="M2.5 9.5 12 5l9.5 4.5L12 14z" fill="#9aa3c7"/><path d="M6.5 11.5v4c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-4" fill="#7c86ad"/><path d="M20.5 10v5" stroke="#9aa3c7" stroke-width="1.4"/>'],
-    ['health', '건강운', '<path d="M12 3.5 19 6v5.5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z" fill="#f6b73c"/><path d="M12 8.5v6M9 11.5h6" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>']
+    ['total', '총운', '<path d="M16 3.6l3.4 7 7.6 1.1-5.5 5.3 1.3 7.6L16 21l-6.8 3.6 1.3-7.6L5 11.7l7.6-1.1z" fill="#ffe59a" stroke="#ffd46b" stroke-width="2" stroke-linejoin="round"/>' + ftFace(16, 15.2) + '<circle cx="26.5" cy="5" r="1.3" fill="#fff3c4"/><circle cx="5" cy="24.5" r="1" fill="#fff3c4"/>'],
+    ['love', '애정운', '<path d="M16 27.2s-10.5-6.2-10.5-13.4A5.6 5.6 0 0 1 16 10.4a5.6 5.6 0 0 1 10.5 3.4c0 7.2-10.5 13.4-10.5 13.4z" fill="#ffb7c8" stroke="#ff9db5" stroke-width="1.4" stroke-linejoin="round"/>' + ftFace(16, 16.2) + '<path d="M9.4 12.6a3 3 0 0 1 2.4-1.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".8"/>'],
+    ['money', '금전운', '<circle cx="16" cy="16.5" r="11" fill="#bff0d9" stroke="#93dcbc" stroke-width="1.6"/><rect x="13.8" y="8.4" width="4.4" height="4.4" rx="1" fill="none" stroke="#7ccaa8" stroke-width="1.5"/>' + ftFace(16, 18.2) + '<path d="M8.2 12.4a8.6 8.6 0 0 1 3-3.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".8"/>'],
+    ['work', '직장운', '<path d="M12.4 10.6V8.8a2.2 2.2 0 0 1 2.2-2.2h2.8a2.2 2.2 0 0 1 2.2 2.2v1.8" fill="none" stroke="#f3ad7f" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.4" width="22" height="16" rx="4.5" fill="#ffd3b0" stroke="#f9bc92" stroke-width="1.4"/><rect x="14.6" y="20.6" width="2.8" height="2.4" rx=".8" fill="#f3ad7f"/>' + ftFace(16, 16.2)],
+    ['study', '학업운', '<rect x="7" y="4.8" width="18.5" height="22.4" rx="3.4" fill="#c4d8ff" stroke="#a9c4fb" stroke-width="1.4"/><path d="M11 4.8v22.4" stroke="#a9c4fb" stroke-width="1.6"/><path d="M21.5 4.8v6.4l-1.8-1.3-1.8 1.3V4.8" fill="#ffb7c8"/>' + ftFace(18.2, 17.4)],
+    ['health', '건강운', '<path d="M16 10.4c-3-2.2-9.6-1.4-9.6 6 0 6.2 4.2 11 7.2 11 1.1 0 1.6-.6 2.4-.6s1.3.6 2.4.6c3 0 7.2-4.8 7.2-11 0-7.4-6.6-8.2-9.6-6z" fill="#cdeeb6" stroke="#ade09a" stroke-width="1.4" stroke-linejoin="round"/><path d="M16 10.2c.2-2.8 2.1-4.8 5-5-.2 2.9-2.1 4.8-5 5z" fill="#93d681"/><path d="M15.6 10.4c-.2-1.6-.8-2.8-1.8-3.6" stroke="#b58b6a" stroke-width="1.3" stroke-linecap="round" fill="none"/>' + ftFace(16, 18.4)]
   ];
   var FT_PERIODS = [['d0', '오늘'], ['d1', '내일'], ['wk', '이번 주'], ['mo', '이번 달']];
   var FT_GRP = {
@@ -4058,7 +4102,7 @@
     var P = ftPeriod(me, r, ftSel.p), C = FT_CATS.filter(function(c){ return c[0] === ftSel.c; })[0];
     var more = ftSel.p === 'd0' && { love:'love', money:'money', work:'career' }[ftSel.c];
     return '<div class="ft-tabs" role="tablist" aria-label="운세 기간">' + FT_PERIODS.map(function(p){ return '<button type="button" role="tab" data-ftp="' + p[0] + '" aria-selected="' + (p[0] === ftSel.p) + '">' + p[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c){ return '<button type="button" role="tab" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 24 24">' + c[2] + '</svg></i><span>' + c[1] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="ft-cats" role="tablist" aria-label="운세 분야">' + FT_CATS.map(function(c, i){ return '<button type="button" role="tab" class="ftc-' + c[0] + '" data-ftc="' + c[0] + '" aria-selected="' + (c[0] === ftSel.c) + '"><i aria-hidden="true"><svg viewBox="0 0 32 32">' + c[2] + '</svg></i><span>' + c[1] + (c[0] === 'total' ? ' <b>' + P.v.total + '</b>' : '') + '</span></button>'; }).join('') + '</div>' +
       '<div class="ft-body" aria-live="polite"><div class="ft-head"><span><small>' + P.title + ' · ' + P.sub + '</small><b>' + C[1] + '</b></span><em data-tier="' + tierOf(P.v[ftSel.c]) + '">' + P.v[ftSel.c] + '<small>점</small></em></div>' +
       '<p>' + (ftSel.c === 'total' && ftSel.p === 'd0' ? esc(me.name) + '님, ' : '') + P.t[ftSel.c] + '</p>' +
       (more ? '<button type="button" class="ft-more" data-cat="' + more + '">' + C[1] + ' 자세히 보기 · 타고난 그릇과 올해 흐름 ›</button>' : '') + '</div>';
@@ -4081,9 +4125,9 @@
     ny:{ k:TJ_YEAR + ' 신년운세', t:'정미년<br>내 한 해', s:'12개월 흐름 · 키워드', pose:'u-newyear', th:'gold', free:'총평 무료', p:'' },
     wl:{ k:'NEW · 평생 리포트', t:'내 재물<br>그릇', s:'평생 돈 흐름 · 들어오는 시기 3번', pose:'u-money', th:'gold', free:'1장 무료', p:'wl' },
     book:{ t:'사주 이야기책', s:'내 사주를 6장 이야기로', pose:'u-book', th:'violet', free:'1장 무료', p:'ez' },
-    gh:{ t:'우리 둘 3단 궁합', s:'성격 · 연애 · 결혼 궁합', pose:'uj-hands', th:'rose', free:'점수 무료', p:'gh' },
+    gh:{ t:'우리 둘 3단 궁합', s:'성격 · 연애 · 결혼 궁합', pose:'wooni-joa', th:'rose', free:'점수 무료', p:'gh' },
     tk:{ t:'중요한 날 잡기', s:'개업 · 이사 · 계약 좋은 날', pose:'u-work', th:'gold', free:'두 달 무료', p:'tk' },
-    lv:{ t:'인연이 오는 해와 달', s:'10년 연애·결혼 시기', pose:'u-love', th:'navy', free:'요약 무료', p:'lv' },
+    lv:{ t:'인연이 오는 해와 달', s:'10년 연애·결혼 시기', pose:'joa-love', th:'navy', free:'요약 무료', p:'lv' },
     job:{ t:'나에게 맞는 일', s:'타고난 재능과 분야', pose:'u-work', th:'teal', free:'', p:'cat' }
   };
   function homeCardHTML(k, kind){
@@ -4164,7 +4208,7 @@
     var M = [
       ['btnTj', 'u-book', '토정비결', '음력 생일로 뽑는 한 해 괘', 'NEW'],
       ['btnFc', 'u-calendar', '월별 운세 달력', '이번 달 좋은 날 무료', ''],
-      ['btnLv', 'uj-hug', '연애·결혼 시기', '인연이 오는 해 찾기', ''],
+      ['btnLv', 'joa-love', '연애·결혼 시기', '인연이 오는 해 찾기', ''],
       ['btnChat', 'u-thinking', '우니에게 묻기', '사주 AI 해석 · 하루 1번 무료', 'AI']
     ];
     if (home) M = M.concat([['btnMmGh', 'uj-hands', '궁합', '둘의 합은 몇 점일까?', ''], ['btnMmJob', 'u-work', '나에게 맞는 직업', '타고난 재능과 분야', '']]);
@@ -4311,7 +4355,7 @@
       return '<li><span class="lv-y"><b>' + x.y + '</b><small>' + x.age + '세</small></span><span class="lv-bars"><i class="l" style="--v:' + (x.lov / 100) + '"></i><i class="m" style="--v:' + (x.mar / 100) + '"></i></span><span class="lv-n">' + x.lov + ' · ' + x.mar + '</span></li>';
     }).join('');
     var yl = function(a){ return a.map(function(x){ return '<b>' + x.y + '년</b>(' + x.age + '세)'; }).join(', '); };
-    openSheet('<div class="lv-sheet"><div class="sheet-fig">' + uniImg('u-love') + '</div>' +
+    openSheet('<div class="lv-sheet"><div class="sheet-fig">' + uniImg('joa-marry', '', '반지를 든 조아') + '</div>' +
       '<h3 id="sheetTitle">' + esc(me.name) + '님의 연애·결혼 시기</h3>' +
       '<p class="helper" style="margin:-4px 0 12px">해마다 들어오는 기운과 배우자 자리(일지)로 본 인연의 흐름이에요.</p>' +
       '<div class="tj-sec"><h4>나의 연애 스타일 · ' + MS.STEM_K[dS] + '(' + MS.STEM_H[dS] + ') 일간</h4><p>' + LV_STYLE[dS] + '</p></div>' +
@@ -5136,7 +5180,7 @@
   function inviteHeroHTML(){
     var inv = INVITE, ri = compute(inv);
     return '<div class="card invite-card">' +
-      '<span class="inv-badge">' + SH_IC.heart + '궁합 신청이 도착했어요</span>' +
+      '<span class="inv-badge">' + SH_IC.heart + '궁합 신청이 도착했어요</span>' + uniImg('joa-letter', 'inv-joa', '편지를 든 조아') +
       '<div class="inv-pair"><div class="inv-p">' + figSVG(ri.animal, MS.EL_KEY[ri.pillars.day.sEl]) + '<b>' + esc(inv.name) + '</b><small>' + ri.pillars.year.name + '년생 ' + ri.animal + '띠</small></div>' +
       '<span class="gh-amp">合</span><div class="inv-p"><span class="inv-q">?</span><b>나</b><small>생년월일 입력</small></div></div>' +
       '<h1 class="hero-title">' + esc(inv.name) + '님의 궁합 신청</h1>' +
