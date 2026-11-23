@@ -18,6 +18,7 @@ function cfg(){
            clientKey: S.CONF.pay && S.CONF.provider === 'toss' ? ck : null,
            storeId: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_STORE_ID : null,
            channelKey: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_CHANNEL_KEY : null,
+           kakaoChannelKey: S.CONF.pay && S.CONF.provider === 'portone' ? process.env.PORTONE_KAKAOPAY_CHANNEL_KEY || null : null,   /* 카카오페이 채널(선택) */
            test: S.CONF.payTest },
     packs: COIN_SALE ? PACKS : null,   /* 엽전 판매는 기본 꺼짐(2026-11-21) */
     won: WON, wonNames: WON_NAMES, wonSale: WON_SALE,
@@ -34,6 +35,11 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET'){
       if (!uid) return S.send(res, 200, { cfg: c, user: null });
+      /* 운영자 열쇠: /?owner=열쇠 → 앱이 /api/me?owner=열쇠 로 넘긴다. off 면 해제 */
+      const ok = req.query && req.query.owner;
+      let owner = S.isOwner(req, uid);
+      if (ok === 'off'){ S.clearOwner(req, res); owner = false; }
+      else if (ok && S.ownerKeyOk(ok)){ S.setOwner(req, res, uid); owner = true; }
       const u = await S.one('users?id=eq.' + uid + '&deleted_at=is.null&select=provider,nick,consent,snapshot,snapshot_at,coin_free,coin_paid,created_at');
       if (!u){ S.clearSession(req, res); return S.send(res, 200, { cfg: c, user: null }); }
       const [led, ord, pu] = await Promise.all([
@@ -46,7 +52,7 @@ module.exports = async (req, res) => {
         snapshot: u.snapshot, snapshotAt: u.snapshot_at ? Date.parse(u.snapshot_at) : 0,
         coins: { free: u.coin_free, paid: u.coin_paid, bal: u.coin_free + u.coin_paid },
         ledger: led.map(x => ({ t: Date.parse(x.created_at), n: x.delta, p: x.delta_paid || 0, k: x.kind, why: x.why || '' })),
-        orders: ord, passUntil: pu, customerKey: 'wj_' + S.sha(uid).slice(0, 32)
+        orders: ord, passUntil: owner ? S.OWNER_UNTIL : pu, owner, customerKey: 'wj_' + S.sha(uid).slice(0, 32)
       } });
     }
     if (!uid) return S.send(res, 401, { ok: false, err: 'login' });
