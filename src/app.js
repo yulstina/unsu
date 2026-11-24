@@ -775,7 +775,7 @@
       '<h2 class="sum-t">' + ig.img + ' · ' + ig.t + '</h2><p class="body-text">' + ig.d + '</p>' +
       '<div class="chip-row sum-tags"><span class="chip">' + P.year.name + '년생 ' + r.animal + '띠</span><span class="chip">일간 ' + P.day.sh + '(' + MS.EL_K[dEl] + ')</span><span class="chip">' + manyE.map(function(e){ return MS.EL_K[e]; }).join('·') + ' 기운이 많아요</span></div></div>' +
       bookCoverHTML(entry, ezOpen) +
-      '<details class="card chart-fold" id="chartFold"><summary><b>명식 · 오행 · 계산 근거 펼치기</b><small>원국 ' + (P.hour ? '8' : '6') + '글자 · 일간 풀이 · 오행 분포 · 만세력 계산</small></summary><div class="chart-in">' + h + '</div></details>' + imgBtn;
+      '<section class="chart-sec" id="chartFold"><h2 class="chart-sec-t">근거로 보는 사주 풀이</h2><p class="chart-sec-s">원국 ' + (P.hour ? '8' : '6') + '글자 · 일간 풀이 · 오행 분포 · 만세력 계산</p><div class="chart-in">' + h + '</div></section>' + imgBtn;
     h += adSlotHTML('원국과 오행을 본 뒤');
     var ezStart = h.length;
     h += zoneHTML('read', '풀이', '글자들이 말해 주는 것');
@@ -856,7 +856,7 @@
     bindTopics(entry, r, $('resultBody'));
     $('btnDraw').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
-    if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if ($('chartFold')) $('chartFold').open = true; if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
+    if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
     $('btnCopyRes').onclick = function(){ copyText(summaryText(), '결과를 복사했어요'); };
     $('btnShareRes').onclick = function(){
       var ig0 = ILGAN[P.day.stem];
@@ -870,51 +870,84 @@
   /* ---- 결과 이미지 카드 (1080×1350, 공유·저장용) ---- */
   var EL_HEX = ['#6fd88a','#ff8a73','#f6cd5b','#eef1f8','#6c9dff'];
   function resultCardCanvas(entry, r, done){
-    var P = r.pillars, c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
-    var g = c.getContext('2d'), F = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif', H = '"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif';
-    var bg = g.createLinearGradient(0,0,0,1350); bg.addColorStop(0,'#070b24'); bg.addColorStop(.55,'#101650'); bg.addColorStop(1,'#2a1a6e');
-    g.fillStyle = bg; g.fillRect(0,0,1080,1350);
-    [[200,260,520,'rgba(76,128,255,.28)'],[900,420,480,'rgba(140,90,250,.30)'],[540,1250,560,'rgba(100,80,240,.25)']].forEach(function(o){
-      var rg = g.createRadialGradient(o[0],o[1],0,o[0],o[1],o[2]); rg.addColorStop(0,o[3]); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0,0,1080,1350); });
-    for (var i = 0; i < 70; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
+    var P = r.pillars, IG = ILGAN[P.day.stem], W = 1080, MX = 100, TW = W - MX * 2;
+    var F = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif', H = '"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif';
+    var sc = document.createElement('canvas').getContext('2d');
+    function wrap(g, text, maxW){
+      var out = [], line = '';
+      String(text).split(' ').forEach(function(w){
+        var t = line ? line + ' ' + w : w;
+        if (g.measureText(t).width <= maxW){ line = t; return; }
+        if (line) out.push(line);
+        line = w;
+        while (g.measureText(line).width > maxW){ var k = line.length; while (k > 1 && g.measureText(line.slice(0, k)).width > maxW) k--; out.push(line.slice(0, k)); line = line.slice(k); }
+      });
+      if (line) out.push(line); return out;
+    }
+    var yg = EL_TEXT[r.yong];
+    var blocks = [
+      ['나는 이런 사람이에요', IG.d], ['타고난 강점', IG.good], ['조심하면 좋은 점', IG.care],
+      ['잘 맞는 분야', IG.fit], ['나를 살리는 기운 · 용신 ' + MS.EL_H[r.yong] + MS.EL_K[r.yong], '행운의 색은 ' + yg.color + ', 좋은 방향은 ' + yg.dir + '이에요. ' + yg.act + ' 같은 활동이 기운을 채워 줘요.']
+    ];
+    sc.font = '400 33px ' + F;
+    var LH = 52, lay = blocks.map(function(b){ return { t:b[0], lines:wrap(sc, b[1], TW) }; });
+    var y0 = 1570, hgt = y0;
+    lay.forEach(function(b){ hgt += 48 + b.lines.length * LH + 32; });
+    var HT = hgt + 90;
+    var c = document.createElement('canvas'); c.width = W; c.height = HT;
+    var g = c.getContext('2d');
+    var bg = g.createLinearGradient(0,0,0,HT); bg.addColorStop(0,'#070b24'); bg.addColorStop(.5,'#101650'); bg.addColorStop(1,'#2a1a6e');
+    g.fillStyle = bg; g.fillRect(0,0,W,HT);
+    [[200,260,520,'rgba(76,128,255,.28)'],[900,520,480,'rgba(140,90,250,.30)'],[540,HT-100,620,'rgba(100,80,240,.25)']].forEach(function(o){
+      var rg = g.createRadialGradient(o[0],o[1],0,o[0],o[1],o[2]); rg.addColorStop(0,o[3]); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(0,0,W,HT); });
+    for (var i = 0; i < 90; i++){ g.fillStyle = 'rgba(230,240,255,' + (Math.random()*.6+.2) + ')'; g.beginPath(); g.arc(Math.random()*W, Math.random()*HT, Math.random()*1.8+.5, 0, 6.283); g.fill(); }
     function rr(x,y,w,h,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); }
-    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 34px ' + F; g.fillText('우니조아  ·  나의 사주 리포트', 540, 96);
-    g.fillStyle = '#fff'; g.font = '700 62px ' + F; g.fillText(entry.name + '님', 540, 594);
-    g.fillStyle = '#c9d4ff'; g.font = '400 32px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 644);
-    /* 결과 한 줄: 일간 이미지 + 키워드 (공유 이미지만 봐도 무슨 사람인지 알게) */
-    var IG = ILGAN[P.day.stem];
-    rr(110, 676, 860, 96, 48); g.fillStyle = 'rgba(246,205,91,.10)'; g.fill(); g.strokeStyle = 'rgba(246,205,91,.45)'; g.lineWidth = 2; g.stroke();
-    var one = '“' + IG.img + ' 같은 사람”', ofs = 38;
-    g.font = '700 ' + ofs + 'px ' + F; while (ofs > 28 && g.measureText(one).width > 800){ ofs--; g.font = '700 ' + ofs + 'px ' + F; }
-    g.fillStyle = '#f6cd5b'; g.fillText(one, 540, 722);
-    g.fillStyle = '#e9dfb6'; g.font = '500 25px ' + F; g.fillText(IG.kw.slice(0, 3).join(' · '), 540, 756);
+    g.textAlign = 'center'; g.fillStyle = '#b9c8ff'; g.font = '500 36px ' + F; g.fillText('우니조아  ·  나의 사주 리포트', 540, 100);
+    /* 일러스트는 작게(280) — 이름·결과가 먼저 읽히게 */
+    g.fillStyle = '#fff'; g.font = '700 84px ' + F; g.fillText(entry.name + '님', 540, 500);
+    g.fillStyle = '#c9d4ff'; g.font = '400 36px ' + F; g.fillText(P.year.name + '년생 ' + r.color + ' ' + r.animal + '띠 · ' + P.day.name + '(' + P.day.hanja + ')일주', 540, 566);
+    rr(MX, 614, TW, 140, 70); g.fillStyle = 'rgba(246,205,91,.10)'; g.fill(); g.strokeStyle = 'rgba(246,205,91,.45)'; g.lineWidth = 2; g.stroke();
+    var one = '“' + IG.img + ' 같은 사람”', ofs = 46;
+    g.font = '700 ' + ofs + 'px ' + F; while (ofs > 30 && g.measureText(one).width > 800){ ofs--; g.font = '700 ' + ofs + 'px ' + F; }
+    g.fillStyle = '#f6cd5b'; g.fillText(one, 540, 679);
+    g.fillStyle = '#e9dfb6'; g.font = '500 30px ' + F; g.fillText(IG.kw.slice(0, 3).join(' · '), 540, 726);
     /* 사주 네 기둥 */
     var keys = ['hour','day','month','year'], lab = {hour:'시주',day:'일주',month:'월주',year:'년주'};
     keys.forEach(function(k, i){
-      var x = 120 + i*205, y = 796, p = P[k];
-      rr(x, y, 185, 226, 26); g.fillStyle = k === 'day' ? 'rgba(124,86,246,.38)' : 'rgba(255,255,255,.07)'; g.fill();
+      var x = 100 + i*224, y = 800, p = P[k];
+      rr(x, y, 202, 250, 28); g.fillStyle = k === 'day' ? 'rgba(124,86,246,.38)' : 'rgba(255,255,255,.07)'; g.fill();
       g.strokeStyle = k === 'day' ? 'rgba(190,170,255,.8)' : 'rgba(255,255,255,.18)'; g.lineWidth = 2; g.stroke();
-      g.fillStyle = '#9fb0e8'; g.font = '500 26px ' + F; g.fillText(lab[k], x+92, y+40);
-      if (!p){ g.fillStyle = 'rgba(255,255,255,.4)'; g.font = '400 30px ' + F; g.fillText('모름', x+92, y+136); return; }
-      g.font = '700 74px ' + H; g.fillStyle = EL_HEX[p.sEl]; g.fillText(p.sh, x+92, y+124);
-      g.fillStyle = EL_HEX[p.bEl]; g.fillText(p.bh, x+92, y+205);
+      g.fillStyle = '#b4c2f2'; g.font = '500 30px ' + F; g.fillText(lab[k], x+101, y+46);
+      if (!p){ g.fillStyle = 'rgba(255,255,255,.4)'; g.font = '400 34px ' + F; g.fillText('모름', x+101, y+150); return; }
+      g.font = '700 84px ' + H; g.fillStyle = EL_HEX[p.sEl]; g.fillText(p.sh, x+101, y+138);
+      g.fillStyle = EL_HEX[p.bEl]; g.fillText(p.bh, x+101, y+230);
     });
     /* 오행 막대 */
+    g.textAlign = 'left'; g.fillStyle = '#c9d4ff'; g.font = '600 32px ' + F; g.fillText('오행 분포', MX, 1114);
     var mx = Math.max.apply(null, r.cnt.concat([1]));
     for (var e = 0; e < 5; e++){
-      var y2 = 1066 + e*38;
-      g.textAlign = 'left'; g.fillStyle = '#dfe6ff'; g.font = '500 28px ' + F; g.fillText(MS.EL_H[e] + ' ' + MS.EL_K[e], 130, y2+10);
-      rr(270, y2-10, 560, 22, 11); g.fillStyle = 'rgba(255,255,255,.1)'; g.fill();
-      if (r.cnt[e]){ rr(270, y2-10, Math.max(22, 560*r.cnt[e]/mx), 22, 11); g.fillStyle = EL_HEX[e]; g.fill(); }
-      g.fillStyle = '#fff'; g.fillText(String(r.cnt[e]), 860, y2+10);
+      var y2 = 1166 + e*52;
+      g.textAlign = 'left'; g.fillStyle = '#e6ecff'; g.font = '500 32px ' + F; g.fillText(MS.EL_H[e] + ' ' + MS.EL_K[e], MX, y2+11);
+      rr(290, y2-11, 560, 26, 13); g.fillStyle = 'rgba(255,255,255,.1)'; g.fill();
+      if (r.cnt[e]){ rr(290, y2-11, Math.max(26, 560*r.cnt[e]/mx), 26, 13); g.fillStyle = EL_HEX[e]; g.fill(); }
+      g.fillStyle = '#fff'; g.fillText(String(r.cnt[e]), 884, y2+11);
     }
-    g.textAlign = 'center'; g.fillStyle = '#c9d4ff'; g.font = '500 30px ' + F;
-    g.fillText('일간 ' + P.day.sh + ' · ' + ILGAN[P.day.stem].t + '  |  용신 ' + MS.EL_H[r.yong] + MS.EL_K[r.yong], 540, 1280);
-    g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '400 26px ' + F; g.fillText(shortUrl(linkFor('')), 540, 1322);
+    g.textAlign = 'center'; g.fillStyle = '#e6ecff'; g.font = '600 34px ' + F;
+    g.fillText('일간 ' + P.day.sh + ' · ' + IG.t + '  |  용신 ' + MS.EL_H[r.yong] + MS.EL_K[r.yong], 540, 1486);
+    /* 풀이 글 */
+    var y = y0;
+    g.beginPath(); g.moveTo(MX, y - 34); g.lineTo(W - MX, y - 34); g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 2; g.stroke();
+    lay.forEach(function(b){
+      g.textAlign = 'left'; g.fillStyle = '#f6cd5b'; g.font = '700 33px ' + F; g.fillText(b.t, MX, y + 22); y += 48;
+      g.fillStyle = '#eef1ff'; g.font = '400 33px ' + F;
+      b.lines.forEach(function(ln){ y += LH; g.fillText(ln, MX, y - 14); });
+      y += 32;
+    });
+    g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.55)'; g.font = '400 28px ' + F; g.fillText(shortUrl(linkFor('')), 540, HT - 56);
     /* 동물 일러스트 */
-    var svg = figSVG(r.animal, ANIMAL_EL[r.animal]).replace('<svg ', '<svg width="460" height="460" ');
+    var svg = figSVG(r.animal, ANIMAL_EL[r.animal]).replace('<svg ', '<svg width="300" height="300" ');
     var im = new Image();
-    im.onload = function(){ g.drawImage(im, 310, 112, 460, 460); done(c); };
+    im.onload = function(){ g.drawImage(im, 390, 130, 300, 300); done(c); };
     im.onerror = function(){ done(c); };
     im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
