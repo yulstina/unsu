@@ -2589,15 +2589,12 @@
       '<span class="hh-uni" aria-hidden="true">' + uniImg(drawn ? 'u-gift' : 'u-pouch') + '</span>' +
       '<div class="hh-acts"><button class="btn-primary hh-cta' + (drawn ? '' : ' sheen') + '" id="btnGoNum">' + (drawn ? '오늘 부적 다시 보기' : '오늘 부적 열기') + '</button><button type="button" class="hh-share" id="btnTodayShare">' + SH_IC.send + '공유</button></div></section>';
     h += bokBannerHTML();
-    h += '<section class="home-sec ft-sec"><div class="hs-head"><h2 class="sec-title">' + esc(me.name) + '님의 운세</h2></div><div class="ft-box" id="ftBox">' + ftHTML(me, r) + '</div></section>';
-    h += homeGridHTML();
+    h += '<button type="button" class="home-ft" id="hmFt"><span class="hf-sc">' + f.total + '<small>점</small></span><span class="hf-t"><b>오늘 운세 자세히</b><small>총운·애정·금전·직장·학업·건강 · 내일·이번 주·이번 달</small></span><i>›</i></button>';
+    h += '<section class="home-sec"><div class="home-book"><span class="hb-img">' + uniImg('u-book') + '</span><div><small>사주 이야기책 · 1장 무료</small><b>' + esc(me.name) + '님 사주의 첫 기둥</b><p>' + '어려운 한자 없이 내 사주를 이야기로 읽어요. 3분이면 돼요.</p></div></div><button type="button" class="btn-primary btn-block" id="hmBook">1장 무료로 읽기</button></section>';
+    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">무엇이 궁금해요?</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div><div class="hm-top">' +
+      HOME_TOPICS.map(function(t){ return '<button type="button" class="tpc-' + t.k + '" data-tpc="' + t.k + '"><b>' + t.n + '</b><small>' + t.s + '</small></button>'; }).join('') + '</div></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + TJ_YEAR + ' 정미년, 미리 열어 봐요</h2></div><div class="hp-car" role="list">' +
       ['tj', 'sal', 'fc', 'ny'].map(function(k){ return homeCardHTML(k, 'car'); }).join('') + '</div></section>';
-    var REC = { w:['wl', '재물', '내 재물 그릇은 얼마나 클까?', '평생 돈 흐름 · 크게 들어오는 시기 3번'], l:['lv', '연애', '인연은 언제 가까워질까?', '10년 연애·결혼 그래프 · ' + TJ_YEAR + '년 인연 달'], j:['job', '일', '나에게 꼭 맞는 일은 뭘까?', '타고난 재능과 잘 맞는 분야'] }[low[0]];
-    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + esc(me.name) + '님께 지금 필요한 풀이</h2></div>' +
-      '<button type="button" class="hp-pick" data-hp="' + REC[0] + '">' + uniImg(HOME_P[REC[0]].pose, 'hpk-uni') + '<span class="hpk-t"><small>오늘 ' + REC[1] + ' ' + f.scores[low[0]] + '점 · ' + (f.scores[low[0]] < 60 ? '조금 약한 날' : '오늘 가장 낮은 분야') + '</small><b>' + REC[2] + '</b><em>' + REC[3] + '</em></span><span class="chev" aria-hidden="true">›</span></button></section>';
-    h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">깊이 보는 풀이</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div>' + pkgBannerHTML('prem') + '<div class="hp-list">' +
-      ['book', 'gh', 'gw', 'tk', 'lv'].map(function(k){ return homeCardHTML(k, 'row'); }).join('') + '</div></section>';
     h += adSlotHTML('오늘의 운세를 본 뒤');
     var z = getZodiac(r.solar.m, r.solar.d);
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">가볍게 해보기</h2><span class="hs-meta">모두 무료</span></div><div class="hp-free">' +
@@ -2614,6 +2611,9 @@
     $('dpNY').onclick = function(){ openNYSheet(me, r); };
     if ($('bokBan')) $('bokBan').onclick = openBokSheet;
     $('hmTopics').onclick = function(){ openTopics(me, r); };
+    $('hmBook').onclick = function(){ openStory(me, r, 0); };
+    $('hmFt').onclick = function(){ openSheet('<h3 id="sheetTitle">' + esc(me.name) + '님의 운세</h3><div class="ft-box" id="ftBox">' + ftHTML(me, r) + '</div>'); bindFt(me, r); };
+    body.querySelectorAll('[data-tpc]').forEach(function(b){ b.onclick = function(){ openHomeTopic(b.dataset.tpc, me, r); }; });
     $('hmAsk').onclick = function(){ openChat(me, r); };
     bindHomeP(me, r, body);
     bindPkg(body);
@@ -3535,11 +3535,11 @@
       '<div class="today-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日</div>' +
       '<h1 class="hero-title">매일 열어보는<br>나만의 행운 부적</h1>' +
       '<div class="wel-fig" id="welFig">' + uniImg('u-pouch', '', '행운 복주머니를 든 우니') + '</div>' +
+      '<div class="wel-cta"><button class="btn-primary btn-block sheen" id="btnWelStart">내 행운 부적 무료로 열기</button></div>' +
       '<div class="wel-sample" aria-label="예시 부적 카드"><span class="ws-badge">예시</span><div class="ws-top"><b>김운수님의 오늘 행운 부적</b><small>수(水) 기운 · 행운의 색 검정, 남색 · 방향 북쪽</small></div>' +
         '<p class="ws-act">작은 행동 · 물 한 잔 천천히 마시기</p></div>' +
-      '<ol class="wel-steps"><li><b>1</b>생년월일 입력</li><li><b>2</b>복주머니 열기</li><li><b>3</b>보관함에 저장</li></ol>' +
-      '<div class="wel-cta"><button class="btn-primary btn-block sheen" id="btnWelStart">내 행운 부적 무료로 열기</button><button class="text-btn" id="btnWelDemo">예시로 먼저 둘러보기</button>' +
-        (isGuest() ? '<p class="wel-login">이미 쓰던 계정이 있나요? <button type="button" id="btnWelLogin">로그인</button></p>' : '') + '</div></div>';
+      '<button type="button" class="wel-demo" id="btnWelDemo">' + uniImg('u-wave', '', '') + '<span><em>체험</em><b>입력 없이 홈 구경하기</b><small>김운수님 예시로 1분 둘러봐요</small></span><i>›</i></button>' +
+      (isGuest() ? '<p class="wel-login">이미 쓰던 계정이 있나요? <button type="button" id="btnWelLogin">로그인</button></p>' : '') + '</div>';
     if (acc && acc.snapshot && acc.snapshot.unsu_me){
       var rl = acc.snapshot.unsu_att && acc.snapshot.unsu_att.days ? Object.keys(acc.snapshot.unsu_att.days).length : 0;
       h += '<div class="card return-card"><div><div style="font-size:calc(15px*var(--fs));color:#fff;font-weight:600">다시 오셨네요, ' + esc(acc.nick) + '님</div><p class="helper">' + PROV[acc.provider] + ' 계정에 출석 ' + rl + '일 · 엽전 ' + (acc.snapshot.unsu_coin || 0) + '닢이 보관돼 있어요.</p></div><button class="btn-soft" id="btnWelReturn" style="padding:10px 14px;font-size:calc(13px*var(--fs))">로그인</button></div>';
@@ -4194,6 +4194,22 @@
   function bindTopics(me, r, root){
     var A = topicActs(me, r);
     root.querySelectorAll('[data-tp]').forEach(function(b){ b.onclick = function(){ var fn = A[b.dataset.tp]; if (!fn) return; closeSheet(); fn(); }; });
+  }
+  var HOME_TOPICS = [
+    { k:'me', n:'나', s:'사주 이야기책 · 재물 그릇 · 살 · 귀인 · 맞는 일', lead:'나는 어떤 사람일까?', list:['book', 'wl', 'sal', 'gw', 'job'], pkg:true },
+    { k:'rel', n:'관계', s:'궁합 · 인연이 오는 해와 달', lead:'우리는 잘 맞을까?', list:['gh', 'lv'] },
+    { k:'day', n:'날짜', s:'골든타이밍 달력 · 중요한 날', lead:'언제가 좋을까?', list:['fc', 'tk'] },
+    { k:'year', n:'올해', s:TJ_YEAR + ' 신년운세 · 토정비결', lead:TJ_YEAR + '년은 어떤 해일까?', list:['ny', 'tj'] }
+  ];
+  function openHomeTopic(k, me, r){
+    var T = HOME_TOPICS.filter(function(x){ return x.k === k; })[0]; if (!T) return;
+    var chips = HOME_TOPICS.map(function(x){ return '<button type="button" class="tpc-chip' + (x.k === k ? ' on' : '') + '" data-tpc="' + x.k + '">' + x.n + '</button>'; }).join('') + '<button type="button" class="tpc-chip" id="tpcAll">전체</button>';
+    openSheet('<h3 id="sheetTitle">' + T.lead + '</h3><p class="helper" style="margin:-8px 0 12px">' + esc(me.name) + '님 사주로 보는 풀이예요</p><div class="tpc-chips">' + chips + '</div>' +
+      '<div class="hp-list">' + T.list.map(function(x){ return homeCardHTML(x, 'row').replace(/<br>/g, ' '); }).join('') + '</div>' + (T.pkg ? pkgBannerHTML('prem') : ''));
+    var root = $('sheetBody');
+    bindHomeP(me, r, root); bindPkg(root);
+    root.querySelectorAll('[data-tpc]').forEach(function(b){ b.onclick = function(){ openHomeTopic(b.dataset.tpc, me, r); }; });
+    $('tpcAll').onclick = function(){ openTopics(me, r); };
   }
   function openTopics(me, r){
     openSheet('<h3 id="sheetTitle">주제별 풀이</h3><p class="helper" style="margin:-8px 0 14px">' + esc(me.name) + '님 사주로 볼 수 있는 풀이를 주제별로 모았어요.</p>' + topicListHTML(me, 'sheet'));
