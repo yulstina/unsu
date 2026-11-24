@@ -1390,7 +1390,7 @@
       '<div class="co-sum"><span>최종 결제 금액</span><b>' + info.won.toLocaleString() + '원</b></div>' +
       (test ? '<p class="co-test"><b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요</p>' : '') +
       '<button class="btn-primary btn-block co-go" id="coGo">' + info.won.toLocaleString() + '원 결제하기</button>' +
-      '<p class="helper co-note">주문 내용을 확인했고 결제에 동의해요. 결제 즉시 열리는 디지털 콘텐츠라 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요.<br>판매: 실로(SYLO) · 결제 대행: ' + '<span class="co-pg" id="coPg"></span></p>' +
+      '<p class="helper co-note">주문 내용을 확인했고 결제에 동의해요. 결제 즉시 열리는 디지털 콘텐츠예요(이용 기간: 결제일부터 1년, 오늘의 운세는 당일). 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요.<br>판매: 실로(SYLO) · 결제 대행: ' + '<span class="co-pg" id="coPg"></span></p>' +
       '<button class="text-btn" data-close>취소</button></div>');
     var body = $('sheetBody');
     var sync = function(){ var v = (body.querySelector('[name=copm]:checked') || {}).value || 'card'; body.querySelectorAll('.co-pm').forEach(function(l){ l.classList.toggle('on', l.querySelector('input').checked); }); $('coPg').textContent = v === 'kakao' ? '카카오페이' : cardPg; $('coGo').classList.toggle('kp', v === 'kakao'); return v; };
@@ -2954,7 +2954,7 @@
     }; });
     if ($('tkBuy')) $('tkBuy').onclick = function(){
       var item = 'tk:' + (entry.id || '') + ':' + TK.p, rs = { k:'tk', id:entry.id, p:TK.p };
-      openChoice({ k:'tk', name:'중요한 날 잡기 · ' + P.short + ' 12개월', who:esc(nm) + '님', art:'tk', item:item, rs:rs, coin:COST.tk, keep:esc(nm) + '님의 ' + P.short + ' 달력은 계속 볼 수 있어요',
+      openChoice({ k:'tk', name:'중요한 날 잡기 · ' + P.short + ' 12개월', who:esc(nm) + '님', art:'tk', item:item, rs:rs, coin:COST.tk, keep:esc(nm) + '님의 ' + P.short + ' 달력은 결제일부터 1년 동안 볼 수 있어요',
         items:['12개월 달력 전체의 좋은 날·피할 날', '1년 중 베스트 5일과 고른 이유', '달마다 가장 좋은 날과 좋은 시간대', '캘린더 저장 · 공유 카드'],
         onOpen:function(){ setTkOpen(entry, TK.p); var b0 = S.best[0]; if (b0){ TK.mi = b0.mi; TK.sel = b0.key; } openTaekil(entry, r); } });
     };
@@ -3363,7 +3363,7 @@
         '<ul class="lock-list">' + ['두 사람의 기질 비교','관계에서 빛나는 점','부딪히기 쉬운 점과 대화 팁','올해 두 사람의 흐름','함께하면 좋은 활동'].map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         '<div class="locked-preview" aria-hidden="true"><div style="width:92%"></div><div style="width:78%"></div><div style="width:85%"></div></div>' +
         '<div class="lock-cta"><button class="btn-primary" id="btnGhBuy">' + (passActive() ? '우니 패스로 상세 리포트 열기' : '상세 리포트 보기 · ' + priceTag('gh')) + '</button>' +
-        '<p class="helper" style="text-align:center">한 번 열면 이 두 사람의 리포트는 계속 볼 수 있어요.</p></div></div>';
+        '<p class="helper" style="text-align:center">한 번 열면 이 두 사람의 리포트는 결제일부터 1년 동안 볼 수 있어요.</p></div></div>';
     } else {
       var ia = ILGAN[ra.pillars.day.stem], ib = ILGAN[rb.pillars.day.stem];
       var extraClash = m.dRel === 'chung' ? ' 일지가 충을 이뤄 생활 리듬이 엇갈리기 쉬우니 함께하는 시간과 혼자 쉬는 시간을 분명히 나눠 두세요.' : m.dRel === 'wonjin' ? ' 일지가 원진이라 작은 말에 서운해지기 쉬워요. 서운함은 그날 바로 가볍게 말하는 게 좋아요.' : '';
@@ -4366,7 +4366,7 @@
     sal:{ k:'NEW · ' + TJ_YEAR, t:'나에게 든<br>살(煞) 풀이', s:'내 사주 속 살과 푸는 법', pose:'u-thinking', th:'plum', free:'1개 무료', p:'sal', tag:'도화·역마·홍염…' },
     fc:{ k:TJ_YEAR + ' 달력', t:'사랑·돈·일<br>골든타이밍', s:'좋은 달과 조심할 달 찾기', pose:'u-calendar', th:'blue', free:'이번 달 무료', p:'cal' },
     ny:{ k:TJ_YEAR + ' 신년운세', t:'정미년<br>내 한 해', s:'12개월 흐름 · 키워드', pose:'u-newyear', th:'gold', free:'총평 무료', p:'' },
-    wl:{ k:'NEW · 평생 리포트', t:'내 재물<br>그릇', s:'평생 돈 흐름 · 들어오는 시기 3번', pose:'u-money', th:'gold', free:'1장 무료', p:'wl' },
+    wl:{ k:'NEW · 재물 리포트', t:'내 재물<br>그릇', s:'평생 돈 흐름 · 들어오는 시기 3번', pose:'u-money', th:'gold', free:'1장 무료', p:'wl' },
     gw:{ k:'NEW · 귀인', t:'나를 돕는 귀인 풀이', s:'도와줄 띠·일간 · 2027 귀인 오는 달', pose:'wooni-joa', th:'teal', free:'1개 무료', p:'gw', tag:'천을·천덕·문창…' },
     book:{ t:'사주 이야기책', s:'내 사주를 6장 이야기로', pose:'u-book', th:'violet', free:'1장 무료', p:'ez' },
     gh:{ t:'우리 둘 3단 궁합', s:'성격 · 연애 · 결혼 궁합', pose:'wooni-joa', th:'rose', free:'점수 무료', p:'gh' },
@@ -4429,6 +4429,7 @@
       '<h3 id="sheetTitle" class="pd-h">' + D.h + '</h3><p class="pd-d">' + D.d + '</p>' +
       '<div class="pd-meta"><div><b>' + D.m[0] + '</b>' + D.m[1] + '</div><div><b>' + D.fr[0] + '</b>' + D.fr[1] + '</div><div><b>' + (P.p ? priceTag(P.p) : '무료') + '</b>' + (P.p ? '전체 열기' : '') + '</div></div>' +
       '<ul class="pd-toc">' + D.toc.map(function(t, i){ return '<li><em>' + (i + 1) + '</em>' + t + '<span class="' + (i < D.nf ? 'f' : '') + '">' + (i < D.nf ? '무료' : '잠금') + '</span></li>'; }).join('') + '</ul>' +
+      (P.p ? '<p class="pd-terms">결제 즉시 온라인으로 제공 · 이용 기간 결제일부터 1년 · 배송 없음 · <button type="button" class="link-btn" data-doc="refund">청약철회·환불</button></p>' : '') +
       '<button class="btn-primary btn-block sheen" id="pdGo">' + D.cta + '</button><button class="text-btn" data-close>나중에 볼게요</button></div>');
     $('pdGo').onclick = function(){ closeSheet(); setTimeout(go2, 260); };
   }
@@ -5183,13 +5184,13 @@
   }
   function product(id){
     return ({
-      gh:{ id:'gh', name:'궁합 상세 리포트', coin:COST.gh, art:'gh', keep:'이 두 사람의 리포트는 계속 볼 수 있어요', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
-      cal:{ id:'cal', name:'월별 운세 달력 12개월', coin:COST.cal, art:'book', keep:'저장한 모든 사람의 달력을 계속 볼 수 있어요', items:['다음 달부터 12개월 날마다 점수','달마다 좋은 날·조심할 날','달마다 흐름 한 줄'] },
-      lv:{ id:'lv', name:'연애·결혼 시기', coin:COST.lv, art:'gh', keep:'저장한 모든 사람의 연애·결혼 시기를 계속 볼 수 있어요', items:['10년 연애운·결혼운 그래프','인연이 가장 가까운 해와 천천히 갈 해','2027년 인연 달과 잘 맞는 사람'] },
-      tj:{ id:'tj', name:'2027 토정비결', coin:COST.tj, art:'book', keep:'저장한 모든 사람의 토정비결을 계속 볼 수 있어요', items:['상반기·하반기 풀이','4~12월 달마다 한 줄','좋은 달과 조심할 달, 한 해 처방'] },
-      wl:{ id:'wl', name:'내 재물 그릇 2~6장', coin:COST.wl, art:'book', keep:'저장한 모든 사람의 재물 그릇을 계속 볼 수 있어요', items:['돈이 들어오는 길과 새는 길','평생 재물 흐름(대운 10년 단위)과 크게 들어오는 시기 3번','나에게 맞는 돈 버는 방식과 2027년 재물 처방'] },
-      sal:{ id:'sal', name:'나에게 든 살 풀이', coin:COST.sal, art:'book', keep:'저장한 모든 사람의 살 풀이를 계속 볼 수 있어요', items:['내 사주에 든 모든 살 · 옛풀이와 요즘풀이로 나눠 보기','살마다 복으로 바꾸는 살풀이','2027년 정미년에 새로 들어오는 살'] },
-      gw:{ id:'gw', name:'나를 돕는 귀인 풀이', coin:COST.gw, art:'book', keep:'저장한 모든 사람의 귀인 풀이를 계속 볼 수 있어요', items:['내 사주에 든 모든 귀인 · 옛풀이와 요즘풀이','나를 돕는 띠·일간·성향','2027년 귀인이 오는 달과 방향·장소'] },
+      gh:{ id:'gh', name:'궁합 상세 리포트', coin:COST.gh, art:'gh', keep:'이 두 사람의 리포트는 결제일부터 1년 동안 볼 수 있어요', items:['두 사람의 기질 비교','관계에서 빛나는 점과 부딪히기 쉬운 점','대화 팁과 올해 두 사람의 흐름'] },
+      cal:{ id:'cal', name:'월별 운세 달력 12개월', coin:COST.cal, art:'book', keep:'저장한 모든 사람의 달력을 결제일부터 1년 동안 볼 수 있어요', items:['다음 달부터 12개월 날마다 점수','달마다 좋은 날·조심할 날','달마다 흐름 한 줄'] },
+      lv:{ id:'lv', name:'연애·결혼 시기', coin:COST.lv, art:'gh', keep:'저장한 모든 사람의 연애·결혼 시기를 결제일부터 1년 동안 볼 수 있어요', items:['10년 연애운·결혼운 그래프','인연이 가장 가까운 해와 천천히 갈 해','2027년 인연 달과 잘 맞는 사람'] },
+      tj:{ id:'tj', name:'2027 토정비결', coin:COST.tj, art:'book', keep:'저장한 모든 사람의 토정비결을 결제일부터 1년 동안 볼 수 있어요', items:['상반기·하반기 풀이','4~12월 달마다 한 줄','좋은 달과 조심할 달, 한 해 처방'] },
+      wl:{ id:'wl', name:'내 재물 그릇 2~6장', coin:COST.wl, art:'book', keep:'저장한 모든 사람의 재물 그릇을 결제일부터 1년 동안 볼 수 있어요', items:['돈이 들어오는 길과 새는 길','평생 재물 흐름(대운 10년 단위)과 크게 들어오는 시기 3번','나에게 맞는 돈 버는 방식과 2027년 재물 처방'] },
+      sal:{ id:'sal', name:'나에게 든 살 풀이', coin:COST.sal, art:'book', keep:'저장한 모든 사람의 살 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['내 사주에 든 모든 살 · 옛풀이와 요즘풀이로 나눠 보기','살마다 복으로 바꾸는 살풀이','2027년 정미년에 새로 들어오는 살'] },
+      gw:{ id:'gw', name:'나를 돕는 귀인 풀이', coin:COST.gw, art:'book', keep:'저장한 모든 사람의 귀인 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['내 사주에 든 모든 귀인 · 옛풀이와 요즘풀이','나를 돕는 띠·일간·성향','2027년 귀인이 오는 달과 방향·장소'] },
       ez:{ id:'ez', name:'사주 이야기책 2~6장', coin:COST.ez, art:'book', keep:'구입한 뒤 계정에서 계속 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달'] }
     })[id];
   }
