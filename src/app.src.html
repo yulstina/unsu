@@ -2690,6 +2690,20 @@
   .gw-dp>div{display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);}
   .gw-dp small{font-size:calc(11.5px*var(--fs));color:var(--text-helper);} .gw-dp b{font-size:calc(14px*var(--fs));color:#fff;line-height:1.45;word-break:keep-all;}
   .dm-nw{font-size:.62em;font-weight:500;color:var(--text-helper);}
+
+  /* ---------- 2026-11-24 피드백3: 가운데 우니 글자 · 주문 금액 줄 · 묶음 비교 · 내 리포트 배지 ---------- */
+  .tab-uni .tu-lb{position:absolute;left:-6px;right:-6px;bottom:4px;text-align:center;font-size:calc(11px*var(--fs));font-weight:700;color:#d9ccff;max-height:none;opacity:1;}
+  .tab-uni .tu-ball{bottom:22px;}
+  body.tb-min .tab-uni .tu-ball{bottom:18px;}
+  body.tb-min .tab-uni .tu-lb{max-height:none;opacity:1;}
+  .co-row{display:flex;justify-content:space-between;margin:12px 2px -8px;font-size:calc(13px*var(--fs));color:#cfc7e6;}
+  .co-row + .co-row{margin-top:14px;}
+  .pkg-cmp{display:flex;flex-direction:column;gap:6px;margin:4px 0 12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(206,190,255,.18);}
+  .pkg-cmp div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:calc(13.5px*var(--fs));color:#cfc7e6;}
+  .pkg-cmp s{color:var(--text-helper);} .pkg-cmp b{font-size:calc(22px*var(--fs));font-weight:800;color:#fff;}
+  .pkg-link{display:block;margin:2px auto 8px;color:#cebeff;font-weight:600;}
+  .rp-via{display:inline-block;font-style:normal;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px;background:rgba(206,190,255,.16);color:#d9ccff;}
+  .rp-via.won{background:rgba(246,205,91,.18);color:#f6dc8f;} .rp-via.pkg{background:rgba(140,214,190,.16);color:#a9e6d2;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
@@ -2908,7 +2922,7 @@
   <div class="tabbar-inner"><i class="tab-lens" aria-hidden="true"></i>
     <button class="tab active" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg><span>홈</span></button>
     <button class="tab" data-tab="saju"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16M12 4v16M16 4v16M3.5 12h17"/></svg><span>사주</span></button>
-    <button class="tab tab-uni" data-tab="ask" aria-label="우니에게 묻기"><i class="tu-ball" aria-hidden="true"><img src="img/u-thinking.webp" width="64" height="64" alt="" draggable="false"><s class="tu-sp sp1"></s><s class="tu-sp sp2"></s><s class="tu-sp sp3"></s></i></button>
+    <button class="tab tab-uni" data-tab="ask" aria-label="우니에게 묻기"><i class="tu-ball" aria-hidden="true"><img src="img/u-thinking.webp" width="64" height="64" alt="" draggable="false"><s class="tu-sp sp1"></s><s class="tu-sp sp2"></s><s class="tu-sp sp3"></s></i><span class="tu-lb">우니에게</span></button>
     <button class="tab" data-tab="dream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.2A7.8 7.8 0 0 1 9.8 4.5a7.8 7.8 0 1 0 9.7 9.7z"/><path d="M16.2 4.2l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/></svg><span>꿈해몽</span></button>
     <button class="tab" data-tab="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg><span>보관함</span></button>
   </div>
