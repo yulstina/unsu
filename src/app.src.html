@@ -2704,6 +2704,26 @@
   .pkg-link{display:block;margin:2px auto 8px;color:#cebeff;font-weight:600;}
   .rp-via{display:inline-block;font-style:normal;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:4px;vertical-align:1px;background:rgba(206,190,255,.16);color:#d9ccff;}
   .rp-via.won{background:rgba(246,205,91,.18);color:#f6dc8f;} .rp-via.pkg{background:rgba(140,214,190,.16);color:#a9e6d2;}
+
+  /* ---------- 2026-11-24 피드백3 P1-5: 사주 한 문단 · 명식 접기 · 결제창 작은 캐릭터 ---------- */
+  .sum-card .sum-k{display:block;font-size:calc(12.5px*var(--fs));font-weight:700;color:#cebeff;}
+  .sum-card .sum-t{font-size:calc(19px*var(--fs));font-weight:800;color:#fff;margin:6px 0 8px;line-height:1.35;}
+  .sum-card .sum-tags{margin-top:10px;}
+  .chart-fold{padding:0;}
+  .chart-fold > summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:16px 44px 16px 18px;position:relative;}
+  .chart-fold > summary::-webkit-details-marker{display:none;}
+  .chart-fold > summary::after{content:"";position:absolute;right:20px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid #cebeff;border-bottom:2px solid #cebeff;transform:rotate(45deg);transition:transform .2s;}
+  .chart-fold[open] > summary::after{transform:rotate(-135deg);margin-top:-2px;}
+  .chart-fold > summary b{font-size:calc(15px*var(--fs));color:#fff;}
+  .chart-fold > summary small{font-size:calc(12px*var(--fs));color:#cfc7e6;}
+  .chart-fold .chart-in{display:flex;flex-direction:column;gap:14px;padding:0 10px 12px;}
+  .pay-head{display:flex;align-items:center;gap:12px;margin:0 0 12px;text-align:left;}
+  .pay-head .pay-hero{margin:0;flex:none;}
+  .pay-head .pay-hero .tile-art,.pay-head .pay-hero .uni-png.tile-art{width:64px!important;height:64px!important;}
+  .pay-head .pay-ht{min-width:0;}
+  .pay-head #sheetTitle{margin:0;text-align:left;}
+  .pay-head .pay-who{margin:2px 0 0;text-align:left;}
+  .pkg-sheet .short-fig img,.pkg-sheet .short-fig .uni-png{width:72px;height:72px;}
 </style>
 
 <canvas id="atmosphere" aria-hidden="true"></canvas>
