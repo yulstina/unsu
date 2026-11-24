@@ -1717,10 +1717,10 @@
       '<p class="helper" style="text-align:center;margin:8px 0 18px">' + (payReady() ? (SRV.cfg.pay.test ? '<b class="pay-test">테스트 결제</b> 실제로 돈이 나가지 않아요 · ' : '') + '안전한 PG사 결제창으로 결제돼요 · 결제하면 <button class="link-btn" data-doc="refund">환불 정책</button>에 동의하는 것으로 봐요. 7일 안에 쓰지 않은 충전은 전액 환불돼요' : '카드 결제를 연결하고 있어요. 열리기 전까지는 아래 방법으로 무료로 모을 수 있어요.') + '</p>') +
       '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
       useRow('hot', '꿈 풀이 리포트', 'dream', '꿈 하나 · 길흉 판정과 오늘의 처방') + useRow('', '분야별 운세', 'cat', '분야 하나 · 오늘 하루') +
-      useRow('', '중요한 날 잡기', 'tk', '목적 하나 · 1년 달력') + useRow('', '궁합 상세', 'gh', '두 사람 · 계속 보기') +
-      useRow('', '사주 이야기책 2~6장', 'ez', '저장한 사람 모두') + useRow('', '2027 토정비결', 'tj', '한 사람 · 계속 보기') +
-      useRow('', '월별 운세 달력', 'cal', '12개월 · 달마다 흐름') + useRow('', '연애·결혼 시기', 'lv', '한 사람 · 계속 보기') +
-      useRow('', '내 재물 그릇', 'wl', '한 사람 · 계속 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 계속 보기') + useRow('', '나를 돕는 귀인 풀이', 'gw', '한 사람 · 계속 보기') +
+      useRow('', '중요한 날 잡기', 'tk', '목적 하나 · 1년 달력') + useRow('', '궁합 상세', 'gh', '두 사람 · 1년 동안 보기') +
+      useRow('', '사주 이야기책 2~6장', 'ez', '저장한 사람 모두') + useRow('', '2027 토정비결', 'tj', '한 사람 · 1년 동안 보기') +
+      useRow('', '월별 운세 달력', 'cal', '12개월 · 달마다 흐름') + useRow('', '연애·결혼 시기', 'lv', '한 사람 · 1년 동안 보기') +
+      useRow('', '내 재물 그릇', 'wl', '한 사람 · 1년 동안 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 1년 동안 보기') + useRow('', '나를 돕는 귀인 풀이', 'gw', '한 사람 · 1년 동안 보기') +
       useRow('', '우니에게 묻기 하루 무제한', 'chat', '산 때부터 24시간 · 하루 1번은 무료') + '</div>' +
       (guestC ? '<div class="cs-guest"><p>엽전은 로그인한 계정에 쌓여요. 처음 로그인하면 <b>' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요.</p><button class="btn-primary btn-block" id="csLogin">로그인하고 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button></div>' : '') +
       '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
@@ -2932,7 +2932,7 @@
       h += '<div class="tk-lock"><h4>1년 전체 보기 <small>' + P.short + '</small></h4><div class="tk-lock-rows" aria-hidden="true">' + [1, 2, 3].map(function(i){ return '<div><em>' + i + '</em><span>●●●●. ●●월 ●●일</span><i></i></div>'; }).join('') + '</div>' +
         '<ul class="lock-list">' + ['12개월 달력 전체의 좋은 날·피할 날', '1년 중 베스트 5일과 고른 이유', '달마다 가장 좋은 날', '그날 좋은 시간대 (시진)', '캘린더 저장 · 공유 카드'].concat(TK.p === 'open' ? ['내 사업 기질과 ' + r.seun.year + '년 사업 흐름'] : []).map(function(t){ return '<li>' + LOCK_SVG + t + '</li>'; }).join('') + '</ul>' +
         passLinkHTML() + '<button class="btn-primary btn-block sheen" id="tkBuy">' + (passActive() ? '우니 패스로 1년 전체 열기' : '12개월 리포트 보기 · ' + priceTag('tk')) + '</button>' +
-        '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 받은 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (COST.tk - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · ' + nm + '님의 ' + P.short + ' 달력은 계속 다시 볼 수 있어요') + '</p></div>';
+        '<p class="helper" style="text-align:center;margin-top:8px">' + (guest ? '로그인하면 받은 엽전으로 바로 열 수 있어요.' : NS ? '예시 모드에서는 엽전 없이 열어 볼 수 있어요.' : short ? '엽전이 ' + (COST.tk - coins) + '닢 부족해요. 보유 ' + coins + '닢' : '보유 ' + coins.toLocaleString() + '닢 · ' + nm + '님의 ' + P.short + ' 달력은 1년 동안 다시 볼 수 있어요') + '</p></div>';
     }
     if (TK.p === 'open') h += '<p class="tk-note">홈택스 개업일은 실제로 사업을 시작하는 날로 적어요. 사업자등록은 개업일 전에 미리 하거나, 개업일부터 20일 안에 신청하면 돼요.</p>';
     h += '<p class="disclaimer">일진과 사주 원국의 관계로 계산한 재미용 풀이예요. 실제 결과를 보장하지 않습니다.</p>' + (open ? adSlotHTML('중요한 날을 본 뒤') : '') + '<button class="text-btn" data-close>닫기</button></div>';
@@ -4082,7 +4082,7 @@
     if (locked){
             body = '<p class="sb-lead">' + esc(entry.name) + '님의 사주를 이어서 읽어 드릴게요.</p><div class="sb-lock"><div class="sb-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="sb-lockbox">' + LOCK_SVG +
         '<b>' + SB_CH.slice(1).map(function(c, j){ return (j + 2) + '장 ' + c.t; }).join('<br>') + '</b>' +
-        '<button class="btn-primary btn-block sheen" id="sbBuy">2~6장 열기 · ' + (wonSale('ez') ? '일반 ' : '') + priceTag('ez') + '</button><p class="helper">5개 장을 한 번에 열어요. 연 뒤에는 계정에서 계속 다시 읽을 수 있어요(보관함 › 내 리포트).</p></div></div>';
+        '<button class="btn-primary btn-block sheen" id="sbBuy">2~6장 열기 · ' + (wonSale('ez') ? '일반 ' : '') + priceTag('ez') + '</button><p class="helper">5개 장을 한 번에 열어요. 연 뒤에는 결제일부터 1년 동안 계정에서 다시 읽을 수 있어요(보관함 › 내 리포트).</p></div></div>';
     } else body = sbChapter(ch, entry, r);
     ov.innerHTML = '<div class="sb-bar"><button class="sb-x" id="sbX" aria-label="닫기">✕</button><div class="sb-dots" aria-label="' + (ch + 1) + '장 / ' + SB_CH.length + '장">' + dots + '</div><span class="sb-no">' + (ch + 1) + '/' + SB_CH.length + '</span></div>' +
       '<div class="sb-page" id="sbPage"><div class="sb-fig">' + uniImg(C.pose) + '</div><div class="sb-chn">' + (ch + 1) + '장</div><h2 class="sb-t">' + C.t + '</h2>' + body + '</div>' +
@@ -5193,7 +5193,7 @@
       wl:{ id:'wl', name:'내 재물 그릇 2~6장', coin:COST.wl, art:'book', keep:'저장한 모든 사람의 재물 그릇을 결제일부터 1년 동안 볼 수 있어요', items:['돈이 들어오는 길과 새는 길','평생 재물 흐름(대운 10년 단위)과 크게 들어오는 시기 3번','나에게 맞는 돈 버는 방식과 2027년 재물 처방'] },
       sal:{ id:'sal', name:'나에게 든 살 풀이', coin:COST.sal, art:'book', keep:'저장한 모든 사람의 살 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['내 사주에 든 모든 살 · 옛풀이와 요즘풀이로 나눠 보기','살마다 복으로 바꾸는 살풀이','2027년 정미년에 새로 들어오는 살'] },
       gw:{ id:'gw', name:'나를 돕는 귀인 풀이', coin:COST.gw, art:'book', keep:'저장한 모든 사람의 귀인 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['내 사주에 든 모든 귀인 · 옛풀이와 요즘풀이','나를 돕는 띠·일간·성향','2027년 귀인이 오는 달과 방향·장소'] },
-      ez:{ id:'ez', name:'사주 이야기책 2~6장', coin:COST.ez, art:'book', keep:'구입한 뒤 계정에서 계속 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달'] }
+      ez:{ id:'ez', name:'사주 이야기책 2~6장', coin:COST.ez, art:'book', keep:'구입한 뒤 결제일부터 1년 동안 계정에서 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달'] }
     })[id];
   }
   function refreshOrders(){ if (!srvUser()) return; api('/api/me').then(function(r){ if (r && r.user){ SRV.orders = r.user.orders || SRV.orders; SRV.couponOk = !!r.user.couponOk; } }).catch(function(){}); }
@@ -5305,6 +5305,15 @@
     if ($('payEarn')) $('payEarn').onclick = function(){ openCoinSheet(); };
     bindPkg($('sheetBody'), { rs:o.rs, onPaid:PAY_CTX && o.rs && PAY_CTX.pid === o.rs.pid ? PAY_CTX.onPaid : null, back:again });
   }
+  /* 이용 기한(약관 제8조와 같은 기준): 분야별 오늘의 운세 = 결제한 날, 대화권 = 24시간, 우니 패스 = 30일, 나머지 = 결제일부터 1년 */
+  function useUntil(x, bk){
+    var t = Date.parse(x.approved_at || x.created_at), k = bk ? bk[1] : '', d = new Date(t);
+    if (k === 'cat') return '이용 기한 ' + fmtDate(t) + ' 하루';
+    if (k === 'chat') return '이용 기한 결제 시각부터 24시간';
+    if (/^pass/.test(x.pack || '')) return '이용 기한 ' + fmtDate(t + 29 * 864e5) + '까지(30일)';
+    d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1);
+    return '이용 기한 ' + fmtDate(d.getTime()) + '까지(1년)';
+  }
   function openOrdersSheet(){
     var ch = srvUser() ? (SRV.orders || []).filter(function(x){ return x.status !== 'failed'; }) : [];
     var ST = { paid:'결제 완료', refunded:'환불 완료', canceled:'취소됨', failed:'결제 실패' };
@@ -5313,11 +5322,11 @@
       (ch.length ? '<div class="st-group">' + ch.map(function(x){
         var bk = /^buy:([a-z]+)/.exec(x.pack || ''), pk = /^pkg:(\w+)/.exec(x.pack || ''), bn = bk ? ((SRV.cfg && SRV.cfg.wonNames && SRV.cfg.wonNames[bk[1]]) || '콘텐츠') : pk ? ((pkgOf(pk[1]) || {}).name || '패키지') : null;
         return '<div class="od-row"><div><b>' + (bn || (/^pass/.test(x.pack || '') ? PASS.name : '엽전 ' + (x.coins + x.bonus).toLocaleString() + '닢')) + '</b><small>' + fmtDate(Date.parse(x.approved_at || x.created_at)) + ' · ' + (ST[x.status] || x.status) +
-          (x.receipt_url ? ' · <a href="' + esc(x.receipt_url) + '" target="_blank" rel="noopener">영수증</a>' : '') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
+          (x.receipt_url ? ' · <a href="' + esc(x.receipt_url) + '" target="_blank" rel="noopener">영수증</a>' : '') + (x.status === 'paid' ? '<br>' + useUntil(x, bk) : '') + '</small></div><span>' + x.amount.toLocaleString() + '원</span></div>';
       }).join('') + '</div>'
       : '<div class="empty-box"><b>아직 결제한 내역이 없어요</b><p class="helper">원화로 결제하면 여기에 영수증과 함께 남아요. 결제 기록은 전자상거래법에 따라 5년 동안 보관해요.</p></div>') +
       '<p class="helper" style="margin-top:10px">엽전으로 연 풀이는 <button class="link-btn" id="odCoin">엽전 주머니</button>의 사용 내역에서 볼 수 있어요.</p>' +
-      '<p class="helper" style="margin-top:12px">콘텐츠 단건 결제는 결제 즉시 열리는 디지털 콘텐츠라 연 뒤에는 환불이 제한돼요. 오류로 열리지 않았다면 전액 환불해요. <button class="link-btn" data-doc="refund">환불 정책</button></p>' +
+      '<p class="helper" style="margin-top:12px">모든 상품은 배송 없이 웹에서 바로 열리는 디지털 콘텐츠예요. 결제일부터 7일 안에 청약철회할 수 있고, 아직 열지 않은 콘텐츠는 전액 환불해요. 연 뒤에는 환불이 제한되며, 오류로 열리지 않았다면 전액 환불해요. 신청: 고객센터 메일(접수일부터 3영업일 안에 취소). <button class="link-btn" data-doc="refund">환불 정책</button></p>' +
       '<button class="btn-primary btn-block" data-close style="margin-top:14px">확인</button>');
     if ($('odCoin')) $('odCoin').onclick = function(){ openCoinSheet(); };
   }
@@ -5330,7 +5339,8 @@
     ['태어난 시간을 몰라도 볼 수 있나요?', '네. 시간을 모르면 시주를 빼고 여섯 글자로 풀어요. 정확도는 조금 낮아질 수 있어요.'],
     ['엽전은 무엇인가요?', '출석·가입 선물·우니 선물로 모으는 우니조아의 무료 포인트예요. 꿈 풀이 리포트, 분야별 운세, 궁합 상세, 쉬운 사주 풀이, 중요한 날 잡기를 열 때 써요. 엽전은 돈으로 사고팔 수 없고 현금으로 바꿀 수 없어요. 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제할 수 있어요. 출시 기념으로 12월 31일까지 계정마다 첫 원화 결제는 50% 할인돼요.'],
     ['신년운세는 유료인가요?', '아니에요. 총평과 1~3월은 바로 무료로 보고, 광고 한 편을 끝까지 보면 4~12월과 2~7장 전체가 무료로 열려요. 한 번 열면 그 사람의 신년운세는 계속 다시 볼 수 있어요.'],
-    ['결제한 콘텐츠를 환불할 수 있나요?', '콘텐츠 단건 결제는 결제하자마자 열리는 디지털 콘텐츠라 연 뒤에는 환불이 제한돼요. 결제했는데 오류로 열리지 않았다면 전액 환불해요. 우니 패스는 한 번도 쓰지 않았다면 전액, 쓰기 시작했다면 남은 날짜만큼 환불 정책에 따라 돌려드려요.'],
+    ['결제한 콘텐츠는 어디서, 언제까지 볼 수 있나요?', '모든 상품은 배송 없이 웹(woonijoa.com)에서 바로 열리는 디지털 콘텐츠예요. 결제가 끝나면 그 화면이 바로 열리고, 이후에는 보관함 › 내 리포트에서 다시 볼 수 있어요. 결제일부터 1년 동안 볼 수 있고(분야별 오늘의 운세는 결제한 날 하루, 우니에게 묻기 대화권은 24시간), 설정 › 구매 내역에서 상품마다 이용 기한을 확인할 수 있어요.'],
+    ['결제한 콘텐츠를 환불할 수 있나요?', '결제일부터 7일 안에 청약철회할 수 있고, 아직 열지 않은 콘텐츠는 전액 환불해요. 콘텐츠 단건 결제는 결제하자마자 열리는 디지털 콘텐츠라 연 뒤에는 환불이 제한돼요. 묶음 패키지는 7일 안에 아직 열지 않은 풀이 몫만큼 부분 환불해요. 결제했는데 오류로 열리지 않았다면 전액 환불해요. 고객센터 메일로 신청하면 확인 후 3영업일 안에 결제 수단으로 취소해 드려요.'],
     ['기기를 바꾸면 기록이 사라지나요?', '로그인하면 사주 목록, 출석, 엽전, 내 리포트가 계정에 보관돼요. 게스트로 쓰면 이 기기의 브라우저에만 저장돼요.'],
     ['꿈풀이에 쓴 엽전을 돌려받을 수 있나요?', '꿈풀이는 누르는 순간 바로 풀이가 만들어지는 디지털 콘텐츠라 엽전을 돌려드리지 않아요. 다만 오류로 결과가 나오지 않았다면 고객센터로 알려 주세요. 확인 후 엽전을 다시 넣어 드려요.'],
     ['행운 부적은 어떻게 정하나요?', '오늘 나에게 필요한 오행(木火土金水)을 사주와 그날 일진으로 골라, 그 기운에 맞는 색·방향·소품·음식·시간·작은 행동을 알려 드려요. 하루를 가볍게 돌아보는 재미용 힌트예요.'],
@@ -5360,7 +5370,8 @@
     if (isGuest()) return;
     openSheet('<h3 id="sheetTitle">회원 탈퇴</h3>' +
       '<ul class="benefits wd"><li>저장한 사주, 출석 기록, 엽전, 쿠폰, 우니 성장 기록이 모두 지워지고 되돌릴 수 없어요.</li>' +
-      '<li>남은 엽전(충전한 엽전 포함)은 모두 사라져요. 쓰지 않은 충전 엽전이 있으면 탈퇴 전에 고객센터로 환불을 요청해 주세요.</li>' +
+      (coinSale() ? '<li>남은 엽전(충전한 엽전 포함)은 모두 사라져요. 쓰지 않은 충전 엽전이 있으면 탈퇴 전에 고객센터로 환불을 요청해 주세요.</li>' : '<li>남은 엽전(무료 적립 포인트)은 모두 사라져요.</li>') +
+      '<li>결제한 콘텐츠도 더 이상 열 수 없어요. 결제일부터 7일 안이고 아직 열지 않은 콘텐츠가 있다면 탈퇴 전에 고객센터로 환불을 요청해 주세요.</li>' +
       '<li>결제 기록은 전자상거래법에 따라 5년 동안 분리 보관한 뒤 파기해요.</li>' +
       '<li>같은 계정으로 다시 가입해도 가입 선물 엽전은 다시 드리지 않아요.</li></ul>' +
       '<button type="button" class="cs-ck" id="wdAgree" aria-pressed="false" style="margin-top:14px"><span class="ck"></span><span>안내를 모두 확인했어요</span></button>' +

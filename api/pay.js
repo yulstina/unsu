@@ -109,16 +109,40 @@ async function confirm(req, res){
 /* 주문을 paid 로 바꾸고 엽전·패스를 지급한다 (엽전 원장은 키로 멱등) */
 async function settle(o, patch){
   const orderId = o.order_id, pass = PASSES[o.pack], item = itemOf(o.pack), pkg = pkgOf(o.pack);
-  await S.db('orders?order_id=eq.' + orderId, { method: 'PATCH', prefer: 'return=minimal', body: patch });
+  /* ready → paid 를 한 번만: 같은 주문의 복귀 요청이 동시에 두 번 와도 지급·중복 취소 판단은 먼저 바꾼 쪽만 한다 */
+  const upd = await S.db('orders?order_id=eq.' + orderId + '&status=eq.ready', { method: 'PATCH', body: patch });
+  if (Array.isArray(upd) && !upd.length) return;
   if (o.user_id && pkg){   /* 패키지: 들어 있는 풀이마다 구매 기록 키. 이미 연 것은 원장이 dup 으로 건너뛴다 */
-    for (const k of pkg.items) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'buy', p_why: pkg.name + ' · ' + (WON_NAMES[k] || '콘텐츠'), p_key: 'spend:' + k, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
+    let fresh = 0;
+    for (const k of pkg.items){ const r = await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'buy', p_why: pkg.name + ' · ' + (WON_NAMES[k] || '콘텐츠'), p_key: 'spend:' + k, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 }); if (r && r.ok && !r.dup) fresh++; }
+    if (!fresh) await cancelDup(o, patch);   /* 들어 있는 풀이를 이미 전부 가진 채 결제됨(창 두 개로 동시 결제 등) → 자동 취소 */
   }
   else if (o.user_id && item){   /* 단건: 엽전 0닢 + 구매 기록 키(spend:item). 화면이 같은 item 으로 열면 dup → 차감 없이 열림 */
     const k = item.split(':')[0];
-    await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'buy', p_why: (WON_NAMES[k] || '콘텐츠') + ' ' + o.amount.toLocaleString('ko-KR') + '원 결제', p_key: 'spend:' + item, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
+    const r = await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'buy', p_why: (WON_NAMES[k] || '콘텐츠') + ' ' + o.amount.toLocaleString('ko-KR') + '원 결제', p_key: 'spend:' + item, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
+    if (r && r.ok && r.dup) await cancelDup(o, patch);   /* 이미 연 콘텐츠를 또 결제함(중복 결제) → 자동 취소 */
   }
   else if (o.user_id && pass) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: 0, p_kind: 'pass', p_why: pass.name + ' 시작', p_key: 'pass:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: 0 });
   else if (o.user_id) await S.rpc('coin_apply', { p_user: o.user_id, p_delta: o.coins + o.bonus, p_kind: 'charge', p_why: '엽전 충전 ' + (o.coins + o.bonus).toLocaleString('ko-KR') + '닢', p_key: 'charge:' + orderId, p_day: S.kstDay(), p_daily_max: null, p_paid: o.coins });
+}
+
+/* 중복 결제 자동 취소: 같은 콘텐츠를 이미 가진 계정이 또 결제한 경우(결제창을 두 번 연 경우 등). 실패하면 기록만 남기고 고객센터에서 수동 환불 */
+async function cancelDup(o, patch){
+  const orderId = o.order_id;
+  try {
+    let ok;
+    if (patch.raw && patch.raw.provider === 'portone'){
+      const r = await fetch('https://api.portone.io/payments/' + encodeURIComponent(orderId) + '/cancel', { method: 'POST', headers: { Authorization: 'PortOne ' + process.env.PORTONE_API_SECRET, 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: '중복 결제 자동 취소' }) });
+      ok = r.ok;
+    } else {
+      const r = await fetch('https://api.tosspayments.com/v1/payments/' + encodeURIComponent(patch.payment_key) + '/cancel', { method: 'POST', headers: { Authorization: 'Basic ' + Buffer.from(process.env.TOSS_SECRET_KEY + ':').toString('base64'), 'Content-Type': 'application/json', 'Idempotency-Key': 'dup-' + orderId }, body: JSON.stringify({ cancelReason: '중복 결제 자동 취소' }) });
+      ok = r.ok;
+    }
+    await S.db('orders?order_id=eq.' + orderId, { method: 'PATCH', prefer: 'return=minimal', body: ok
+      ? { status: 'refunded', refunded_at: new Date().toISOString(), refund_amount: o.amount, raw: Object.assign({}, patch.raw, { dup: 'auto_canceled' }) }
+      : { raw: Object.assign({}, patch.raw, { dup: 'cancel_failed' }) } });
+    if (!ok) console.error('dup cancel failed', orderId);
+  } catch (e) { console.error('dup cancel', orderId, e.message); }
 }
 
 /* 포트원 V2: 복귀 주소의 paymentId 로 서버에서 결제 건을 직접 조회해 금액·상태를 대조한다 (브라우저가 준 값은 믿지 않는다) */
