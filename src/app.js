@@ -730,9 +730,8 @@
       '<div class="poster-meta">양력 ' + solarStr + ' ' + timeStr + '<br>음력 ' + lunarStr + (corrStr ? ' · ' + corrStr : '') + '</div>' +
       '</div></div>';
     h += trustStripHTML(r);
-    h += '<button class="btn-primary btn-block" id="btnImgRes" style="margin:-4px 0 4px">정리된 결과 이미지로 저장·공유</button>';
+    var imgBtn = '<button class="btn-ghost btn-block" id="btnImgRes" style="margin:-4px 0 4px">정리된 결과 이미지로 저장·공유</button>';
 
-    h += zoneHTML('me', '나', '타고난 나의 모습');
     /* --- 일간 --- */
     h += '<div class="card me-card ' + EL_CLASS[dEl] + '"><div class="sec-head"><h2 class="sec-title">나를 나타내는 글자</h2><span class="sec-meta">일간 日干</span></div>' +
       '<div class="ilgan-head ' + EL_CLASS[dEl] + '"><div class="ilgan-mark">' + P.day.sh + '</div><div><div class="ilgan-t">' + ig.t + '</div><div class="ilgan-img">' + ig.img + '</div><span class="me-badge">' + MS.EL_K[dEl] + '(' + MS.EL_H[dEl] + ') 기운을 타고난 ' + esc(entry.name) + '님</span></div></div>' +
@@ -769,10 +768,17 @@
     h += '<p class="body-text"><strong>' + EL_TEXT[fewEl].name + ' ' + minC + '개</strong> — ' + EL_TEXT[fewEl].few + ' 추천 활동: ' + EL_TEXT[r.yong].act + '.</p>';
     h += '</div>';
 
+    /* 2026-11-24 피드백3 P1-5 (소율 승인): 내 사주 한 문단 → 이야기책 → 명식·오행·계산 근거는 펼치기 안으로.
+       원국·포스터·계산 근거는 지우지 않고 접어 둔다. 계산 근거 링크를 누르면 펼쳐서 그 자리로 간다 */
+    var ezOpen = owns('ez'), manyE = [0,1,2,3,4].filter(function(e){ return r.cnt[e] === Math.max.apply(null, [0,1,2,3,4].map(function(x){ return r.cnt[x] || 0; })); });
+    h = '<div class="card sum-card ' + EL_CLASS[dEl] + '"><small class="sum-k">' + esc(entry.name) + '님의 사주 한 문단</small>' +
+      '<h2 class="sum-t">' + ig.img + ' · ' + ig.t + '</h2><p class="body-text">' + ig.d + '</p>' +
+      '<div class="chip-row sum-tags"><span class="chip">' + P.year.name + '년생 ' + r.animal + '띠</span><span class="chip">일간 ' + P.day.sh + '(' + MS.EL_K[dEl] + ')</span><span class="chip">' + manyE.map(function(e){ return MS.EL_K[e]; }).join('·') + ' 기운이 많아요</span></div></div>' +
+      bookCoverHTML(entry, ezOpen) +
+      '<details class="card chart-fold" id="chartFold"><summary><b>명식 · 오행 · 계산 근거 펼치기</b><small>원국 ' + (P.hour ? '8' : '6') + '글자 · 일간 풀이 · 오행 분포 · 만세력 계산</small></summary><div class="chart-in">' + h + '</div></details>' + imgBtn;
     h += adSlotHTML('원국과 오행을 본 뒤');
-    var ezStart = h.length, ezOpen = owns('ez');
+    var ezStart = h.length;
     h += zoneHTML('read', '풀이', '글자들이 말해 주는 것');
-    h += bookCoverHTML(entry, true);
     /* --- 십성 --- */
     var gCount = { '비겁':0,'식상':0,'재성':0,'관성':0,'인성':0 };
     order.forEach(function(k){ var p = P[k]; if (!p) return; if (k !== 'day') gCount[TEN_TO_GROUP[p.tenStem]]++; gCount[TEN_TO_GROUP[p.tenBr]]++; });
@@ -827,7 +833,7 @@
     var luck = todayLuck(entry, r), yongNums = luck.nums, lEl = luck.el;
     cur.yongNums = yongNums;
     if (!ezOpen){
-      h = h.slice(0, ezStart) + zoneHTML('read', '풀이 · 흐름', '쉬운 사주 풀이에서 이어져요') + bookCoverHTML(entry, false);
+      h = h.slice(0, ezStart);   /* 이야기책 표지는 맨 위(한 문단 아래)에 있다 */
     }
     h += '<div class="card lt"><div class="sec-head"><h2 class="sec-title">주제별 풀이</h2></div>' + topicListHTML(entry, 'result') + '</div>';
     h += '<div class="card num-cta ' + EL_CLASS[lEl] + '"><div class="num-cta-q">오늘 ' + esc(entry.name) + '님의<br><em>작은 행동</em></div>' +
@@ -850,7 +856,7 @@
     bindTopics(entry, r, $('resultBody'));
     $('btnDraw').onclick = function(){ go('num'); window.scrollTo(0, 0); };
     $('btnImgRes').onclick = function(){ shareResultImage(entry, r); };
-    if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
+    if ($('btnBasis')) $('btnBasis').onclick = function(){ var b = $('basisCard'); if ($('chartFold')) $('chartFold').open = true; if (b) b.scrollIntoView({ block:'start', behavior: reduceMotion ? 'auto' : 'smooth' }); };
     $('btnCopyRes').onclick = function(){ copyText(summaryText(), '결과를 복사했어요'); };
     $('btnShareRes').onclick = function(){
       var ig0 = ILGAN[P.day.stem];
@@ -5218,8 +5224,9 @@
     var guest = isGuest(), coins = getCoins(), won = wonSale(o.k), w0 = wonOf(o.k), cp = won && couponOk() && !passActive(), W = wonBlock(w0, cp, guest), w = W.w, pass = passActive();
     var short = !NS && !pass && coins < o.coin;
     var again = function(){ openChoice(o); };
-    openSheet('<div class="pay-sheet"><div class="pay-hero">' + tileArtSVG(o.art || 'book') + '</div>' +
-      '<h3 id="sheetTitle">' + o.name + '</h3>' + (o.who ? '<p class="pay-who">' + o.who + '</p>' : '') +
+    /* 2026-11-24 피드백3 P1-5 (소율 승인): 캐릭터는 제목 옆 작은 그림으로 → 상품·금액·버튼이 위로 */
+    openSheet('<div class="pay-sheet"><div class="pay-head"><div class="pay-hero">' + tileArtSVG(o.art || 'book') + '</div><div class="pay-ht">' +
+      '<h3 id="sheetTitle">' + o.name + '</h3>' + (o.who ? '<p class="pay-who">' + o.who + '</p>' : '') + '</div></div>' +
       '<ul class="pay-list">' + o.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
       (won ? (cp && !guest ? '<span class="pay-cp">' + esc(SRV.cfg.coupon.name) + ' · 자동 적용</span>' : '') +
         W.price +
