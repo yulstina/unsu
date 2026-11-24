@@ -4422,6 +4422,8 @@
     gh:{ h:'우리 둘 3단 궁합', d:'두 사람의 생년월일로 성격·연애·결혼 궁합을 봐요. 궁합 점수는 무료, 상세 리포트는 한 쌍마다 열려요.', m:['3단', '궁합'], fr:['점수', '무료로 보기'], toc:['궁합 점수와 한 줄', '두 사람의 기질 비교', '빛나는 점 · 부딪히기 쉬운 점', '대화 팁과 올해 두 사람의 흐름'], nf:1, cta:'궁합 보러 가기' },
     tk:{ h:'중요한 날 잡기', d:'개업·이사·계약·면접처럼 중요한 일정을 내 사주와 맞는 날로 골라 드려요. 이번 달과 다음 달은 무료예요.', m:['12개월', '달력'], fr:['두 달', '무료로 보기'], toc:['목적 고르기', '이번 달 · 다음 달 길한 날', '12개월 전체 달력', '1년 베스트 5일과 시간대', '캘린더 저장 · 공유 카드'], nf:2, cta:'두 달 무료로 보기' }
   };
+  /* 토스페이 심사(비실물 상품): 상세·결제 화면에 제공 경로·이용 방법·제공 기간·환불을 함께 보인다 */
+  var SVC_TERMS = '제공 경로: 웹(woonijoa.com) · 결제 즉시 로그인한 계정 화면에서 열리고 보관함 › 내 리포트에서 다시 봐요 · 이용 기간 결제일부터 1년(오늘의 운세는 당일) · 배송 없음 · 7일 안 청약철회, 연 뒤에는 환불 제한 · <button type="button" class="link-btn" data-doc="refund">환불 정책</button>';
   function openHomeDetail(k, me, r, go2){
     var P = HOME_P[k], D = HOME_PD[k];
     if (!D || (P.p && (owns(P.p) || passActive()))){ go2(); return; }
@@ -4429,7 +4431,7 @@
       '<h3 id="sheetTitle" class="pd-h">' + D.h + '</h3><p class="pd-d">' + D.d + '</p>' +
       '<div class="pd-meta"><div><b>' + D.m[0] + '</b>' + D.m[1] + '</div><div><b>' + D.fr[0] + '</b>' + D.fr[1] + '</div><div><b>' + (P.p ? priceTag(P.p) : '무료') + '</b>' + (P.p ? '전체 열기' : '') + '</div></div>' +
       '<ul class="pd-toc">' + D.toc.map(function(t, i){ return '<li><em>' + (i + 1) + '</em>' + t + '<span class="' + (i < D.nf ? 'f' : '') + '">' + (i < D.nf ? '무료' : '잠금') + '</span></li>'; }).join('') + '</ul>' +
-      (P.p ? '<p class="pd-terms">결제 즉시 온라인으로 제공 · 이용 기간 결제일부터 1년 · 배송 없음 · <button type="button" class="link-btn" data-doc="refund">청약철회·환불</button></p>' : '') +
+      (P.p ? '<p class="pd-terms">' + SVC_TERMS + '</p>' : '') +
       '<button class="btn-primary btn-block sheen" id="pdGo">' + D.cta + '</button><button class="text-btn" data-close>나중에 볼게요</button></div>');
     $('pdGo').onclick = function(){ closeSheet(); setTimeout(go2, 260); };
   }
@@ -5228,7 +5230,7 @@
           (cp && guest ? '<p class="helper pay-note" style="margin-top:-4px">첫 결제 대상이면 ' + W.w.toLocaleString() + '원 · 일반 ' + K.p.toLocaleString() + '원</p>' : '') +
           (leftSum <= W.w ? '<p class="helper pay-note">남은 풀이만 하나씩 여는 게 더 저렴해요.</p>' : '') +
           '<button class="btn-primary btn-block" id="pkgGo"' + (W.dis ? ' disabled' : '') + '>' + (W.st === 'demo' ? '예시 모드에서는 결제할 수 없어요' : W.st === 'on' ? '주문 확인 · ' + W.w.toLocaleString() + '원' : W.btn) + '</button>' +
-          '<p class="helper pay-note">' + W.note + '한 번 결제하는 상품이에요(자동 결제·충전 아님). 결제 즉시 계정에서 모두 열리는 디지털 콘텐츠라, 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요. 궁합 상세·중요한 날 잡기·월별 달력은 이 묶음에 들어 있지 않아요.</p>') +
+          '<p class="helper pay-note">' + W.note + '한 번 결제하는 상품이에요(자동 결제·충전 아님). ' + SVC_TERMS + ' 열지 않은 풀이는 7일 안에 그 몫만큼 부분 환불돼요. 궁합 상세·중요한 날 잡기·월별 달력은 이 묶음에 들어 있지 않아요.</p>') +
       '<button class="text-btn" id="pkgBack">' + (from && from.back ? '이전으로' : '닫기') + '</button></div>');
     $('pkgBack').onclick = function(){ closeSheet(); if (from && from.back) setTimeout(from.back, 260); };
     if ($('pkgMine')) $('pkgMine').onclick = function(){ closeSheet(); boxTab = 'bought'; go('box'); };
@@ -5281,7 +5283,7 @@
       (won ? (cp && !guest ? '<span class="pay-cp">' + esc(SRV.cfg.coupon.name) + ' · 자동 적용</span>' : '') +
         W.price +
         '<button class="btn-primary btn-block" id="payWon"' + (W.dis && !pass ? ' disabled' : '') + '>' + (pass ? '우니 패스로 열기' : W.btn) + '</button>' +
-        '<p class="helper pay-note">' + (pass ? '' : W.note) + (W.st === 'off' ? '' : '결제 즉시 계정에서 열리는 디지털 콘텐츠라 열린 뒤에는 <button class="link-btn" data-doc="refund">환불</button>이 제한돼요. ') + (o.keep ? o.keep + '.' : '') + '</p>' +
+        '<p class="helper pay-note">' + (pass ? '' : W.note) + (W.st === 'off' ? '' : SVC_TERMS + ' ') + (o.keep ? o.keep + '.' : '') + '</p>' +
         (PKG.prem.items.indexOf(o.k) > -1 && !pass ? pkgLinkHTML('prem') : '')
         : '<p class="helper pay-note" style="margin:0 0 10px">이 리포트는 지금 무료 적립 엽전으로 열 수 있어요. 원화 결제는 준비 중이에요.</p>') +
       '<div class="pay-coin"><div><b>적립 엽전 ' + o.coin.toLocaleString() + '닢 사용</b><small>' + (guest ? '처음 로그인하면 ' + SIGNUP_COINS.toLocaleString() + '닢을 받아요' : NS ? '예시 모드' : '보유 ' + coins.toLocaleString() + '닢' + (short ? ' · ' + (o.coin - coins).toLocaleString() + '닢 부족' : '')) + '</small></div>' +
