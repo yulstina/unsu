@@ -10,7 +10,7 @@ var LEGAL = (function(){
     name: '실로(SYLO)',           /* 상호 (사업자등록증과 같게) */
     owner: '홍소율',                    /* 대표자 실명 */
     regNo: '471-06-03822',        /* 사업자등록번호 */
-    mailOrderNo: '면제(간이과세자)',              /* 통신판매업 신고번호 제0000-지역-0000호 */
+    mailOrderNo: '간이과세자로서 통신판매업 신고 면제 대상 (공정거래위원회 「통신판매업 신고 면제 기준에 대한 고시」 제2조)',   /* 신고번호가 생기면 제0000-지역-0000호 로 교체 */
     addr: '경기도 김포시 고촌읍 상미1로 7, 214동 604호(힐스테이트 리버시티 2단지)',                     /* 사업장 주소 (등록증 주소) */
     email: 'sylostudio.official@gmail.com',                    /* 고객센터·개인정보 보호책임자 메일 */
     tel: '010-7475-5393',                      /* 고객센터 전화 (전자상거래법상 표시 필요) */
@@ -25,7 +25,7 @@ var LEGAL = (function(){
 
   /* 하단 사업자 정보 한 줄짜리 (전자상거래법 제10조·제13조 표시 항목) */
   function footer(){
-    return '상호 ' + v(BIZ.name) + ' · 대표 ' + v(BIZ.owner) + '<br>사업자등록번호 ' + v(BIZ.regNo, '발급 후 입력') + ' · 통신판매업 신고 ' + v(BIZ.mailOrderNo, '신고 후 입력') +
+    return '상호 ' + v(BIZ.name) + ' · 대표 ' + v(BIZ.owner) + '<br>사업자등록번호 ' + v(BIZ.regNo, '발급 후 입력') + '<br>통신판매업 신고: ' + v(BIZ.mailOrderNo, '신고 후 입력') +
       '<br>주소 ' + v(BIZ.addr) + '<br>고객센터 ' + v(BIZ.email) + (BIZ.tel ? ' · ' + esc(BIZ.tel) : '') + ' · 호스팅 ' + esc(BIZ.hosting) +
       '<br>서비스 제공: 결제 즉시 온라인 제공(배송 없음) · 이용 기간 결제일부터 1년 이내 · 청약철회 결제일부터 7일 이내(이용약관 제8·9조, 환불 정책)';
   }
@@ -35,7 +35,7 @@ var LEGAL = (function(){
       '<li>서비스명: ' + esc(BIZ.service) + ' (' + esc(BIZ.site.replace('https://', '')) + ')</li>' +
       '<li>상호: ' + v(BIZ.name) + '</li><li>대표자: ' + v(BIZ.owner) + '</li>' +
       '<li>사업자등록번호: ' + v(BIZ.regNo, '발급 후 입력') + '</li>' +
-      '<li>통신판매업 신고번호: ' + v(BIZ.mailOrderNo, '신고 후 입력') + '</li>' +
+      '<li>통신판매업 신고: ' + v(BIZ.mailOrderNo, '신고 후 입력') + '</li>' +
       '<li>사업장 주소: ' + v(BIZ.addr) + '</li>' +
       '<li>고객센터: ' + v(BIZ.email) + (BIZ.tel ? ' · ' + esc(BIZ.tel) : '') + ' (평일 10:00~18:00)</li>' +
       '<li>호스팅 서비스: ' + esc(BIZ.hosting) + '</li></ul>'; } },
