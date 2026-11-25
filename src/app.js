@@ -2617,13 +2617,22 @@
     var drawn = todoDone('drawn');
     /* 2026-11-23 헬로우봇 분석 반영(소율 확정): 오늘 카드 → 아이콘 메뉴 2×5 → 2027 캐러셀 → 맞춤 추천 → 깊이 보는 풀이 → 가볍게 해보기 → 우니와 매일 */
     var low = [['w','money'],['l','love'],['j','career']].sort(function(a, b){ return f.scores[a[0]] - f.scores[b[0]]; })[0];
-    h += '<section class="home-hero ' + elc + '"><div class="hh-txt"><div class="hh-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日 ' + f.ten + '의 날</div>' +
+    /* 2026-11-25 소율: ① 메인 배너 느낌(배지·반짝이·우니 후광) ② 분야 이모티콘이 들어간 오늘 운세 카드 ③ 이야기책 배너와 버튼을 한 카드로 */
+    h += '<section class="home-hero ' + elc + '"><span class="hh-spark s1" aria-hidden="true"></span><span class="hh-spark s2" aria-hidden="true"></span><span class="hh-spark s3" aria-hidden="true"></span>' +
+      '<div class="hh-txt"><span class="hh-badge">오늘의 부적</span><div class="hh-date">' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일 · ' + P.day.hanja + '日 ' + f.ten + '의 날</div>' +
       '<h1 class="hh-title">' + f.head + '</h1></div>' +
       '<span class="hh-uni" aria-hidden="true">' + uniImg(drawn ? 'u-gift' : 'u-pouch') + '</span>' +
       '<div class="hh-acts"><button class="btn-primary hh-cta' + (drawn ? '' : ' sheen') + '" id="btnGoNum">' + (drawn ? '오늘 부적 다시 보기' : '오늘 부적 열기') + '</button><button type="button" class="hh-share" id="btnTodayShare">' + SH_IC.send + '공유</button></div></section>';
     h += bokBannerHTML();
-    h += '<button type="button" class="home-ft" id="hmFt"><span class="hf-sc">' + f.total + '<small>점</small></span><span class="hf-t"><b>오늘 운세 자세히</b><small>총운·애정·금전·직장·학업·건강 · 내일·이번 주·이번 달</small></span><i>›</i></button>';
-    h += '<section class="home-sec"><div class="home-book"><span class="hb-img">' + uniImg('u-book') + '</span><div><small>사주 이야기책 · 1장 무료</small><b>' + esc(me.name) + '님 사주의 첫 기둥</b><p>' + '어려운 한자 없이 내 사주를 이야기로 읽어요. 3분이면 돼요.</p></div></div><button type="button" class="btn-primary btn-block" id="hmBook">1장 무료로 읽기</button></section>';
+    var ftv = ftPeriod(me, r, 'd0').v, ftTop = FT_CATS.slice(1).sort(function(a, b){ return ftv[b[0]] - ftv[a[0]]; })[0][0];
+    h += '<section class="home-ft"><button type="button" class="hft-head" id="hmFt"><span class="hft-sc" style="--v:' + f.total + '"><b>' + f.total + '</b><small>점</small></span>' +
+      '<span class="hft-t"><small>분야별 · 내일 · 이번 주 · 이번 달</small><b>오늘 운세 자세히</b></span><i aria-hidden="true">›</i></button>' +
+      '<div class="hft-cats">' + FT_CATS.map(function(c, i){
+        return '<button type="button" class="ftc-' + c[0] + (c[0] === ftTop ? ' top' : '') + '" data-hft="' + c[0] + '" style="--d:' + (i * .35) + 's">' + (c[0] === ftTop ? '<span class="hft-best">오늘 최고</span>' : '') +
+          '<i aria-hidden="true"><svg viewBox="0 0 32 32">' + c[2] + '</svg></i><span>' + c[1] + '</span><em data-tier="' + tierOf(ftv[c[0]]) + '">' + ftv[c[0]] + '</em></button>';
+      }).join('') + '</div></section>';
+    h += '<section class="home-sec hb-sec"><div class="home-book" id="hmBookCard"><div class="hb-row"><span class="hb-img">' + uniImg('u-book') + '</span><div><small>사주 이야기책 · 1장 무료</small><b>' + esc(me.name) + '님 사주의 첫 기둥</b><p>' + '어려운 한자 없이 내 사주를 이야기로 읽어요. 3분이면 돼요.</p></div></div>' +
+      '<button type="button" class="hb-btn" id="hmBook">1장 무료로 읽기 <span aria-hidden="true">›</span></button></div></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">무엇이 궁금해요?</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div><div class="hm-top">' +
       HOME_TOPICS.map(function(t){ return '<button type="button" class="tpc-' + t.k + '" data-tpc="' + t.k + '"><b>' + t.n + '</b><small>' + t.s + '</small></button>'; }).join('') + '</div></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + TJ_YEAR + ' 정미년, 미리 열어 봐요</h2></div><div class="hp-car" role="list">' +
@@ -2645,7 +2654,10 @@
     if ($('bokBan')) $('bokBan').onclick = openBokSheet;
     $('hmTopics').onclick = function(){ openTopics(me, r); };
     $('hmBook').onclick = function(){ openStory(me, r, 0); };
-    $('hmFt').onclick = function(){ openSheet('<h3 id="sheetTitle">' + esc(me.name) + '님의 운세</h3><div class="ft-box" id="ftBox">' + ftHTML(me, r) + '</div>'); bindFt(me, r); };
+    var openFt = function(c){ ftSel.p = 'd0'; ftSel.c = c || 'total'; openSheet('<h3 id="sheetTitle">' + esc(me.name) + '님의 운세</h3><div class="ft-box" id="ftBox">' + ftHTML(me, r) + '</div>'); bindFt(me, r); };
+    $('hmFt').onclick = function(){ openFt('total'); };
+    document.querySelectorAll('.home-ft [data-hft]').forEach(function(b){ b.onclick = function(){ openFt(b.dataset.hft); }; });
+    $('hmBookCard').onclick = function(e){ if (e.target.closest('#hmBook')) return; openStory(me, r, 0); };
     body.querySelectorAll('[data-tpc]').forEach(function(b){ b.onclick = function(){ openHomeTopic(b.dataset.tpc, me, r); }; });
     $('hmAsk').onclick = function(){ openChat(me, r); };
     bindHomeP(me, r, body);
