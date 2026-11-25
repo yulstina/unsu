@@ -10,7 +10,8 @@
      COUPON_OFF                              1 이면 출시 기념 첫 결제 할인을 끈다
      EVENT_FROM, EVENT_TO                    새해 복주머니 이벤트 기간(ISO, 기본 2026-12-14 ~ 2027-01-31 KST)
      TOSS_CLIENT_KEY, TOSS_SECRET_KEY        토스페이먼츠 (API 개별 연동 키 · test_ck_ / test_sk_ 로 시작하면 테스트 결제)
-     PORTONE_STORE_ID, PORTONE_CHANNEL_KEY, PORTONE_API_SECRET   포트원 V2 (둘 다 있으면 포트원 우선). PORTONE_TEST=1 이면 테스트 채널이라 항상 켜짐
+     PAY_PROVIDER                            toss 이면 포트원 키가 있어도 토스를 쓴다(토스 심사 기간용). 비우면 예전처럼 포트원 우선
+     PORTONE_STORE_ID, PORTONE_CHANNEL_KEY, PORTONE_API_SECRET   포트원 V2 (둘 다 있으면 포트원 우선, PAY_PROVIDER=toss 가 아니면). PORTONE_TEST=1 이면 테스트 채널이라 항상 켜짐
      PORTONE_KAKAOPAY_CHANNEL_KEY            (선택) 카카오페이 채널 키. 있으면 결제 버튼이 '카드 / 카카오페이' 둘로 나뉜다. PORTONE_CHANNEL_KEY 는 카드(KPN 등) 채널
      PAY_LIVE                                실결제 스위치. 라이브 키(live_ck_)는 PAY_LIVE=1 이고 개업일(2026-12-04 KST) 이후일 때만 켜진다. 테스트 키는 항상 켜짐
      OWNER_KEY                               (선택) 운영자 계정 열쇠. 로그인한 채로 /?owner=열쇠 로 한 번 들어오면 그 기기에서 모든 콘텐츠가 결제 없이 열린다
@@ -29,7 +30,8 @@ const CONF = {
   get toss(){ return this.db && !!(E.TOSS_CLIENT_KEY && E.TOSS_SECRET_KEY); },
   /* 결제가 열려 있는가 — 화면(me.js 의 cfg.pay.on)과 주문 API(pay.js)가 이 한 곳만 본다.
      키가 있고, 비상 스위치(PAY_OFF)가 꺼져 있고, 테스트 키이거나(돈이 안 나감) 라이브 키 + PAY_LIVE=1 + 개업일 이후일 때만 true */
-  get portone(){ return this.db && !!(E.PORTONE_STORE_ID && E.PORTONE_CHANNEL_KEY && E.PORTONE_API_SECRET); },
+  /* PAY_PROVIDER=toss 이면 포트원 키가 있어도 토스 결제창을 쓴다(토스 심사용 테스트 결제). 포트원 설정은 지우지 않고 그대로 둔다 */
+  get portone(){ return this.db && E.PAY_PROVIDER !== 'toss' && !!(E.PORTONE_STORE_ID && E.PORTONE_CHANNEL_KEY && E.PORTONE_API_SECRET); },
   get provider(){ return this.portone ? 'portone' : this.toss ? 'toss' : null; },
   get payTest(){ return this.portone ? E.PORTONE_TEST === '1' : /^test_/.test(E.TOSS_CLIENT_KEY || ''); },
   get pay(){
