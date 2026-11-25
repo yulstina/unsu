@@ -2567,18 +2567,71 @@
   .pkg-list li span{opacity:.7;white-space:nowrap;}
   .pkg-list li i{font-style:normal;color:#8fe3b0;}
   .pkg-sheet .pay-price small{font-size:12px;opacity:.65;font-weight:500;}
-  .home-ft{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 4px;padding:12px 16px;border:0;border-radius:18px;background:var(--h-surf);box-shadow:inset 0 0 0 1px rgba(206,190,255,.28);color:var(--h-ink);font:inherit;text-align:left;cursor:pointer;}
-  .home-ft .hf-sc{font-size:calc(26px*var(--fs));font-weight:800;color:#f6cd5b;min-width:54px;font-variant-numeric:tabular-nums;}
-  .home-ft .hf-sc small{font-size:calc(13px*var(--fs));}
-  .home-ft .hf-t{flex:1;display:flex;flex-direction:column;gap:2px;}
-  .home-ft .hf-t b{font-size:calc(17px*var(--fs));}
-  .home-ft .hf-t small{font-size:calc(14px*var(--fs));color:var(--h-sub);line-height:1.4;}
-  .home-ft i{font-style:normal;font-size:22px;color:#cebeff;}
-  .home-book{display:flex;gap:12px;align-items:center;padding:16px;border-radius:20px;background:linear-gradient(135deg,#f6ecd6,#ead9b6);color:#3a2a10;margin-bottom:8px;}
+  /* ===== 2026-11-25 홈 상단 세 영역 구분 ===== */
+  /* ① 메인 배너: 배지 + 반짝이 + 우니 후광 + 테두리 빛 — 화면에서 가장 크고 밝은 카드 */
+  .home-hero{padding:22px 18px 18px;border-radius:26px;background:radial-gradient(120% 90% at 85% 20%,rgba(206,190,255,.30) 0%,rgba(206,190,255,0) 55%),linear-gradient(155deg,#56409a 0%,#382a66 48%,#211a3a 100%);
+    box-shadow:inset 0 0 0 1px rgba(214,200,255,.38),0 14px 34px rgba(82,56,170,.38);}
+  .home-hero::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,0) 38%);}
+  .hh-badge{display:inline-flex;align-items:center;gap:5px;margin-bottom:8px;padding:4px 10px 4px 8px;border-radius:999px;background:rgba(255,226,150,.16);box-shadow:inset 0 0 0 1px rgba(255,214,120,.45);color:#ffe3a1;font-size:calc(12px*var(--fs));font-weight:700;letter-spacing:.02em;}
+  .hh-badge::before{content:"";width:9px;height:9px;background:#ffd76e;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);}
+  .home-hero .hh-title{font-family:'Noto Serif KR','Nanum Myeongjo',serif;font-weight:700;font-size:calc(20px*var(--fs));line-height:1.4;letter-spacing:-.035em;text-wrap:balance;}
+  .home-hero{column-gap:4px;padding-right:12px;}
+  @media (max-width:370px){.home-hero .hh-title{font-size:calc(18.5px*var(--fs));}}
+  .home-hero .hh-uni{position:relative;}
+  .home-hero .hh-uni::before{content:"";position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle,rgba(255,236,170,.42) 0%,rgba(206,190,255,.18) 45%,rgba(206,190,255,0) 70%);}
+  .home-hero .hh-uni img{position:relative;width:88px;height:88px;animation:float 4.5s ease-in-out infinite;}
+  .hh-spark{position:absolute;width:10px;height:10px;background:#fff3c4;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;animation:tuTw 3.2s ease-in-out infinite;pointer-events:none;}
+  .hh-spark.s1{top:16px;right:30%;}
+  .hh-spark.s2{top:58%;right:8px;width:7px;height:7px;animation-delay:1.1s;}
+  .hh-spark.s3{top:22px;right:12px;width:8px;height:8px;animation-delay:2.1s;}
+  .home-hero .hh-cta{min-height:52px;box-shadow:0 6px 16px rgba(20,10,50,.35);}
+
+  /* ② 오늘 운세 자세히: 어두운 카드 + 분야 이모티콘 6개(둥실, 점수, 오늘 최고) — 누르면 그 분야로 시트가 열린다 */
+  .home-ft{position:relative;margin:14px 0 4px;padding:14px 12px 14px;border-radius:22px;background:radial-gradient(90% 70% at 10% 0%,rgba(255,229,154,.08),rgba(255,229,154,0) 60%),var(--h-surf);box-shadow:inset 0 0 0 1px rgba(206,190,255,.22);overflow:hidden;}
+  .hft-head{display:flex;align-items:center;gap:12px;width:100%;padding:0 4px 12px;border:0;border-bottom:1px dashed rgba(206,190,255,.18);background:none;color:var(--h-ink);font:inherit;text-align:left;cursor:pointer;}
+  .hft-sc{display:flex;align-items:baseline;justify-content:center;min-width:58px;height:58px;padding-top:12px;box-sizing:border-box;border-radius:50%;background:conic-gradient(#f6cd5b calc(var(--v,75)*1%),rgba(246,205,91,.16) 0);position:relative;}
+  .hft-sc::before{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--h-surf);}
+  .hft-sc b,.hft-sc small{position:relative;color:#f6cd5b;font-variant-numeric:tabular-nums;}
+  .hft-sc b{font-size:calc(21px*var(--fs));font-weight:800;line-height:1.3;}
+  .hft-sc small{font-size:calc(11px*var(--fs));font-weight:700;}
+  .hft-t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .hft-t small{font-size:calc(12.5px*var(--fs));color:var(--h-sub);}
+  .hft-t b{font-size:calc(17.5px*var(--fs));}
+  .hft-head i{font-style:normal;font-size:22px;color:#cebeff;}
+  .hft-cats{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;padding-top:12px;}
+  .hft-cats button{--c:#c9bff7;--cb:rgba(201,191,247,.14);position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0;border:0;background:none;color:var(--h-sub);font:inherit;font-size:calc(11.5px*var(--fs));cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+  .hft-cats .ftc-total{--c:#ffe59a;--cb:rgba(255,229,154,.14);}
+  .hft-cats .ftc-love{--c:#ffb7c8;--cb:rgba(255,183,200,.14);}
+  .hft-cats .ftc-money{--c:#a6e8cb;--cb:rgba(166,232,203,.13);}
+  .hft-cats .ftc-work{--c:#ffc9a3;--cb:rgba(255,201,163,.13);}
+  .hft-cats .ftc-study{--c:#b9d0ff;--cb:rgba(185,208,255,.14);}
+  .hft-cats .ftc-health{--c:#c3eaa9;--cb:rgba(195,234,169,.13);}
+  .hft-cats i{display:grid;place-items:center;width:46px;height:46px;border-radius:16px;background:var(--cb);animation:hftBob 3.6s ease-in-out infinite;animation-delay:var(--d,0s);transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+  .hft-cats svg{width:34px;height:34px;}
+  .hft-cats span{margin-top:2px;}
+  .hft-cats em{font-style:normal;font-weight:800;font-size:calc(13px*var(--fs));color:var(--h-ink);font-variant-numeric:tabular-nums;}
+  .hft-cats em[data-tier="gold"]{color:#ffd98a;}
+  .hft-cats em[data-tier="rose"]{color:#ffb49e;}
+  .hft-cats button.top i{box-shadow:0 0 0 2px var(--c),0 0 16px var(--c);}
+  .hft-cats button.top span{color:var(--h-ink);font-weight:700;}
+  .hft-best{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:1;padding:1px 6px;border-radius:999px;background:#ffd76e;color:#3a2a00;font-size:calc(9.5px*var(--fs));font-weight:800;white-space:nowrap;}
+  .hft-cats button:active i{transform:scale(.9);}
+  @keyframes hftBob{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-4px) rotate(-4deg)}60%{transform:translateY(0) rotate(3deg)}}
+
+  /* ③ 사주 이야기책: 종이색 카드 안에 버튼까지 한 덩어리 */
+  .hb-sec{margin-top:18px;}
+  .home-book{position:relative;display:flex;flex-direction:column;gap:14px;padding:16px 16px 14px;border-radius:22px;background:linear-gradient(135deg,#f8efdb,#ecdcba);color:#3a2a10;box-shadow:0 10px 26px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.55);cursor:pointer;overflow:hidden;}
+  .home-book::after{content:"";position:absolute;top:0;right:0;width:34px;height:34px;background:linear-gradient(225deg,#1a1530 0 50%,#d9c597 50% 100%);border-bottom-left-radius:10px;box-shadow:-2px 2px 4px rgba(0,0,0,.12);}
+  .hb-row{display:flex;gap:12px;align-items:center;padding-right:18px;}
   .home-book .hb-img img{width:74px;height:74px;object-fit:contain;display:block;}
   .home-book small{font-size:13.5px;color:#8a6a2c;font-weight:700;}
   .home-book b{display:block;font-size:19px;margin:2px 0 4px;}
   .home-book p{margin:0;font-size:15px;line-height:1.45;color:#5a4626;}
+  .hb-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:48px;border:0;border-radius:14px;background:#3b2a63;color:#fbf3e2;font:inherit;font-size:calc(15.5px*var(--fs));font-weight:700;cursor:pointer;box-shadow:0 4px 0 #2a1d48;}
+  .hb-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #2a1d48;}
+  html[data-perf="lite"] .hft-cats i,html[data-perf="lite"] .hh-spark,html[data-perf="lite"] .home-hero .hh-uni img{animation:none;}
+  html[data-perf="lite"] .hh-spark{opacity:.7;}
+  @media (prefers-reduced-motion:reduce){.hft-cats i,.hh-spark,.home-hero .hh-uni img{animation:none}.hh-spark{opacity:.7}}
   .hm-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .hm-top button{display:flex;flex-direction:column;gap:4px;padding:16px;border:0;border-radius:18px;text-align:left;color:var(--h-ink);font:inherit;cursor:pointer;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 22%,transparent),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent);}
   .hm-top b{font-size:calc(19px*var(--fs));color:var(--c);}
