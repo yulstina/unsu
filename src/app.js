@@ -234,7 +234,7 @@
     var ti = ['today','saju','ask','dream','box'].indexOf(currentTab), lens = document.querySelector('.tab-lens');
     if (lens){ lens.style.opacity = ti < 0 ? '0' : '1'; if (ti >= 0) lens.style.setProperty('--ti', ti); }
     var segKey = view === 'result' ? 'mine' : view;
-    document.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });
+    document.querySelectorAll('.seg button[data-sub]').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.sub === segKey)); });   /* data-sub 없는 세그먼트(보관함 등)는 각자 상태 유지 */
     document.body.dataset.view = view; document.body.dataset.tab = currentTab || 'none';
     window.scrollTo(0, 0);
     if (viewChanged) enterFx(VIEWS[view]);
@@ -736,7 +736,7 @@
     h += '<div class="card me-card ' + EL_CLASS[dEl] + '"><div class="sec-head"><h2 class="sec-title">나를 나타내는 글자</h2><span class="sec-meta">일간 日干</span></div>' +
       '<div class="ilgan-head ' + EL_CLASS[dEl] + '"><div class="ilgan-mark">' + P.day.sh + '</div><div><div class="ilgan-t">' + ig.t + '</div><div class="ilgan-img">' + ig.img + '</div><span class="me-badge">' + MS.EL_K[dEl] + '(' + MS.EL_H[dEl] + ') 기운을 타고난 ' + esc(entry.name) + '님</span></div></div>' +
       '<div class="chip-row">' + ig.kw.map(function(k){ return '<span class="chip">' + k + '</span>'; }).join('') + '</div>' +
-      '<p class="body-text">' + ig.d + '</p><div class="divider"></div>' +
+      '<div class="divider"></div>' +   /* 2026-11-25 P1-6: ig.d는 맨 위 '사주 한 문단'에 이미 있어 여기선 뺀다 */
       '<div class="sub-block"><h4>타고난 강점</h4><p class="body-text">' + ig.good + '</p></div>' +
       '<div class="sub-block"><h4>조심하면 좋은 점</h4><p class="body-text">' + ig.care + '</p></div>' +
       '<div class="sub-block"><h4>잘 맞는 분야</h4><p class="body-text">' + ig.fit + '</p></div>' +
@@ -2081,7 +2081,8 @@
     var guest = isGuest(), cp = dmCoupon(), coins = getCoins(), past = getDreams(), draft = store('unsu_dmdraft') || '';
     dmAgree = false;
     var ready = dmReady();
-    var h = '<div class="flow-header"><button class="icon-back" id="btnDmBack" aria-label="뒤로">‹</button><span class="ttl">꿈해몽</span>' + (dmCtx.theme ? '<button class="btn-ghost" id="btnDmReset" style="padding:8px 14px;font-size:calc(12.5px*var(--fs))">처음부터</button>' : '') + '</div>' +
+    /* 2026-11-25 디자인 크리틱 P1-8: 하단 탭 루트 화면이라 보관함처럼 큰 제목. 뒤로 가기 대신 '처음부터'만 */
+    var h = '<div class="num-head dm-head"><h1 class="num-title">꿈해몽</h1>' + (dmCtx.theme ? '<button class="btn-ghost" id="btnDmReset" style="padding:8px 14px;font-size:calc(12px*var(--fs))">처음부터</button>' : '') + '</div>' +
       '<div class="card dmc" id="dmChat">' + dmChatHTML() + '</div>';
     if (ready){
       h += '<div class="card dm-card"><label class="dm-lab" for="dmText">내 꿈 이야기</label>' +
@@ -2106,7 +2107,7 @@
     if (past.length) h += '<div class="card"><div class="sec-head"><h2 class="sec-title">지난 꿈풀이</h2><span class="sec-meta">최근 ' + REC_MAX + '개까지 · 이 기기</span></div><div class="dm-past">' +
       past.map(function(d, i){ return '<div class="rec-row"><button type="button" data-dm="' + i + '"><b>' + esc(d.title) + '</b><span>' + fmtDate(d.at) + ' · ' + (d.free ? '무료 해몽' : '꿈 풀이 리포트') + '</span></button><button type="button" class="rec-del" data-dmdel="' + esc(d.id) + '" aria-label="이 기록 지우기">✕</button></div>'; }).join('') + '</div></div>';
     $('dmInput').innerHTML = h;
-    $('btnDmBack').onclick = function(){ go('today'); };
+    if ($('btnDmBack')) $('btnDmBack').onclick = function(){ go('today'); };
     if ($('btnDmReset')) $('btnDmReset').onclick = function(){ dmCtx = { theme:'', who:'', name:'', named:false }; renderDreamInput(); };
     var box = $('dmChat');
     box.querySelectorAll('[data-dmt]').forEach(function(b){ b.onclick = function(){ dmCtx.theme = b.dataset.dmt; renderDreamInput(); dmScroll(); }; });
@@ -2634,7 +2635,7 @@
     h += '<section class="home-sec hb-sec"><div class="home-book" id="hmBookCard"><div class="hb-row"><span class="hb-img">' + uniImg('u-book') + '</span><div><small>사주 이야기책 · 1장 무료</small><b>' + esc(me.name) + '님 사주의 첫 기둥</b><p>' + '어려운 한자 없이 내 사주를 이야기로 읽어요. 3분이면 돼요.</p></div></div>' +
       '<button type="button" class="hb-btn" id="hmBook">1장 무료로 읽기 <span aria-hidden="true">›</span></button></div></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">무엇이 궁금해요?</h2><button type="button" class="hs-link" id="hmTopics">전체 ›</button></div><div class="hm-top">' +
-      HOME_TOPICS.map(function(t){ return '<button type="button" class="tpc-' + t.k + '" data-tpc="' + t.k + '"><b>' + t.n + '</b><small>' + t.s + '</small></button>'; }).join('') + '</div></section>';
+      HOME_TOPICS.map(function(t){ return '<button type="button" class="tpc-' + t.k + '" data-tpc="' + t.k + '"><b>' + t.n + '</b><small>' + t.s.split(' · ').map(function(x){ return '<span>' + x + '</span>'; }).join(' · ') + '</small></button>'; }).join('') + '</div></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + TJ_YEAR + ' 정미년, 미리 열어 봐요</h2></div><div class="hp-car" role="list">' +
       ['tj', 'sal', 'fc', 'ny'].map(function(k){ return homeCardHTML(k, 'car'); }).join('') + '</div></section>';
     h += adSlotHTML('오늘의 운세를 본 뒤');
@@ -5067,7 +5068,7 @@
       '</div>' +
       '<div class="ak-dock"><div class="ak-qr" id="akQr" role="group" aria-label="빠른 답장"></div>' +
       '<form class="ak-bar" id="akBar" autocomplete="off"><textarea id="chatQ" maxlength="200" rows="1" placeholder="우니에게 고민을 적어 보세요" aria-label="질문"></textarea><button class="ak-send" id="chatGo" aria-label="보내기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button></form></div>' +
-      '<p class="disclaimer ak-disc">AI가 사주를 바탕으로 만든 재미용 답변이에요. 건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 생년월일은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p>' +
+      '<details class="disclaimer ak-disc"><summary>AI가 사주로 만든 재미용 답변이에요 <span>자세히</span></summary><p>건강·법률·투자처럼 중요한 결정은 전문가와 상의해 주세요. 질문과 생년월일은 답을 만들 때만 쓰고 서버에 남기지 않아요. 대화 기록은 이 기기에만 저장돼요.</p></details>' +   /* 2026-11-25 P1-9: 3줄 → 1줄 + 펼치기 */
       '</div>';
     bindDemoBar();
     var q = $('chatQ');
@@ -5287,6 +5288,8 @@
   function openChoice(o){
     var guest = isGuest(), coins = getCoins(), won = wonSale(o.k), w0 = wonOf(o.k), cp = won && couponOk() && !passActive(), W = wonBlock(w0, cp, guest), w = W.w, pass = passActive();
     var short = !NS && !pass && coins < o.coin;
+    /* 2026-11-25 디자인 크리틱 P0-3: 원화 결제가 꺼져 있으면 죽은 큰 버튼 대신 안내 한 줄, 엽전 버튼을 주 버튼으로 */
+    var wonOff = won && !pass && W.st === 'off', coinMain = !won || wonOff;
     var again = function(){ openChoice(o); };
     /* 2026-11-24 피드백3 P1-5 (소율 승인): 캐릭터는 제목 옆 작은 그림으로 → 상품·금액·버튼이 위로 */
     openSheet('<div class="pay-sheet"><div class="pay-head"><div class="pay-hero">' + tileArtSVG(o.art || 'book') + '</div><div class="pay-ht">' +
@@ -5294,12 +5297,13 @@
       '<ul class="pay-list">' + o.items.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>' +
       (won ? (cp && !guest ? '<span class="pay-cp">' + esc(SRV.cfg.coupon.name) + ' · 자동 적용</span>' : '') +
         W.price +
-        '<button class="btn-primary btn-block" id="payWon"' + (W.dis && !pass ? ' disabled' : '') + '>' + (pass ? '우니 패스로 열기' : W.btn) + '</button>' +
-        '<p class="helper pay-note">' + (pass ? '' : W.note) + (W.st === 'off' ? '' : SVC_TERMS + ' ') + (o.keep ? o.keep + '.' : '') + '</p>' +
+        (wonOff ? '<p class="pay-off">원화 결제는 준비 중이에요 · 지금은 아래 적립 엽전으로 열 수 있어요</p>'
+          : '<button class="btn-primary btn-block" id="payWon"' + (W.dis && !pass ? ' disabled' : '') + '>' + (pass ? '우니 패스로 열기' : W.btn) + '</button>') +
+        '<p class="helper pay-note">' + (pass || wonOff ? '' : W.note) + (W.st === 'off' ? '' : SVC_TERMS + ' ') + (o.keep ? o.keep + '.' : '') + '</p>' +
         (PKG.prem.items.indexOf(o.k) > -1 && !pass ? pkgLinkHTML('prem') : '')
         : '<p class="helper pay-note" style="margin:0 0 10px">이 리포트는 지금 무료 적립 엽전으로 열 수 있어요. 원화 결제는 준비 중이에요.</p>') +
       '<div class="pay-coin"><div><b>적립 엽전 ' + o.coin.toLocaleString() + '닢 사용</b><small>' + (guest ? '처음 로그인하면 ' + SIGNUP_COINS.toLocaleString() + '닢을 받아요' : NS ? '예시 모드' : '보유 ' + coins.toLocaleString() + '닢' + (short ? ' · ' + (o.coin - coins).toLocaleString() + '닢 부족' : '')) + '</small></div>' +
-        '<button class="' + (won ? 'btn-soft' : 'btn-primary') + '" id="payCoin"' + (short && !guest ? ' disabled' : '') + '>' + (short && !guest ? '부족해요' : '엽전으로 열기') + '</button></div>' +
+        '<button class="' + (coinMain ? 'btn-primary' : 'btn-soft') + '" id="payCoin"' + (short && !guest ? ' disabled' : '') + '>' + (short && !guest ? '부족해요' : '엽전으로 열기') + '</button></div>' +
       (short && !guest ? '<button class="text-btn" id="payEarn">엽전 무료로 모으는 방법</button>' : '') +
       '<p class="helper pay-note" style="margin-top:6px">연 리포트는 보관함 › 내 리포트에서 다시 볼 수 있어요. 엽전은 출석·가입으로 받는 무료 적립 포인트라 사고팔거나 현금으로 바꿀 수 없어요.</p></div>');
     if ($('payWon')) $('payWon').onclick = function(){
