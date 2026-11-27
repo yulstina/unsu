@@ -49,7 +49,7 @@
   /* 저장소: 예시 모드는 'demo:' 네임스페이스로 분리, 계정/모드 키는 전역 */
   var MEM = {}, NS = '', syncHook = null;
   var GLOBAL_KEYS = { unsu_mode:1, unsu_auth:1, unsu_account:1, unsu_intro:1, unsu_invite:1, unsu_gift:1, unsu_consent:1, unsu_notif:1, unsu_syncat:1 };
-  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders','unsu_ny_open','unsu_dreams','unsu_dmdraft','unsu_numbox','unsu_drawn','unsu_peek','unsu_shared','unsu_todo','unsu_lifeseen','unsu_tk_open'];
+  var DATA_KEYS = ['unsu_list','unsu_me','unsu_coin','unsu_coinlog','unsu_att','unsu_ad','unsu_unlock','unsu_extra','unsu_draft','unsu_zbirth','unsu_seeded','unsu_welcomed','unsu_nudge','unsu_invgift','unsu_ny_alert','unsu_pet','unsu_coupons','unsu_orders','unsu_ny_open','unsu_dreams','unsu_dmdraft','unsu_numbox','unsu_drawn','unsu_peek','unsu_shared','unsu_todo','unsu_lifeseen','unsu_tk_open','unsu_rit'];
   function nsk(k){ return GLOBAL_KEYS[k] ? k : NS + k; }
   function store(k, v){
     var key = nsk(k);
@@ -1100,7 +1100,7 @@
   var GH_COST = 30, AD_REWARD = 20, AD_LIMIT = 3;
   /* 2026-11-15 소율: 유료는 전부 엽전(닢). 엽전은 충전소에서 원화로 충전(토스) · 신년운세 전체는 광고 시청으로 연다.
      값은 여기 한 곳만 고치면 화면 전체가 바뀐다. 1닢 ≈ 9~11원(충전 패키지 기준) */
-  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100, cal:100, lv:200, chat:100, wl:100, sal:100, gw:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
+  var COST = { cat:100, dream:200, gh:100, ez:100, tk:500, tj:100, cal:100, lv:200, chat:100, wl:100, sal:100, gw:100, fl:200, du:100 };   /* 서버 가격표 api/_lib/shop.js PRICES 와 같이 바꾼다 */
   var CAT_COST = COST.cat;
 
   var SIGNUP_COINS = 500;   /* 2026-11-14 소율: 1,000 → 500 */
@@ -1117,7 +1117,7 @@
   /* 원화 단건 결제 (2026-11-21 소율 결정): PG 심사 때문에 엽전은 팔지 않고, 엽전이 모자라면 그 콘텐츠 하나만 원화로 바로 결제한다.
      엽전은 출석·가입·선물로 모으는 무료 적립 포인트. 가격은 서버 api/_lib/shop.js WON 과 같게(서버 값이 오면 그 값을 쓴다).
      */
-  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990, cal:990, lv:1900, chat:990, wl:990, sal:990, gw:990 };
+  var WON = { cat:990, dream:1900, gh:990, ez:990, tk:4900, tj:990, cal:990, lv:1900, chat:990, wl:990, sal:990, gw:990, fl:1900, du:990 };
   function wonOf(k){ var w = SRV.cfg && SRV.cfg.won; return (w && w[k]) || WON[k] || 0; }
   function coinSale(){ return !!(SRV.cfg && SRV.cfg.packs); }
   /* 원화로 실제 파는 상품(서버 shop.js WON_SALE). 첫 판매 3종: 사주 이야기책·궁합 상세·중요한 날 잡기. 나머지는 미리보기 + 무료 엽전 */
@@ -1257,8 +1257,8 @@
   /* 2026-11-24 피드백3 P0-2·P0-3: 상품 화면을 다시 연다(로그인 복귀·결제 뒤·취소 뒤 공통).
      buy=true 면 그 화면의 결제 버튼까지 눌러 '주문 확인' 시트로 돌아간다. 이미 산 상품이면 잠금이 풀린 화면이 열린다 */
   var PAY_VIEW = { ez:function(e, r, rs){ openStory(e, r, rs.ch || 1); }, tj:function(e, r){ openTojeong(e, r); }, cal:function(e, r){ openFortuneCal(e, r, 1); },
-    lv:function(e, r){ openLoveTiming(e, r); }, wl:function(e, r){ openWealth(e, r); }, sal:function(e, r){ openSal(e, r); }, gw:function(e, r){ openGuin(e, r); }, gh:function(){ go('gunghap'); } };
-  var PAY_BTN = { ez:'sbBuy', tj:'btnTjBuy', cal:'btnFcBuy', lv:'btnLvBuy', wl:'btnWlBuy', sal:'btnSalBuy', gw:'btnGwBuy', gh:'btnGhBuy' };
+    lv:function(e, r){ openLoveTiming(e, r); }, wl:function(e, r){ openWealth(e, r); }, sal:function(e, r){ openSal(e, r); }, gw:function(e, r){ openGuin(e, r); }, fl:function(e, r){ openLens(e, r); }, du:function(e, r){ openDecade(e, r); }, gh:function(){ go('gunghap'); } };
+  var PAY_BTN = { ez:'sbBuy', tj:'btnTjBuy', cal:'btnFcBuy', lv:'btnLvBuy', wl:'btnWlBuy', sal:'btnSalBuy', gw:'btnGwBuy', fl:'btnLzBuy', du:'btnDuBuy', gh:'btnGhBuy' };
   function reopenProduct(rs, buy){
     if (!rs || !PAY_VIEW[rs.pid]) return false;
     var e = (rs.id && getList().filter(function(x){ return x.id === rs.id; })[0]) || getMe();
@@ -1718,9 +1718,9 @@
       '<div class="eyebrow"><span class="line"></span>엽전으로 열 수 있어요<span class="line right"></span></div><div class="cs-use">' +
       useRow('hot', '꿈 풀이 리포트', 'dream', '꿈 하나 · 길흉 판정과 오늘의 처방') + useRow('', '분야별 운세', 'cat', '분야 하나 · 오늘 하루') +
       useRow('', '중요한 날 잡기', 'tk', '목적 하나 · 1년 달력') + useRow('', '궁합 상세', 'gh', '두 사람 · 1년 동안 보기') +
-      useRow('', '사주 이야기책 2~6장', 'ez', '저장한 사람 모두') + useRow('', '2027 토정비결', 'tj', '한 사람 · 1년 동안 보기') +
+      useRow('', '사주 이야기책 2~7장', 'ez', '저장한 사람 모두') + useRow('', '2027 토정비결', 'tj', '한 사람 · 1년 동안 보기') +
       useRow('', '월별 운세 달력', 'cal', '12개월 · 달마다 흐름') + useRow('', '연애·결혼 시기', 'lv', '한 사람 · 1년 동안 보기') +
-      useRow('', '내 재물 그릇', 'wl', '한 사람 · 1년 동안 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 1년 동안 보기') + useRow('', '나를 돕는 귀인 풀이', 'gw', '한 사람 · 1년 동안 보기') +
+      useRow('', '내 재물 그릇', 'wl', '한 사람 · 1년 동안 보기') + useRow('', '나에게 든 살 풀이', 'sal', '한 사람 · 1년 동안 보기') + useRow('', '나를 돕는 귀인 풀이', 'gw', '한 사람 · 1년 동안 보기') + useRow('', '다섯 렌즈 풀이', 'fl', '한 사람 · 1년 동안 보기') + useRow('', '대운 10년 세운표', 'du', '한 사람 · 1년 동안 보기') +
       useRow('', '우니에게 묻기 하루 무제한', 'chat', '산 때부터 24시간 · 하루 1번은 무료') + '</div>' +
       (guestC ? '<div class="cs-guest"><p>엽전은 로그인한 계정에 쌓여요. 처음 로그인하면 <b>' + SIGNUP_COINS.toLocaleString() + '닢</b>을 바로 드려요.</p><button class="btn-primary btn-block" id="csLogin">로그인하고 ' + SIGNUP_COINS.toLocaleString() + '닢 받기</button></div>' : '') +
       '<div class="eyebrow"><span class="line"></span>무료로 모으기<span class="line right"></span></div><div class="tip-list" style="margin:12px 0 18px">' +
@@ -1739,7 +1739,7 @@
       var k = b.dataset.use, me = getMe();
       if (!me){ closeSheet(); startOnboarding('new'); return; }
       var r = compute(me); if (r.error) return;
-      var A = topicActs(me, r), fn = { dream:A.dream, cat:function(){ openTopics(me, r); }, tk:A.tk, gh:A.gh, ez:A.book, tj:A.tj, cal:A.fc, lv:A.lv, wl:A.wl, sal:A.sal, gw:A.gw, chat:function(){ chatBuy(me, r, askTopic); } }[k];
+      var A = topicActs(me, r), fn = { dream:A.dream, cat:function(){ openTopics(me, r); }, tk:A.tk, gh:A.gh, ez:A.book, tj:A.tj, cal:A.fc, lv:A.lv, wl:A.wl, sal:A.sal, gw:A.gw, fl:A.fl, du:A.du, chat:function(){ chatBuy(me, r, askTopic); } }[k];
       if (!fn) return;
       if (k !== 'chat' && k !== 'cat') closeSheet();
       fn();
@@ -2638,6 +2638,7 @@
       HOME_TOPICS.map(function(t){ return '<button type="button" class="tpc-' + t.k + '" data-tpc="' + t.k + '"><b>' + t.n + '</b><small>' + t.s.split(' · ').map(function(x){ return '<span>' + x + '</span>'; }).join(' · ') + '</small></button>'; }).join('') + '</div></section>';
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">' + TJ_YEAR + ' 정미년, 미리 열어 봐요</h2></div><div class="hp-car" role="list">' +
       ['tj', 'sal', 'fc', 'ny'].map(function(k){ return homeCardHTML(k, 'car'); }).join('') + '</div></section>';
+    h += lzHomeHTML(me, r);
     h += adSlotHTML('오늘의 운세를 본 뒤');
     var z = getZodiac(r.solar.m, r.solar.d);
     h += '<section class="home-sec"><div class="hs-head"><h2 class="sec-title">가볍게 해보기</h2><span class="hs-meta">모두 무료</span></div><div class="hp-free">' +
@@ -2664,7 +2665,7 @@
     bindHomeP(me, r, body);
     bindPkg(body);
     bindFt(me, r);
-    bindDailyBox();
+    bindDailyBox(); bindRitual();
     $('hmDream').onclick = function(){ openDream(); };
     $('dpSet').onclick = function(){ openCoinSheet(); };
     $('btnGoNum').onclick = function(){ go('num'); window.scrollTo(0, 0); };
@@ -3063,8 +3064,11 @@
       '<p class="helper" style="text-align:center">복주머니를 열면 오늘 ' + esc(me.name) + '님께 필요한 행운의 색, 방향, 작은 행동이 나와요.</p>' +
       '<button class="btn-primary btn-block sheen" id="btnPouch">복주머니 열기</button></div>';
     h += talismanHTML(me, r, luck, opened);
+    var RT = LENS.rituals(r, todayStr());
+    h += '<button type="button" class="rit-link" id="numRit"><span class="rit-el" style="--rc:' + LZ_EL[RT.el] + '"><b>' + MS.EL_H[RT.el] + '</b></span><span><small>부적과 함께 · 오늘의 개운 리추얼</small><b>' + RT.list[0].x + ' 외 2가지</b></span><i class="chev" aria-hidden="true">›</i></button>';
     if (!opened) h += '<div id="pouchAd">' + adSlotHTML('복주머니를 열기 전') + '</div>';
     box.innerHTML = h;
+    if ($('numRit')) $('numRit').onclick = goRitual;
     if ($('btnPouch')) $('btnPouch').onclick = function(){
       var fig = $('pouchFig'), btn = this; btn.disabled = true; FX.vib(10);
       if (fig && !reduceMotion){ fig.classList.add('shake'); }
@@ -3238,7 +3242,7 @@
     if ($('bxList')) $('bxList').onclick = function(){ renderList(); show('list'); };
     bindRecDel($('boxBody'), 'data-bx', function(id){ store('unsu_numbox', getBoxAll().filter(function(x){ return x.id !== id; })); renderBox(); });
     bindRecDel($('boxBody'), 'data-dmdel', function(id){ delDream(id); renderBox(); });
-    document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(), id = b.dataset.rp; if (id === 'gh'){ go('gunghap'); return; } if (!me) return; var r = compute(me), O = { wl:openWealth, sal:openSal, gw:openGuin, lv:openLoveTiming, tj:openTojeong }; if (O[id]) O[id](me, r); else if (id === 'cal') openFortuneCal(me, r, 0); else if (id === 'ez') openStory(me, r, 0); else openResult(me, r, true); }; });
+    document.querySelectorAll('[data-rp]').forEach(function(b){ b.onclick = function(){ var me = getMe(), id = b.dataset.rp; if (id === 'gh'){ go('gunghap'); return; } if (!me) return; var r = compute(me), O = { wl:openWealth, sal:openSal, gw:openGuin, lv:openLoveTiming, tj:openTojeong, fl:openLens, du:openDecade }; if (O[id]) O[id](me, r); else if (id === 'cal') openFortuneCal(me, r, 0); else if (id === 'ez') openStory(me, r, 0); else openResult(me, r, true); }; });
     document.querySelectorAll('[data-rptk]').forEach(function(b){ b.onclick = function(){ var k = b.dataset.rptk.split('|'), e = getList().filter(function(x){ return x.id === k[0]; })[0]; if (e) openTaekil(e, compute(e), k[1]); }; });
     document.querySelectorAll('[data-rpny]').forEach(function(b){ b.onclick = function(){ var e = getList().filter(function(x){ return x.id === b.dataset.rpny; })[0]; if (e) openNYSheet(e, compute(e)); }; });
     document.querySelectorAll('[data-dm]').forEach(function(b){ b.onclick = function(){ var d = getDreams().filter(function(x){ return x.id === b.dataset.dm; })[0]; if (d){ show('dream'); renderDreamResult(d, false); } }; });
@@ -3997,8 +4001,8 @@
     return { st:st, w:w, price:price, btn:btn, dis:st === 'wait' || st === 'off', note:note };
   }
   /* =========================================================
-     쉬운 사주 풀이 — 우니가 읽어 주는 이야기책 (6개 장)
-     1장은 무료, 2~6장은 쉬운 사주 풀이를 열면 이어진다. 전문 카드(십성·신살·대운)는 결과 화면에 그대로 있다.
+     쉬운 사주 풀이 — 우니가 읽어 주는 이야기책 (7개 장 · 2026-11-27 7장 도사의 편지 추가)
+     1장은 무료, 2~7장은 쉬운 사주 풀이를 열면 이어진다. 전문 카드(십성·신살·대운)는 결과 화면에 그대로 있다.
      ========================================================= */
   var SB_ROLE = {
     year:{ n:'년주', img:'뿌리', age:'0~15세', who:'조상과 어린 시절, 세상이 처음 보는 나', tail:'어릴 때 집안 분위기와 주변에서 이 기운을 많이 받았고, 처음 만나는 사람에게 이 모습으로 보이기 쉬워요.' },
@@ -4023,7 +4027,8 @@
     { t:'내 안의 다섯 가지 힘', pose:'u-work' },
     { t:'나를 돕는 귀인과 특별한 별', pose:'u-gift' },
     { t:'10년마다 바뀌는 계절', pose:'u-calendar' },
-    { t:'올해와 이번 달, 우니의 편지', pose:'u-happy' }
+    { t:'올해와 이번 달, 우니의 편지', pose:'u-happy' },
+    { t:'다섯 고전의 도사가 보낸 편지', pose:'u-love' }
   ];
   var sbCtx = null;
   function sbPillarCard(k, P, ig, full){
@@ -4076,6 +4081,10 @@
         if (next) h += '<h4 class="sb-h">다음 계절 · ' + next.age + '세부터</h4><p>' + next.name + ' 대운이 와요. ' + TEN_DESC[next.tenStem] + '의 10년으로 넘어가요. ' + SEUN_TEXT[next.tenStem].split('. ')[0] + '.</p>';
       } else h += '<p>첫 대운(' + r.dNum + '세) 전의 시기예요. 부모님의 기운과 월주의 영향이 가장 커요.</p>';
       h += '<div class="scroller sb-du">' + r.daeun.map(function(p){ var now = r.curDaeun === p; return '<div class="du' + (now ? ' now' : '') + '"><span class="age">' + p.age + '세</span><span class="g"><span class="' + EL_CLASS[p.sEl] + '">' + p.sh + '</span><span class="' + EL_CLASS[p.bEl] + '">' + p.bh + '</span></span></div>'; }).join('') + '</div>';
+    } else if (n === 6){
+      h += '<p class="sb-lead">마지막 장이에요. 명리학 5대 고전을 모두 읽은 할미 도사가 ' + name + '님에게 편지를 남겼어요.</p>' + letterHTML(entry, r, 'sb-dsl') +
+        '<div class="row"><button class="btn-soft grow" data-letter>' + LZ_IC.share + ' 편지 이미지로 저장·공유</button></div>' +
+        '<div class="row"><button class="btn-soft grow" id="sbGoLz">다섯 렌즈 풀이</button><button class="btn-soft grow" id="sbGoRit">오늘의 개운 리추얼</button></div>';
     } else {
       var S = r.seun, M = r.wolun;
       h += '<h4 class="sb-h">' + S.year + '년 · ' + S.name + '</h4><p>' + SEUN_TEXT[S.tenStem] + '</p><p class="sb-note">' + STAGE_DESC[S.stage] + '</p>' +
@@ -4095,7 +4104,7 @@
     if (locked){
             body = '<p class="sb-lead">' + esc(entry.name) + '님의 사주를 이어서 읽어 드릴게요.</p><div class="sb-lock"><div class="sb-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="sb-lockbox">' + LOCK_SVG +
         '<b>' + SB_CH.slice(1).map(function(c, j){ return (j + 2) + '장 ' + c.t; }).join('<br>') + '</b>' +
-        '<button class="btn-primary btn-block sheen" id="sbBuy">2~6장 열기 · ' + (wonSale('ez') ? '일반 ' : '') + priceTag('ez') + '</button><p class="helper">5개 장을 한 번에 열어요. 연 뒤에는 결제일부터 1년 동안 계정에서 다시 읽을 수 있어요(보관함 › 내 리포트).</p></div></div>';
+        '<button class="btn-primary btn-block sheen" id="sbBuy">2~7장 열기 · ' + (wonSale('ez') ? '일반 ' : '') + priceTag('ez') + '</button><p class="helper">6개 장을 한 번에 열어요. 연 뒤에는 결제일부터 1년 동안 계정에서 다시 읽을 수 있어요(보관함 › 내 리포트).</p></div></div>';
     } else body = sbChapter(ch, entry, r);
     ov.innerHTML = '<div class="sb-bar"><button class="sb-x" id="sbX" aria-label="닫기">✕</button><div class="sb-dots" aria-label="' + (ch + 1) + '장 / ' + SB_CH.length + '장">' + dots + '</div><span class="sb-no">' + (ch + 1) + '/' + SB_CH.length + '</span></div>' +
       '<div class="sb-page" id="sbPage"><div class="sb-fig">' + uniImg(C.pose) + '</div><div class="sb-chn">' + (ch + 1) + '장</div><h2 class="sb-t">' + C.t + '</h2>' + body + '</div>' +
@@ -4111,13 +4120,16 @@
     if ($('sbBuy')) $('sbBuy').onclick = buy;
     if ($('sbGoTk')) $('sbGoTk').onclick = function(){ close(); openTaekil(sbCtx.entry, sbCtx.r); };
     if ($('sbGoNum')) $('sbGoNum').onclick = function(){ close(); go('num'); };
+    bindLetter(ov, entry, r);
+    if ($('sbGoLz')) $('sbGoLz').onclick = function(){ close(); openLens(sbCtx.entry, sbCtx.r); };
+    if ($('sbGoRit')) $('sbGoRit').onclick = function(){ close(); goRitual(); };
   }
   function bookCoverHTML(entry, open){
     return '<div class="card sb-cover"><div class="sb-cfig">' + uniImg('u-book') + '</div><div class="sb-ck">사주 이야기책</div>' +
       '<h2 class="sb-ct">우니가 읽어 주는<br>' + esc(entry.name) + '님의 사주 이야기책</h2>' +
       '<ul class="sb-cl"><li>년주·월주·일주·시주가 내 삶에서 하는 일</li><li>나를 돕는 귀인과 특별한 별(살)</li><li>10년 계절(대운)과 올해·이번 달</li></ul>' +
       '<button class="btn-primary btn-block sheen" id="btnBook">' + (open ? '이야기책 다시 읽기' : '1장 무료로 읽어 보기') + '</button>' +
-      '<p class="helper" style="text-align:center">' + (open ? '6개 장 모두 열려 있어요' : '1장 무료 · 2~6장 ' + priceTag('ez')) + '</p></div>';
+      '<p class="helper" style="text-align:center">' + (open ? '7개 장 모두 열려 있어요' : '1장 무료 · 2~7장 ' + priceTag('ez')) + '</p></div>';
   }
   /* =========================================================
      2027 토정비결 (2026-11-21 소율: "남들 있는 건 다 있어야")
@@ -4212,10 +4224,10 @@
     return [
       ['관계', [['gh', 'uj-hands', '궁합', '두 사람의 합과 잘 맞는 대화법', '상세 ' + priceTag('gh')], ['lv', 'joa-love', '인연이 오는 해와 달', '10년 연애·결혼 시기', '']]],
       ['날짜', [['fc', 'u-calendar', '사랑·돈·일 골든타이밍', '월별 운세 달력 · 이번 달 좋은 날', '무료'], ['tk', 'u-calendar', '중요한 날 잡기', '이사·개업·계약·면접 날짜', '두 달 무료']]],
-      ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '내 사주 × 정미년 기운 · 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '음력 생일로 뽑는 한 해 괘 · 옛 풀이', ''], ['sal', 'u-thinking', '나에게 든 살 풀이', '도화·역마·홍염… 강점과 푸는 법', '1개 무료']]],
+      ['연간 운세', [['ny', 'u-newyear', '2027 신년운세', '내 사주 × 정미년 기운 · 12개월 흐름', '총평 무료'], ['tj', 'u-book', '2027 토정비결', '음력 생일로 뽑는 한 해 괘 · 옛 풀이', ''], ['du', 'u-calendar', '대운 10년 세운표', '해마다 적극·대비와 꼭 챙길 것 하나', '올해 무료'], ['sal', 'u-thinking', '나에게 든 살 풀이', '도화·역마·홍염… 강점과 푸는 법', '1개 무료']]],
       ['사람', [['gw', 'wooni-joa', '나를 돕는 귀인', '어떤 띠·일간이 나를 돕고 언제 올까', '1개 무료']]],
       ['돈', [['wl', 'u-money', '내 재물 그릇', '평생 돈 흐름 · 크게 들어오는 시기 3번', '1장 무료']]],
-      ['더 깊이', [['book', 'u-book', '사주 이야기책', '우니가 읽어 주는 내 사주', '1장 무료'], ['chat', 'u-thinking', '우니에게 묻기', '사주 AI 해석 · 고민을 내 사주로 답해요', '하루 1번 무료'], ['job', 'u-work', '나에게 맞는 직업', '타고난 재능과 맞는 분야', '']]],
+      ['더 깊이', [['fl', 'u-book', '다섯 렌즈 풀이', '명리 5대 고전으로 입체 해석 · 도사의 편지', '1권 무료'], ['book', 'u-book', '사주 이야기책', '우니가 읽어 주는 내 사주', '1장 무료'], ['chat', 'u-thinking', '우니에게 묻기', '사주 AI 해석 · 고민을 내 사주로 답해요', '하루 1번 무료'], ['job', 'u-work', '나에게 맞는 직업', '타고난 재능과 맞는 분야', '']]],
       ['가볍게 보기', [['zodiac', 'u-zodiac', '별자리 운세', '오늘의 별자리', '무료'], ['dream', 'u-sleep', '꿈해몽', '길몽일까? 오늘의 처방', '무료']]]
     ];
   }
@@ -4232,6 +4244,7 @@
       fc:function(){ openFortuneCal(me, r, 0); }, tk:function(){ openTaekil(me, r); },
       ny:function(){ openNYSheet(me, r); }, tj:function(){ openTojeong(me, r); },
       wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); }, gw:function(){ openGuin(me, r); },
+      fl:function(){ openLens(me, r); }, du:function(){ openDecade(me, r); },
       book:function(){ openStory(me, r, 0); }, chat:function(){ openChat(me, r); }, job:function(){ openCat(me, r, 'job'); },
       zodiac:function(){ var z = getZodiac(r.solar.m, r.solar.d); myZ = z.name; renderZGrid(); openZodiac(z, entryISO(me, r)); show('zodiac'); },
       dream:function(){ openDream(); }
@@ -4242,10 +4255,10 @@
     root.querySelectorAll('[data-tp]').forEach(function(b){ b.onclick = function(){ var fn = A[b.dataset.tp]; if (!fn) return; closeSheet(); fn(); }; });
   }
   var HOME_TOPICS = [
-    { k:'me', n:'나', s:'사주 이야기책 · 재물 그릇 · 살 · 귀인 · 맞는 일', lead:'나는 어떤 사람일까?', list:['book', 'wl', 'sal', 'gw', 'job'], pkg:true },
+    { k:'me', n:'나', s:'다섯 렌즈 · 이야기책 · 재물 그릇 · 살 · 귀인', lead:'나는 어떤 사람일까?', list:['fl', 'book', 'wl', 'sal', 'gw', 'job'], pkg:true },
     { k:'rel', n:'관계', s:'궁합 · 인연이 오는 해와 달', lead:'우리는 잘 맞을까?', list:['gh', 'lv'] },
     { k:'day', n:'날짜', s:'골든타이밍 달력 · 중요한 날', lead:'언제가 좋을까?', list:['fc', 'tk'] },
-    { k:'year', n:'올해', s:TJ_YEAR + ' 신년운세 · 토정비결', lead:TJ_YEAR + '년은 어떤 해일까?', list:['ny', 'tj'] }
+    { k:'year', n:'올해', s:TJ_YEAR + ' 신년운세 · 토정비결 · 대운 10년', lead:TJ_YEAR + '년은 어떤 해일까?', list:['ny', 'tj', 'du'] }
   ];
   function openHomeTopic(k, me, r){
     var T = HOME_TOPICS.filter(function(x){ return x.k === k; })[0]; if (!T) return;
@@ -4381,7 +4394,9 @@
     ny:{ k:TJ_YEAR + ' 신년운세', t:'정미년<br>내 한 해', s:'12개월 흐름 · 키워드', pose:'u-newyear', th:'gold', free:'총평 무료', p:'' },
     wl:{ k:'NEW · 재물 리포트', t:'내 재물<br>그릇', s:'평생 돈 흐름 · 들어오는 시기 3번', pose:'u-money', th:'gold', free:'1장 무료', p:'wl' },
     gw:{ k:'NEW · 귀인', t:'나를 돕는 귀인 풀이', s:'도와줄 띠·일간 · 2027 귀인 오는 달', pose:'wooni-joa', th:'teal', free:'1개 무료', p:'gw', tag:'천을·천덕·문창…' },
-    book:{ t:'사주 이야기책', s:'내 사주를 6장 이야기로', pose:'u-book', th:'violet', free:'1장 무료', p:'ez' },
+    fl:{ k:'NEW · 5대 고전', t:'다섯 렌즈<br>사주 풀이', s:'뼈대·백과·기세·그릇·온도로 입체 해석', pose:'u-book', th:'violet', free:'1권 무료', p:'fl', tag:'연해자평·적천수…' },
+    du:{ k:'NEW · 10년 지도', t:'대운 10년<br>세운표', s:'해마다 적극·대비와 꼭 챙길 것', pose:'u-calendar', th:'navy', free:'올해 무료', p:'du' },
+    book:{ t:'사주 이야기책', s:'내 사주를 7장 이야기로', pose:'u-book', th:'violet', free:'1장 무료', p:'ez' },
     gh:{ t:'우리 둘 3단 궁합', s:'성격 · 연애 · 결혼 궁합', pose:'wooni-joa', th:'rose', free:'점수 무료', p:'gh' },
     tk:{ t:'중요한 날 잡기', s:'개업 · 이사 · 계약 좋은 날', pose:'u-work', th:'gold', free:'두 달 무료', p:'tk' },
     lv:{ t:'인연이 오는 해와 달', s:'10년 연애·결혼 시기', pose:'joa-love', th:'navy', free:'요약 무료', p:'lv' },
@@ -4415,7 +4430,7 @@
   function bindHomeP(me, r, root){
     var A = {
       saju:function(){ go('saju'); window.scrollTo(0, 0); }, lv:function(){ openLoveTiming(me, r); }, gh:function(){ go('gunghap'); window.scrollTo(0, 0); },
-      wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); }, gw:function(){ openGuin(me, r); }, tj:function(){ openTojeong(me, r); }, fc:function(){ openFortuneCal(me, r, 0); },
+      wl:function(){ openWealth(me, r); }, sal:function(){ openSal(me, r); }, gw:function(){ openGuin(me, r); }, tj:function(){ openTojeong(me, r); }, fc:function(){ openFortuneCal(me, r, 0); }, fl:function(){ openLens(me, r); }, du:function(){ openDecade(me, r); },
       tk:function(){ openTaekil(me, r); }, job:function(){ openCat(me, r, 'job'); }, all:function(){ openTopics(me, r); },
       ny:function(){ openNYSheet(me, r); }, book:function(){ openStory(me, r, 0); }
     };
@@ -4428,10 +4443,12 @@
     wl:{ h:'내 재물 그릇은 얼마나 클까?', d:'사주 속 재물·재능의 별과 10년마다 바뀌는 대운으로 평생 돈 흐름을 읽어요. 돈이 모이는 방식과 크게 들어오는 시기 3번을 알려 드려요.', m:['6장', '구성'], fr:['1장', '무료로 읽기'], toc:['내 재물 그릇의 모양', '돈이 들어오는 길 · 새는 길', '평생 재물 흐름 그래프', '크게 들어오는 시기 3번', '나에게 맞는 돈 버는 방식', TJ_YEAR + '년 재물 처방'], nf:1, cta:'1장 무료로 읽어 보기' },
     sal:{ h:'내 사주에는 어떤 살이 들었을까?', d:'도화·홍염·역마·화개·백호·괴강·양인·원진까지 내 사주에 든 살을 찾고, 살마다 강점과 조심할 점, 복으로 바꾸는 살풀이를 알려 드려요.', m:['8가지', '살 확인'], fr:['1개', '무료로 읽기'], toc:['내 사주에 든 살 한눈에', '첫 번째 살 풀이', '나머지 살의 강점 · 조심할 점', '살마다 살풀이', TJ_YEAR + '년 정미년에 들어오는 살'], nf:2, cta:'무료로 내 살 확인하기' },
     gw:{ h:'나를 돕는 귀인은 누구일까?', d:'천을·천덕·월덕·문창·학당·태극·암록·금여 가운데 내 사주에 든 귀인을 찾아 옛풀이와 요즘풀이로 읽어요. 나를 돕는 띠·일간·성향과 ' + TJ_YEAR + '년 귀인이 오는 달까지 알려 드려요.', m:['8가지', '귀인 확인'], fr:['1개', '무료로 읽기'], toc:['내 사주에 든 귀인 한눈에', '첫 번째 귀인 풀이', '나머지 귀인 · 옛풀이와 요즘풀이', '나를 돕는 사람 · 띠·일간·성향', TJ_YEAR + '년 귀인이 오는 달 · 방향·장소'], nf:2, cta:'무료로 내 귀인 확인하기' },
+    fl:{ h:'다섯 고전이 읽은 내 사주', d:'연해자평(뼈대)·삼명통회(백과사전)·적천수(기세)·자평진전(그릇)·궁통보감(온도) — 명리학 5대 고전의 관점으로 같은 여덟 글자를 다섯 번 읽어요. 옛 책의 해석과 요즘 말로 바꾼 해석을 나란히 보여 드리고, 세 렌즈가 함께 가리키는 열쇠 기운과 할미 도사의 편지로 마무리해요.', m:['5권', '렌즈'], fr:['1권', '무료로 읽기'], toc:['다섯 도사의 첫인상 한 줄씩', '연해자평 · 네 기둥 집과 궁위', '삼명통회 · 납음·12운성·신살', '적천수 · 득령·득지·득세와 오행의 흐름', '자평진전 · 격국과 사회적 그릇', '궁통보감 · 계절의 온도와 조후', '세 렌즈 겹쳐 읽기 · 도사의 편지 카드'], nf:2, cta:'1권 무료로 펼쳐 보기' },
+    du:{ h:'앞으로 10년, 언제 움직이고 언제 지킬까?', d:'지금 지나는 대운과 그 안의 열 번의 세운을 한 해씩 펼쳐요. 해마다 적극·다지기·대비를 표시하고, 그해 꼭 챙길 것 하나를 알려 드려요. 올해와 내년은 무료예요.', m:['10년', '세운표'], fr:['2년', '무료로 보기'], toc:['지금 대운 · 앞 5년과 뒤 5년', '10년 파도 그래프', '올해 · 내년 풀이', '나머지 8년 적극·다지기·대비', '해마다 꼭 챙길 것 하나 · 합·충·형·조후', '다음 대운 10년 미리 보기'], nf:3, cta:'올해부터 무료로 보기' },
     tj:{ h:TJ_YEAR + '년 내 한 해 토정비결', d:'음력 생년월일과 ' + TJ_YEAR + '년 간지로 괘를 지어 한 해를 풀어요. 총평과 1~3월은 무료예요.', m:['12달', '구성'], fr:['총평', '무료로 읽기'], toc:['한 해 괘와 총평', '1~3월 달마다 한 줄', '상반기 · 하반기 풀이', '4~12월 달마다 한 줄', '좋은 달 · 조심할 달 · 한 해 처방'], nf:2, cta:'총평 무료로 보기' },
     fc:{ h:'사랑·돈·일 골든타이밍', d:'오늘의 운세와 같은 계산으로 날마다 점수를 매겨 달력에 담았어요. 이번 달은 무료, 다음 달부터 12개월은 잠금이에요.', m:['12개월', '달력'], fr:['이번 달', '무료로 보기'], toc:['이번 달 날마다 점수', '좋은 날 · 조심할 날', '다음 달부터 12개월', '달마다 흐름 한 줄'], nf:2, cta:'이번 달 무료로 보기' },
     lv:{ h:'인연은 언제 가까워질까?', d:'해마다 들어오는 기운과 배우자 자리(일지)로 10년 동안 연애운·결혼운을 그래프로 보여 드려요.', m:['10년', '그래프'], fr:['요약', '무료로 읽기'], toc:['나의 연애 스타일', '배우자 자리', '올해 인연운', '10년 연애·결혼 그래프', '인연이 가장 가까운 해 · ' + TJ_YEAR + '년 인연 달', '나와 잘 맞는 사람'], nf:3, cta:'요약 무료로 보기' },
-    book:{ h:'우니가 읽어 주는 사주 이야기책', d:'어려운 한자 없이 내 사주를 여섯 장의 이야기로 풀어 드려요. 1장은 무료로 읽을 수 있어요.', m:['6장', '이야기'], fr:['1장', '무료로 읽기'], toc:['1장 나의 하늘 · 원국과 일간', '2장 기둥마다 들여다보기', '3장 내 안의 다섯 가지 힘', '4장 나를 돕는 귀인과 특별한 별', '5장 10년 계절(대운)', '6장 올해와 이번 달'], nf:1, cta:'1장 무료로 읽어 보기' },
+    book:{ h:'우니가 읽어 주는 사주 이야기책', d:'어려운 한자 없이 내 사주를 일곱 장의 이야기로 풀어 드려요. 1장은 무료로 읽을 수 있어요.', m:['7장', '이야기'], fr:['1장', '무료로 읽기'], toc:['1장 나의 하늘 · 원국과 일간', '2장 기둥마다 들여다보기', '3장 내 안의 다섯 가지 힘', '4장 나를 돕는 귀인과 특별한 별', '5장 10년 계절(대운)', '6장 올해와 이번 달', '7장 다섯 고전의 도사가 보낸 편지'], nf:1, cta:'1장 무료로 읽어 보기' },
     gh:{ h:'우리 둘 3단 궁합', d:'두 사람의 생년월일로 성격·연애·결혼 궁합을 봐요. 궁합 점수는 무료, 상세 리포트는 한 쌍마다 열려요.', m:['3단', '궁합'], fr:['점수', '무료로 보기'], toc:['궁합 점수와 한 줄', '두 사람의 기질 비교', '빛나는 점 · 부딪히기 쉬운 점', '대화 팁과 올해 두 사람의 흐름'], nf:1, cta:'궁합 보러 가기' },
     tk:{ h:'중요한 날 잡기', d:'개업·이사·계약·면접처럼 중요한 일정을 내 사주와 맞는 날로 골라 드려요. 이번 달과 다음 달은 무료예요.', m:['12개월', '달력'], fr:['두 달', '무료로 보기'], toc:['목적 고르기', '이번 달 · 다음 달 길한 날', '12개월 전체 달력', '1년 베스트 5일과 시간대', '캘린더 저장 · 공유 카드'], nf:2, cta:'두 달 무료로 보기' }
   };
@@ -4451,11 +4468,12 @@
   /* 우니와 매일: 출석 줄 + [오늘 할 일 · 꾹 뽑기 · 우니 키우기] 탭 한 장. 모든 부품은 DOM 에 그대로 두고 보이기만 바꾼다(바인딩 유지) */
   var dailyTab = 'todo';
   function dailyBoxHTML(me, nums, elc, newly){
-    var T = [['todo', '오늘 할 일'], ['peek', '꾹 뽑기'], ['pet', '우니 키우기']];
+    var T = [['todo', '오늘 할 일'], ['rit', '개운 리추얼'], ['peek', '꾹 뽑기'], ['pet', '우니 키우기']];
     return '<section class="home-sec daily-box"><div class="hs-head"><h2 class="sec-title">우니와 매일</h2><button type="button" class="hs-link" id="dpSet">엽전 ' + (isGuest() ? '0' : getCoins().toLocaleString()) + '닢 ›</button></div>' +
       '<div class="db-card">' + attStripHTML(newly) +
       '<div class="db-tabs" role="tablist">' + T.map(function(t){ return '<button type="button" role="tab" data-db="' + t[0] + '" aria-selected="' + (t[0] === dailyTab) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
       '<div class="db-pane" data-dbp="todo"' + (dailyTab === 'todo' ? '' : ' hidden') + '>' + todoCardHTML() + '</div>' +
+      '<div class="db-pane" data-dbp="rit"' + (dailyTab === 'rit' ? '' : ' hidden') + '>' + ritualCardHTML(me) + '</div>' +
       '<div class="db-pane" data-dbp="peek"' + (dailyTab === 'peek' ? '' : ' hidden') + '>' + peekCardHTML(me, nums, elc) + '</div>' +
       '<div class="db-pane" data-dbp="pet"' + (dailyTab === 'pet' ? '' : ' hidden') + '>' + petCardHTML() + '</div></div></section>';
   }
@@ -4932,11 +4950,291 @@
     if ($('btnGwBuy')) $('btnGwBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('gw', { who:nm + '님', id:me.id, onPaid:function(){ openGuin(me, r); } }); }, 260); };
   }
 
+  /* =========================================================
+     다섯 렌즈 풀이 (item 'fl') · 도사의 편지 · 대운 10년 세운표 (item 'du') · 개운 리추얼
+     2026-11-27 소율: "짧지도 길지도 않게, 깊이 파고드는 맛, 돈 쓴 보람". 계산·문장은 src/lens.js (LENS)
+     무료: 다섯 렌즈 첫인상(한 줄) + 1번 연해자평 렌즈 전체 / 유료: 렌즈 2~5 · 세 렌즈 겹쳐 읽기 · 도사의 편지
+     ========================================================= */
+  var LZ_EL = ['#7fdc9c', '#ff9c86', '#f6cd5b', '#e8ecf6', '#86afff'];
+  var LZ_IC = {
+    open:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6.5v13"/></svg>',
+    share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5v6A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-6"/></svg>',
+    up:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3.5M4 7.5 8 3.5l4 4"/></svg>',
+    mid:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 8h9"/><path d="M3.5 11.5h9" opacity=".5"/></svg>',
+    guard:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 2 13 4v4c0 3-2.2 5-5 6-2.8-1-5-3-5-6V4z"/></svg>'
+  };
+  /* 다섯 권 책장 일러스트 (책등에 고전 이름) */
+  function lzShelfSVG(L, open){
+    var W = [46, 40, 50, 44, 42], x = 18, out = '';
+    L.list.forEach(function(b, i){
+      var h = [108, 96, 116, 102, 92][i], y = 128 - h, w = W[i];
+      out += '<g class="lz-spine" style="--i:' + i + '"><rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="7" fill="' + b.color + '"/>' +
+        '<rect x="' + (x + 5) + '" y="' + (y + 10) + '" width="' + (w - 10) + '" height="4" rx="2" fill="#fff" opacity=".55"/><rect x="' + (x + 5) + '" y="' + (y + h - 16) + '" width="' + (w - 10) + '" height="4" rx="2" fill="#fff" opacity=".4"/>' +
+        '<text x="' + (x + w / 2) + '" y="' + (y + 34) + '" text-anchor="middle" class="lz-spt">' + b.bh.slice(0, 1) + '</text><text x="' + (x + w / 2) + '" y="' + (y + 56) + '" text-anchor="middle" class="lz-spt">' + b.bh.slice(1, 2) + '</text>' +
+        (i > 0 && !open ? '<path d="M' + (x + w / 2 - 5) + ' ' + (y + h - 34) + 'h10v8h-10z M' + (x + w / 2 - 3) + ' ' + (y + h - 34) + 'v-3a3 3 0 0 1 6 0v3" fill="none" stroke="#3b2f5e" stroke-width="1.6" opacity=".55"/>' : '') + '</g>';
+      x += w + 8;
+    });
+    return '<svg class="lz-shelf" viewBox="0 0 280 140" aria-hidden="true"><rect x="6" y="128" width="268" height="8" rx="4" fill="#cdbfff" opacity=".35"/>' + out + '</svg>';
+  }
+  function lzWongukHTML(r){
+    var P = r.pillars;
+    return '<div class="lz-wg" aria-label="원국 여덟 글자">' + ['hour', 'day', 'month', 'year'].map(function(k){
+      var p = P[k]; return '<span class="' + (k === 'day' ? 'me' : '') + '"><small>' + POS_LABEL[k] + '</small>' + (p ? '<b style="color:' + LZ_EL[p.sEl] + '">' + p.sh + '</b><b style="color:' + LZ_EL[p.bEl] + '">' + p.bh + '</b>' : '<b>?</b><b>?</b>') + '</span>';
+    }).join('') + '</div>';
+  }
+  /* 렌즈별 그림 */
+  function lzArtBone(r, X){
+    var P = r.pillars, LIFE = { hour:'후반 인생', day:'나 · 가까운 사람', month:'사회생활', year:'어린 시절' };
+    return '<div class="lz-house"><div class="lz-roof" aria-hidden="true"></div><div class="lz-cols">' + ['hour', 'day', 'month', 'year'].map(function(k){
+      var p = P[k];
+      if (!p) return '<div class="lz-col none"><small>' + POS_LABEL[k] + '</small><b>?</b><b>?</b><em>시간 모름</em><i>' + LIFE[k] + '</i></div>';
+      return '<div class="lz-col' + (k === 'day' ? ' me' : '') + '">' + (k === 'day' ? '<span class="lz-crown">나</span>' : '') + '<small>' + POS_LABEL[k] + '</small><b style="color:' + LZ_EL[p.sEl] + '">' + p.sh + '</b><b style="color:' + LZ_EL[p.bEl] + '">' + p.bh + '</b><em>' + (k === 'day' ? p.tenBr : p.tenStem + '·' + p.tenBr) + '</em><i>' + LIFE[k] + '</i></div>';
+    }).join('') + '</div></div>';
+  }
+  function lzArtBook(X){
+    var n = X.nayin.year;
+    return '<div class="lz-openbook"><div class="lz-pg l"><small>타고난 바탕 · 납음</small><b class="lz-ny">' + n[1].split('').join('<br>') + '</b><span>' + n[0] + '</span></div>' +
+      '<div class="lz-pg r"><small>에너지 단계 · 12운성</small><ul>' + X.stages.map(function(s){ return '<li><span>' + POS_LABEL[s.k] + '</span><i style="--v:' + (s.pw / 10) + '"></i><b>' + s.s + '</b></li>'; }).join('') + '</ul></div></div>' +
+      (X.ss.length ? '<div class="lz-ss">' + X.ss.map(function(s){ return '<div><b>' + s.n + '</b><p class="o">' + s.old + '.</p><p>' + s.now + '.</p></div>'; }).join('') + '</div>' : '');
+  }
+  function lzArtFlow(r, X){
+    var pos = [[110, 22], [190, 80], [160, 170], [60, 170], [30, 80]], cnt = r.cnt, mx = Math.max.apply(null, cnt.concat([1]));
+    var arrows = '', nodes = '';
+    for (var i = 0; i < 5; i++){
+      var a = pos[i], b = pos[(i + 1) % 5], on = cnt[i] > 0 && cnt[(i + 1) % 5] > 0;
+      arrows += '<path d="M' + a[0] + ' ' + a[1] + ' Q ' + ((a[0] + b[0]) / 2 + (b[1] - a[1]) * .18) + ' ' + ((a[1] + b[1]) / 2 - (b[0] - a[0]) * .18) + ' ' + b[0] + ' ' + b[1] + '" class="lz-arw' + (on ? ' on' : '') + '"/>';
+    }
+    for (var e = 0; e < 5; e++){
+      var p = pos[e], rad = 13 + (cnt[e] / mx) * 15;
+      nodes += '<g class="lz-node' + (cnt[e] ? '' : ' zero') + (e === r.yong ? ' yong' : '') + '"><circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + rad.toFixed(1) + '" fill="' + LZ_EL[e] + '"/>' +
+        '<text x="' + p[0] + '" y="' + (p[1] + 1) + '" text-anchor="middle" dominant-baseline="middle">' + MS.EL_H[e] + '</text><text class="n" x="' + p[0] + '" y="' + (p[1] + rad + 11) + '" text-anchor="middle">' + MS.EL_K[e] + ' ' + cnt[e] + '</text></g>';
+    }
+    var seg = ['극신약', '신약', '중화', '신강', '극신강'];
+    return '<div class="lz-flow"><svg viewBox="0 0 220 205" aria-hidden="true">' + arrows + nodes + '<text class="lz-pct" x="110" y="104" text-anchor="middle">' + X.pct + '%</text><text class="lz-pctl" x="110" y="120" text-anchor="middle">충전</text></svg>' +
+      '<div class="lz-gauge"><div class="lz-gbar">' + seg.map(function(s){ return '<span class="' + (s === r.strength ? 'on' : '') + '">' + s + '</span>'; }).join('') + '<i class="lz-gm" style="--x:' + X.pct + '%"></i></div>' +
+      '<div class="lz-deuk"><span class="' + (X.deukR ? 'ok' : '') + '">득령</span><span class="' + (X.deukJ ? 'ok' : '') + '">득지</span><span class="' + (X.deukS >= 2 ? 'ok' : '') + '">득세</span><span class="' + (X.roots.length ? 'ok' : '') + '">통근</span></div></div></div>';
+  }
+  function lzArtFrame(X){
+    var crack = X.status === 'crack';
+    return '<div class="lz-bowlw"><svg class="lz-bowl" viewBox="0 0 220 130" aria-hidden="true"><defs><linearGradient id="lzBg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff4d4"/><stop offset="1" stop-color="#f6cd5b"/></linearGradient></defs>' +
+      '<ellipse cx="110" cy="118" rx="58" ry="8" fill="#000" opacity=".18"/><path d="M28 40 Q32 112 110 114 Q188 112 192 40 Z" fill="url(#lzBg)"/><ellipse cx="110" cy="40" rx="82" ry="16" fill="#fff9e6"/><ellipse cx="110" cy="40" rx="70" ry="10" fill="#f3e2b0"/>' +
+      '<path d="M70 98 Q100 106 150 98" stroke="#fff" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>' +
+      (crack ? '<path class="lz-gold" d="M120 52 l-8 14 l10 8 l-9 13 l6 9" stroke="#d9a520" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' : '') +
+      (X.status === 'whole' ? '<g class="lz-shine"><path d="M54 26l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fff"/><path d="M172 58l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#fff"/></g>' : '') +
+      '</svg><span class="lz-stamp" aria-hidden="true"><i>' + X.info.h.charAt(0) + '</i><i>' + X.info.h.charAt(1) + '</i></span></div>' +
+      '<div class="lz-tags"><span class="st-' + X.status + '">' + ({ whole:'성격 成格', crack:'파격 破格 · 금으로 메우기', mid:'모양 잡는 중' })[X.status] + '</span><span>' + (X.info.kind ? X.info.kind + ' ' + (X.info.kind === '순용' ? '順用' : '逆用') : '쓰임을 골라 쓰는 격') + '</span><span>상신 ' + X.helper + ' · ' + MS.EL_K[X.helperEl] + '</span></div>' +
+      (X.how ? '<p class="lz-how">' + X.how + '</p>' : '');
+  }
+  var LZ_SEASON_IC = [
+    '<circle cx="12" cy="12" r="2.6" fill="#ffd5e5"/><g fill="#ff9cc0"><circle cx="12" cy="6.5" r="3"/><circle cx="17.2" cy="10.3" r="3"/><circle cx="15.2" cy="16.4" r="3"/><circle cx="8.8" cy="16.4" r="3"/><circle cx="6.8" cy="10.3" r="3"/></g><circle cx="12" cy="12" r="2.4" fill="#ffe27a"/>',
+    '<circle cx="12" cy="12" r="5" fill="#ffd166"/><g stroke="#ffb84d" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g>',
+    '<path d="M12 3c5 3 7 8 4 13-2 3-6 4-9 2C4 14 6 6 12 3z" fill="#ffab73"/><path d="M8 19C10 14 12 10 14 7" stroke="#c96b3a" stroke-width="1.4" fill="none" stroke-linecap="round"/>',
+    '<g stroke="#bfe1ff" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></g>'
+  ];
+  function lzArtSeason(X){
+    return '<div class="lz-season"><div class="lz-thermo" aria-hidden="true"><svg viewBox="0 0 40 150"><defs><linearGradient id="lzTg" x1="0" x2="0" y1="1" y2="0"><stop offset="0" stop-color="#86afff"/><stop offset=".55" stop-color="#ffd166"/><stop offset="1" stop-color="#ff8a73"/></linearGradient></defs>' +
+      '<rect x="13" y="6" width="14" height="118" rx="7" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)"/><rect class="lz-tfill" x="16" y="' + (9 + 112 * (1 - X.tPct / 100)).toFixed(1) + '" width="8" height="' + (112 * X.tPct / 100).toFixed(1) + '" rx="4" fill="url(#lzTg)"/><circle cx="20" cy="134" r="12" fill="' + (X.T < 0 ? '#86afff' : '#ff9c86') + '"/></svg></div>' +
+      '<div class="lz-sinfo"><div class="lz-sic"><svg viewBox="0 0 24 24" aria-hidden="true">' + LZ_SEASON_IC[X.season] + '</svg><b>' + LENS.SEASON[X.season] + '생 · ' + X.tLab + '</b></div>' +
+      '<div class="lz-hum"><small>습도</small><span><i style="--v:' + (X.hPct / 100) + '"></i></span><em>' + X.hLab + '</em></div>' +
+      '<small class="lz-nk">궁통보감이 먼저 찾는 글자</small><div class="lz-need">' + X.need.map(function(n){
+        return '<span class="' + (n.sky ? 'sky' : n.ground ? 'gr' : 'no') + '"><b style="color:' + LZ_EL[n.el] + '">' + MS.STEM_H[n.s] + '</b><small>' + (n.sky ? '하늘에 있음' : n.ground ? '땅속에 숨음' : '비어 있음') + '</small></span>';
+      }).join('') + '</div></div></div>';
+  }
+  function lzCardHTML(X, i, r, open){
+    var head = '<header class="lz-ch"><span class="lz-no">' + (i + 1) + '</span><div><small>' + X.lens + ' 렌즈 · ' + X.bh + '</small><b>' + X.book + '</b></div><span class="lz-seal" aria-hidden="true"><i>' + X.bh.charAt(0) + '</i><i>' + X.bh.charAt(1) + '</i></span></header>' +
+      '<p class="lz-head">' + X.head + '</p>';
+    if (!open) return '<article class="lz-card lock" id="lz-' + X.key + '" style="--c:' + X.color + '">' + head +
+      '<div class="lz-lockbody" aria-hidden="true"><p>' + esc(X.metaphor) + '</p><p>옛 책은 이 사주를 이렇게 읽어요. 요즘 말로 바꾸면 이렇게 달라져요.</p></div><div class="lz-lockchip">' + LOCK_SVG + '옛 책 풀이 · 요즘 풀이 · 명리 근거</div></article>';
+    var art = X.key === 'bone' ? lzArtBone(r, X) : X.key === 'book' ? lzArtBook(X) : X.key === 'flow' ? lzArtFlow(r, X) : X.key === 'frame' ? lzArtFrame(X) : lzArtSeason(X);
+    var two;
+    if (X.key === 'bone') two = '<ul class="lz-pos">' + X.now.map(function(n, k){ return '<li><span>' + POS_LABEL[n.k] + ' · ' + n.g + '</span><p class="o">' + X.old[k].t + '.</p><p>' + n.t + '.</p></li>'; }).join('') + '</ul>';
+    else two = '<div class="lz-two"><div class="lz-old"><em>옛 책은</em><p>' + X.oldTxt + '</p></div><div class="lz-now"><em>요즘 말로</em><p>' + X.nowTxt + '</p></div></div>';
+    return '<article class="lz-card" id="lz-' + X.key + '" style="--c:' + X.color + '">' + head +
+      '<p class="lz-meta">' + X.metaphor + '</p>' + art +
+      '<div class="lz-pr"><b>' + X.principle[0] + '</b><small>' + X.principle[1] + '</small></div>' + two +
+      '<p class="lz-shift"><b>관점이 이렇게 달라져요</b>' + X.shift + '</p>' +
+      '<p class="lz-basis">명리 근거 · ' + X.basis + '</p></article>';
+  }
+  function lzSynthHTML(r, L){
+    var S = L.synth, k = S.key;
+    return '<article class="lz-card lz-syn" style="--c:#cebeff"><header class="lz-ch"><span class="lz-no">✦</span><div><small>세 렌즈 겹쳐 읽기 · 三鏡合看</small><b>입체로 본 열쇠 기운</b></div></header>' +
+      '<div class="lz-venn" aria-hidden="true"><svg viewBox="0 0 240 170"><circle cx="88" cy="70" r="52" fill="#f6cd5b" opacity=".32"/><circle cx="152" cy="70" r="52" fill="#ffb38a" opacity=".32"/><circle cx="120" cy="118" r="52" fill="#9fc8ff" opacity=".32"/>' +
+      '<text x="62" y="50" class="vl">그릇</text><text x="178" y="50" class="vl" text-anchor="end">온도</text><text x="120" y="160" class="vl" text-anchor="middle">기세</text>' +
+      '<circle class="lz-key" cx="120" cy="88" r="20" fill="' + LZ_EL[k] + '"/><text x="120" y="89" text-anchor="middle" dominant-baseline="middle" class="vk">' + MS.EL_H[k] + '</text></svg></div>' +
+      '<div class="lz-layers"><div><small>자평진전 · 그릇</small><b>' + L.frame.g.name + '</b></div><div><small>궁통보감 · 온도</small><b>' + L.season.tLab + '</b></div><div><small>적천수 · 기세</small><b>' + r.strength + ' ' + L.flow.pct + '%</b></div></div>' +
+      '<p>' + S.txt + '</p>' + (S.dTxt ? '<p>' + S.dTxt + '</p>' : '') +
+      '<p class="lz-keyline"><b>' + MS.EL_K[k] + '(' + MS.EL_H[k] + ') 기운을 채우는 법</b>' + EL_TEXT[k].act + ' · 색 ' + EL_TEXT[k].color + ' · 방향 ' + EL_TEXT[k].dir + '</p></article>';
+  }
+  /* ---------- 도사가 손녀(손자)에게: 한지 편지 카드 ---------- */
+  function letterHTML(me, r, cls){
+    var T = LENS.letter(r, me);
+    return '<div class="dsl ' + (cls || '') + '"><span class="dsl-seal" aria-hidden="true">五<br>經</span><small class="dsl-k">다섯 고전의 도사가 보낸 편지</small>' +
+      '<h4>' + esc(me.name) + ' ' + T.who + '에게</h4>' + T.paras.map(function(p){ return '<p>' + p + '</p>'; }).join('') +
+      '<p class="dsl-sign">— ' + T.sign + '</p><span class="dsl-uni" aria-hidden="true">' + uniImg('u-calm') + '</span></div>';
+  }
+  function letterCanvas(me, r, done){
+    var T = LENS.letter(r, me), W = 1080, MX = 120, TW = W - MX * 2;
+    var F = '"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif', FS = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+    var sc = document.createElement('canvas').getContext('2d');
+    function wrap(text){ var out = [], line = ''; sc.font = '400 38px ' + F; String(text).split(' ').forEach(function(w){ var t = line ? line + ' ' + w : w; if (sc.measureText(t).width <= TW){ line = t; return; } if (line) out.push(line); line = w; }); if (line) out.push(line); return out; }
+    var paras = T.paras.map(wrap), LH = 64, hgt = 420;
+    paras.forEach(function(p){ hgt += p.length * LH + 34; });
+    var HT = Math.max(1350, hgt + 360);
+    var c = document.createElement('canvas'); c.width = W; c.height = HT; var g = c.getContext('2d');
+    g.fillStyle = '#fbf3e3'; g.fillRect(0, 0, W, HT);
+    for (var i = 0; i < 1400; i++){ g.fillStyle = 'rgba(160,120,60,' + (Math.random() * .07) + ')'; g.fillRect(Math.random() * W, Math.random() * HT, Math.random() * 26 + 2, 1); }
+    g.strokeStyle = 'rgba(200,144,43,.45)'; g.lineWidth = 3; g.setLineDash([14, 10]); g.strokeRect(48, 48, W - 96, HT - 96); g.setLineDash([]);
+    g.textAlign = 'left'; g.fillStyle = '#a0742c'; g.font = '600 32px ' + FS; g.fillText('다섯 고전의 도사가 보낸 편지', MX, 170);
+    g.fillStyle = '#3b2f1e'; g.font = '700 62px ' + F; g.fillText(me.name + ' ' + T.who + '에게', MX, 260);
+    g.fillStyle = '#b8322a'; g.fillRect(W - MX - 110, 120, 110, 140); g.fillStyle = '#fbf3e3'; g.font = '700 50px ' + F; g.textAlign = 'center'; g.fillText('五', W - MX - 55, 182); g.fillText('經', W - MX - 55, 240);
+    g.textAlign = 'left'; g.fillStyle = '#3b2f1e'; g.font = '400 38px ' + F;
+    var y = 360; paras.forEach(function(p){ p.forEach(function(ln){ g.fillText(ln, MX, y); y += LH; }); y += 34; });
+    g.fillStyle = '#7a5a2e'; g.font = '500 34px ' + F; g.textAlign = 'right'; g.fillText('— ' + T.sign, W - MX, y + 20);
+    g.textAlign = 'center'; g.fillStyle = 'rgba(59,47,30,.55)'; g.font = '400 28px ' + FS; g.fillText('우니조아 · woonijoa.com', W / 2, HT - 92);
+    var im = new Image(); im.onload = function(){ g.drawImage(im, MX - 10, HT - 330, 200, 200); done(c); }; im.onerror = function(){ done(c); }; im.src = 'img/u-calm.webp';
+  }
+  function shareCanvas(c, fname){
+    c.toBlob(function(blob){
+      if (!blob){ toast('이미지를 만들지 못했어요'); return; }
+      var file = null; try { file = new File([blob], fname, { type:'image/png' }); } catch(_){}
+      if (file && navigator.canShare && navigator.canShare({ files:[file] })) navigator.share({ files:[file] }).catch(function(){});
+      else { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); toast('이미지를 저장했어요'); }
+    }, 'image/png');
+  }
+  function shareLetter(me, r){ toast('편지를 이미지로 만드는 중이에요…'); letterCanvas(me, r, function(c){ shareCanvas(c, 'woonijoa-letter.png'); }); }
+  function bindLetter(root, me, r){ root.querySelectorAll('[data-letter]').forEach(function(b){ b.onclick = function(){ shareLetter(me, r); }; }); }
+
+  function openLens(me, r){
+    setTimeout(function(){ bond('today'); }, 900);
+    var L = LENS.calc(r), open = owns('fl') || passActive(), nm = esc(me.name);
+    var h = '<div class="lz-sheet"><div class="lz-hero">' + lzShelfSVG(L, open) + '<span class="lz-heroU" aria-hidden="true">' + uniImg('u-book') + '</span></div>' +
+      '<h3 id="sheetTitle">' + nm + '님을 읽는 다섯 개의 렌즈</h3>' +
+      '<p class="helper lz-sub">명리학 5대 고전이 같은 여덟 글자를 다섯 번 다르게 읽어요. 옛 책의 해석과 요즘 말로 바꾼 해석을 나란히 보여 드려요.</p>' + lzWongukHTML(r) +
+      '<div class="lz-first"><h4>다섯 도사의 첫인상</h4><ol>' + L.list.map(function(X, i){ return '<li style="--c:' + X.color + '"><button type="button" data-lzgo="' + X.key + '"><em>' + X.book + '<small>' + X.lens + '</small></em><span>' + X.head + '</span></button></li>'; }).join('') + '</ol></div>' +
+      L.list.map(function(X, i){ return lzCardHTML(X, i, r, open || i === 0); }).join('');
+    if (open){
+      h += lzSynthHTML(r, L) +
+        '<div class="lz-lwrap"><h4 class="lz-sec"><em>✉</em>도사가 ' + (me.gender === 'M' ? '손자' : '손녀') + '에게 하는 말</h4>' + letterHTML(me, r) +
+        '<div class="lz-acts"><button class="btn-soft grow" data-letter>' + LZ_IC.share + ' 편지 이미지로 저장·공유</button></div></div>' +
+        '<div class="lz-next"><b>이 풀이와 이어서 보면 좋아요</b><div class="row"><button class="btn-ghost grow" id="lzGoDu">대운 10년 세운표</button><button class="btn-ghost grow" id="lzGoRit">오늘의 개운 리추얼</button></div></div>' + adSlotHTML('다섯 렌즈 풀이를 본 뒤');
+    } else {
+      h += '<div class="lz-card lock lz-syn"><header class="lz-ch"><span class="lz-no">✦</span><div><small>세 렌즈 겹쳐 읽기 · 도사의 편지</small><b>입체로 본 열쇠 기운</b></div></header><div class="lz-lockchip">' + LOCK_SVG + '그릇 × 온도 × 기세가 가리키는 열쇠 하나 · 할미 도사의 편지 카드</div></div>' +
+        '<div class="tj-buy lz-buy"><b>나머지 네 권의 렌즈, 세 렌즈 겹쳐 읽기, 도사의 편지까지</b><ul class="lz-inc"><li>삼명통회 · 납음과 12운성, 내 신살의 옛 뜻과 요즘 뜻</li><li>적천수 · 득령·득지·득세로 본 기세와 오행의 흐름</li><li>자평진전 · 내 격국(사회적 그릇)과 잘 맞는 일</li><li>궁통보감 · 태어난 계절의 온도와 먼저 필요한 글자</li><li>세 렌즈가 함께 가리키는 열쇠 기운 + 할미 도사의 편지 카드</li></ul>' + passLinkHTML() +
+        '<button class="btn-primary btn-block sheen" id="btnLzBuy">네 권 더 펼치기 · ' + priceTag('fl') + '</button></div>';
+    }
+    h += '<p class="disclaimer">고전의 관점을 우니조아가 쉬운 말로 다시 쓴 풀이예요. 원국 계산은 만세력 엔진 값을 그대로 썼고, 재미로 보는 참고용이에요.</p>' +
+      '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button></div>';
+    openSheet(h);
+    var root = $('sheetBody');
+    root.querySelectorAll('[data-lzgo]').forEach(function(b){ b.onclick = function(){ var t = $('lz-' + b.dataset.lzgo); if (t) t.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block:'start' }); }; });
+    bindLetter(root, me, r);
+    if ($('btnLzBuy')) $('btnLzBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('fl', { who:nm + '님', id:me.id, onPaid:function(){ openLens(me, r); } }); }, 260); };
+    if ($('lzGoDu')) $('lzGoDu').onclick = function(){ closeSheet(); setTimeout(function(){ openDecade(me, r); }, 260); };
+    if ($('lzGoRit')) $('lzGoRit').onclick = function(){ closeSheet(); goRitual(); };
+  }
+
+  /* 홈 '고전으로 깊이 보기' — 무료로 보이는 첫 렌즈 한 줄을 미끼로 보여 준다. 누르면 상품 상세(openHomeDetail) */
+  function lzHomeHTML(me, r){
+    var L = LENS.calc(r), D = LENS.decade(r), nowY = new Date().getFullYear(), Y = D.years.filter(function(x){ return x.y === nowY; })[0];
+    return '<section class="home-sec lzh"><div class="hs-head"><h2 class="sec-title">고전으로 깊이 보기</h2><span class="hs-meta">NEW</span></div>' +
+      '<button type="button" class="lzh-main" data-hp="fl"><span class="lzh-art">' + lzShelfSVG(L, owns('fl')) + '</span><span class="lzh-t"><small>명리 5대 고전 · 1권 무료</small><b>다섯 렌즈로 읽는<br>' + esc(me.name) + '님의 사주</b>' +
+      '<em>“' + L.bone.head + '”</em><span class="lzh-pr">' + (owns('fl') ? '열려 있어요' : priceTag('fl') + ' · 도사의 편지 카드 포함') + '</span></span></button>' +
+      '<button type="button" class="lzh-du" data-hp="du"><span class="lzh-gz"><i style="color:' + LZ_EL[D.d.sEl] + '">' + D.d.sh + '</i><i style="color:' + LZ_EL[D.d.bEl] + '">' + D.d.bh + '</i></span><span class="lzh-dt"><small>' + D.d.age + '~' + (D.d.age + 9) + '세 대운 · ' + D.y0 + '~' + D.y1 + '</small><b>대운 10년 세운표</b><span>' + (Y ? '올해는 ' + Y.ten + '의 해 · 올해·내년 무료' : '해마다 적극·대비와 꼭 챙길 것') + '</span></span><i class="chev" aria-hidden="true">›</i></button></section>';
+  }
+  /* ---------- 대운 10년 세운표 (item 'du') ---------- */
+  var DC_MODE = { go:['적극', '움직일 해', LZ_IC.up], build:['다지기', '쌓을 해', LZ_IC.mid], guard:['대비', '지킬 해', LZ_IC.guard] };
+  function dcWaveSVG(D, nowY, open, FREE){
+    var W = 320, H = 120, px = function(i){ return 18 + i * ((W - 36) / 9); }, py = function(v){ return 100 - v * .8; };
+    var pts = D.years.map(function(x, i){ return px(i).toFixed(1) + ',' + py(x.v).toFixed(1); }).join(' ');
+    var area = 'M' + px(0) + ',104 L' + pts.split(' ').join(' L') + ' L' + px(9) + ',104 Z';
+    var dots = D.years.map(function(x, i){ var see = open || FREE.indexOf(x.y) > -1; return '<circle cx="' + px(i).toFixed(1) + '" cy="' + py(x.v).toFixed(1) + '" r="' + (x.y === nowY ? 6 : 4.2) + '" class="dc-dot ' + (see ? x.mode : 'hid') + (x.y === nowY ? ' now' : '') + '"/>'; }).join('');
+    var labs = D.years.map(function(x, i){ return '<text x="' + px(i).toFixed(1) + '" y="117" text-anchor="middle" class="' + (x.y === nowY ? 'now' : '') + '">\'' + String(x.y).slice(2) + '</text>'; }).join('');
+    return '<svg class="dc-wave" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs><linearGradient id="dcG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#cebeff" stop-opacity=".45"/><stop offset="1" stop-color="#cebeff" stop-opacity="0"/></linearGradient></defs>' +
+      '<line x1="12" x2="' + (W - 12) + '" y1="' + py(52) + '" y2="' + py(52) + '" class="dc-mid"/><path d="' + area + '" fill="url(#dcG)"' + (open ? '' : ' class="tj-blur"') + '/><polyline points="' + pts + '" class="dc-line' + (open ? '' : ' tj-blur') + '"/>' + dots + labs + '</svg>';
+  }
+  function openDecade(me, r, which){
+    setTimeout(function(){ bond('today'); }, 900);
+    var nm = esc(me.name), open = owns('du') || passActive();
+    var base = r.daeun.indexOf(r.curDaeun); if (base < 0) base = 0;
+    var idx = which === 'next' ? Math.min(base + 1, r.daeun.length - 1) : base;
+    var D = LENS.decade(r, idx), nowY = new Date().getFullYear(), FREE = [nowY, nowY + 1];
+    var locked = !open && which === 'next';
+    var cnt = { go:0, build:0, guard:0 }; D.years.forEach(function(x){ cnt[x.mode]++; });
+    var d = D.d, row = function(x){
+      var see = open || (!locked && FREE.indexOf(x.y) > -1), M = DC_MODE[x.mode];
+      var links = x.y === TJ_YEAR ? '<button type="button" class="dc-link" data-dcl="tj">' + TJ_YEAR + ' 토정비결로 열두 달 보기 ›</button>' : '';
+      if (x.y === nowY || x.y === nowY + 1) links += '<button type="button" class="dc-link" data-dcl="fc">골든타이밍 달력으로 좋은 날 보기 ›</button>';
+      return '<li class="dc-y ' + (see ? x.mode : 'lock') + (x.y === nowY ? ' now' : '') + '"><div class="dc-yl"><b>' + x.y + '</b><small>' + x.age + '세</small>' + (x.y === nowY ? '<em>올해</em>' : '') + '</div>' +
+        '<div class="dc-yb"><div class="dc-yt"><span class="dc-gz"><i style="color:' + LZ_EL[x.sEl] + '">' + MS.STEM_H[x.s] + '</i><i style="color:' + LZ_EL[x.bEl] + '">' + MS.BR_H[x.b] + '</i></span><span class="dc-ten">' + x.ten + '의 해</span>' +
+        (see ? '<span class="dc-badge ' + x.mode + '">' + M[2] + M[0] + '</span>' : '<span class="dc-badge lock">' + LOCK_SVG + '</span>') + '</div>' +
+        (see ? '<p>' + x.line + '</p>' + x.flags.map(function(f){ return '<p class="dc-flag">' + ({ chung:'沖', hap:'合', hyeong:'刑', johu:'調' })[f] + ' · ' + LENS_FLAG[f] + '</p>'; }).join('') +
+          '<p class="dc-care"><b>올해 꼭 챙길 것 하나</b>' + x.care + '</p>' + links
+          : '<p class="tj-blur" aria-hidden="true">' + x.line + '</p>') + '</div></li>';
+    };
+    var hasNext = base + 1 < r.daeun.length;
+    var h = '<div class="dc-sheet"><div class="sheet-fig">' + uniImg('u-calendar') + '</div>' +
+      '<h3 id="sheetTitle">' + nm + '님의 대운 10년 세운표</h3>' +
+      '<p class="helper" style="margin:-4px 0 12px">대운은 10년마다 바뀌는 큰 계절, 세운은 해마다 들어오는 기운이에요. 한 해씩 움직일 때와 지킬 때를 짚어 드려요.</p>' +
+      (hasNext ? '<div class="dc-tabs" role="tablist"><button type="button" role="tab" data-dct="now" aria-selected="' + (which !== 'next') + '">지금 대운<small>' + r.daeun[base].age + '~' + (r.daeun[base].age + 9) + '세</small></button><button type="button" role="tab" data-dct="next" aria-selected="' + (which === 'next') + '">다음 대운' + (open ? '' : ' ' + LOCK_SVG) + '<small>' + r.daeun[base + 1].age + '~' + (r.daeun[base + 1].age + 9) + '세</small></button></div>' : '') +
+      '<div class="dc-head"><div class="dc-big"><i style="color:' + LZ_EL[d.sEl] + '">' + d.sh + '</i><i style="color:' + LZ_EL[d.bEl] + '">' + d.bh + '</i></div><div class="dc-hi"><small>' + d.name + ' 대운 · ' + D.y0 + '~' + D.y1 + '</small><b>' + d.age + '~' + (d.age + 9) + '세의 계절</b>' +
+      '<span class="dc-badge ' + D.tone + '">' + DC_MODE[D.tone][2] + '10년 결: ' + DC_MODE[D.tone][0] + '</span></div></div>' +
+      '<div class="dc-half"><div><small>앞 5년 · 천간 ' + d.sh + ' ' + d.tenStem + '</small><p>' + D.first + '</p></div><div><small>뒤 5년 · 지지 ' + d.bh + ' ' + d.tenBr + '</small><p>' + D.second + '</p></div></div>' +
+      '<div class="dc-wavebox">' + dcWaveSVG(D, nowY, open, locked ? [] : FREE) + '<div class="dc-legend"><span class="go">' + LZ_IC.up + '적극 ' + (open ? cnt.go : '?') + '</span><span class="build">' + LZ_IC.mid + '다지기 ' + (open ? cnt.build : '?') + '</span><span class="guard">' + LZ_IC.guard + '대비 ' + (open ? cnt.guard : '?') + '</span></div></div>' +
+      '<ol class="dc-list">' + D.years.map(row).join('') + '</ol>';
+    if (!open){
+      h += '<div class="tj-buy"><b>' + (locked ? '다음 대운 10년도 미리' : '나머지 8년의 적극·대비와 해마다 꼭 챙길 것') + '</b><ul class="lz-inc"><li>10년 파도 그래프와 해마다 적극·다지기·대비 표시</li><li>해마다 꼭 챙길 것 하나 · 합·충·형·조후 짚기</li><li>지금 대운과 다음 대운 두 개를 모두</li></ul>' + passLinkHTML() + '<button class="btn-primary btn-block sheen" id="btnDuBuy">10년 세운표 전체 보기 · ' + priceTag('du') + '</button></div>';
+    } else h += adSlotHTML('대운 세운표를 본 뒤');
+    h += '<div class="lz-next"><b>함께 보면 좋아요</b><div class="row"><button class="btn-ghost grow" data-dcl="tj">' + TJ_YEAR + ' 토정비결</button><button class="btn-ghost grow" data-dcl="fc">골든타이밍 달력</button></div><div class="row"><button class="btn-ghost grow" data-dcl="fl">다섯 렌즈 풀이</button></div></div>' +
+      '<p class="disclaimer">세운표는 용신·조후와 합·충·형으로 계산한 흐름이에요. 특정한 일이 일어난다는 예언이 아니라, 힘을 쓸 때와 아낄 때를 고르는 참고용이에요.</p>' +
+      '<button class="text-btn" data-close>' + (open ? '닫기' : '나중에 볼게요') + '</button></div>';
+    openSheet(h);
+    var root = $('sheetBody');
+    root.querySelectorAll('[data-dct]').forEach(function(b){ b.onclick = function(){ openDecade(me, r, b.dataset.dct); }; });
+    root.querySelectorAll('[data-dcl]').forEach(function(b){ b.onclick = function(){ var k = b.dataset.dcl; closeSheet(); setTimeout(function(){ if (k === 'tj') openTojeong(me, r); else if (k === 'fc') openFortuneCal(me, r, 0); else openLens(me, r); }, 260); }; });
+    if ($('btnDuBuy')) $('btnDuBuy').onclick = function(){ closeSheet(); setTimeout(function(){ openPaySheet('du', { who:nm + '님', id:me.id, onPaid:function(){ openDecade(me, r, which); } }); }, 260); };
+  }
+  var LENS_FLAG = {
+    chung:'일지와 충(沖) — 집·일터·관계 같은 생활의 자리에 움직임이 생기기 쉬워요. 바꿀 게 있다면 미리 계획해서 내가 고르는 변화로 만드세요.',
+    hap:'일지와 합(合) — 가까운 사람과 손발이 잘 맞아요. 협업·약속·관계 맺기에 좋아요.',
+    hyeong:'일지와 형(刑) — 작은 마찰이 생기기 쉬워요. 서류·말·운전은 한 번 더 확인해요.',
+    johu:'조후 글자가 들어와요 — 사주의 온도가 맞춰져 몸과 마음이 한결 편해요.'
+  };
+
+  /* ---------- 오늘의 개운 리추얼 (우니와 매일 탭 · 무료) ----------
+     열쇠 기운(LENS.synth: 억부·조후·상신)으로 아침·낮·밤 한 가지씩. 날마다 바뀌고 체크는 이 기기에만 저장 */
+  function ritState(){ var s = store('unsu_rit'); return s && typeof s === 'object' ? s : { d:'', done:[], days:[] }; }
+  function ritStreak(s){ var n = 0, d = nowD(); for (var i = 0; i < 60; i++){ var k = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); if ((s.days || []).indexOf(k) > -1) n++; else if (i > 0) break; d.setDate(d.getDate() - 1); } return n; }
+  function ritualCardHTML(me){
+    if (!me) return '';
+    var r = compute(me); if (r.error) return '';
+    var R = LENS.rituals(r, todayStr()), s = ritState(), done = s.d === todayStr() ? s.done : [], n = done.length, st = ritStreak(s);
+    return '<div class="card lt rit-card" id="ritCard"><div class="sec-head"><h2 class="sec-title">오늘의 개운 리추얼</h2><span class="rit-el" style="--rc:' + LZ_EL[R.el] + '"><b>' + MS.EL_H[R.el] + '</b>' + MS.EL_K[R.el] + ' 기운 채우기</span></div>' +
+      '<p class="rit-why">' + esc(me.name) + '님의 열쇠 기운은 ' + MS.EL_K[R.el] + '(' + MS.EL_H[R.el] + ')예요 · ' + R.why.join('·') + '이 골랐어요</p>' +
+      '<ul class="rit-list">' + R.list.map(function(x){ var d = done.indexOf(x.k) > -1; return '<li class="' + (d ? 'done' : '') + '"><button type="button" data-rit="' + x.k + '" aria-pressed="' + d + '"><em class="rit-t ' + x.k + '">' + x.t + '</em><span>' + x.x + '</span><i aria-hidden="true">' + (d ? OK_SVG : '') + '</i></button></li>'; }).join('') + '</ul>' +
+      '<p class="helper">' + (n === 3 ? '오늘 세 가지를 다 했어요. 기운이 단단히 채워졌어요' : '해 본 것을 눌러 체크해요 · ' + n + '/3') + (st > 1 ? ' · <b class="rit-st">' + st + '일째 이어 가는 중</b>' : '') + '</p>' +
+      '<button type="button" class="rit-more" id="ritLens">이 기운은 어디서 왔을까? 다섯 렌즈 풀이 ›</button></div>';
+  }
+  function bindRitual(){
+    document.querySelectorAll('[data-rit]').forEach(function(b){ b.onclick = function(){
+      var s = ritState(), t = todayStr(); if (s.d !== t){ s.d = t; s.done = []; }
+      var k = b.dataset.rit, i = s.done.indexOf(k);
+      if (i > -1) s.done.splice(i, 1); else { s.done.push(k); var rc = b.getBoundingClientRect(); FX.spark(rc.right - 24, rc.top + rc.height / 2, 10); FX.vib(10); }
+      s.days = (s.days || []).filter(function(x){ return x !== t; }); if (s.done.length) s.days.push(t); s.days = s.days.slice(-90);
+      store('unsu_rit', s);
+      var c = $('ritCard'); if (c){ var tmp = document.createElement('div'); tmp.innerHTML = ritualCardHTML(getMe()); c.replaceWith(tmp.firstChild); bindRitual(); }
+      if (s.done.length === 3 && i < 0){ var nc = $('ritCard'); if (nc && FX.confetti) FX.confetti(nc, 36); toast('오늘의 개운 리추얼 완료! 내일도 만나요'); }
+    }; });
+    if ($('ritLens')) $('ritLens').onclick = function(){ var me = getMe(); if (me) openLens(me, compute(me)); };
+  }
+  function goRitual(){ go('today'); window.scrollTo(0, 0); setTimeout(function(){ setDailyTab('rit'); var c = $('ritCard'); if (c) c.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block:'center' }); }, 350); }
+
   /* ---------- 풀이 전 '우니가 분석 중' 로딩 (2026-11-23 소율: 결과가 너무 빨리 나오면 믿음이 안 간다) ----------
      세션마다 (풀이 · 사람 · 열림 여부) 처음 한 번만 1.8초 보여 준다. 같은 화면 안에서 달·목적을 바꿀 때는 다시 안 나온다.
      줄임 모션·라이트 모드는 0.9초. */
   var loadSeen = {};
   var LOAD_STEPS = {
+    fl:['연해자평으로 네 기둥 세우기', '적천수로 기세 재고 자평진전으로 격 세우기', '궁통보감으로 태어난 달 온도 맞추기'],
+    du:['대운 10년 펼치기', '해마다 용신·조후와 맞춰 보기', '합·충·형 짚고 적극·대비 고르기'],
     gw:['여덟 글자에서 귀인 별 찾기', '나를 돕는 띠·일간 맞춰 보기', TJ_YEAR + '년 달마다 귀인 자리 대 보기'],
     sal:['여덟 글자에서 신살 찾기', '살마다 자리(연·월·일·시) 맞춰 보기', '2027년 정미년 기운 겹쳐 보기'],
     tj:['태어난 해·달·날 괘 세우기', '상반기·하반기 흐름 읽기', '달마다 한 줄 풀이 정리'],
@@ -4969,6 +5267,8 @@
   }
   openSal = withLoad('sal', '살 풀이', openSal, function(){ return owns('sal') || passActive(); });
   openGuin = withLoad('gw', '귀인 풀이', openGuin, function(){ return owns('gw') || passActive(); });
+  openLens = withLoad('fl', '다섯 렌즈 풀이', openLens, function(){ return owns('fl') || passActive(); });
+  openDecade = withLoad('du', '대운 10년 세운표', openDecade, function(){ return owns('du') || passActive(); });
   openTojeong = withLoad('tj', '2027 토정비결', openTojeong, function(){ return owns('tj') || passActive(); });
   openWealth = withLoad('wl', '재물 그릇', openWealth, function(){ return owns('wl') || passActive(); });
   openLoveTiming = withLoad('lv', '연애·결혼 시기', openLoveTiming, function(){ return owns('lv') || passActive(); });
@@ -5206,7 +5506,9 @@
       wl:{ id:'wl', name:'내 재물 그릇 2~6장', coin:COST.wl, art:'book', keep:'저장한 모든 사람의 재물 그릇을 결제일부터 1년 동안 볼 수 있어요', items:['돈이 들어오는 길과 새는 길','평생 재물 흐름(대운 10년 단위)과 크게 들어오는 시기 3번','나에게 맞는 돈 버는 방식과 2027년 재물 처방'] },
       sal:{ id:'sal', name:'나에게 든 살 풀이', coin:COST.sal, art:'book', keep:'저장한 모든 사람의 살 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['내 사주에 든 모든 살 · 옛풀이와 요즘풀이로 나눠 보기','살마다 복으로 바꾸는 살풀이','2027년 정미년에 새로 들어오는 살'] },
       gw:{ id:'gw', name:'나를 돕는 귀인 풀이', coin:COST.gw, art:'book', keep:'저장한 모든 사람의 귀인 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['내 사주에 든 모든 귀인 · 옛풀이와 요즘풀이','나를 돕는 띠·일간·성향','2027년 귀인이 오는 달과 방향·장소'] },
-      ez:{ id:'ez', name:'사주 이야기책 2~6장', coin:COST.ez, art:'book', keep:'구입한 뒤 결제일부터 1년 동안 계정에서 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달'] }
+      fl:{ id:'fl', name:'다섯 렌즈 풀이', coin:COST.fl, art:'book', keep:'저장한 모든 사람의 다섯 렌즈 풀이를 결제일부터 1년 동안 볼 수 있어요', items:['삼명통회·적천수·자평진전·궁통보감 네 권의 렌즈 · 옛 책 풀이와 요즘 풀이','내 격국(사회적 그릇)과 계절의 온도, 기세','세 렌즈가 함께 가리키는 열쇠 기운과 할미 도사의 편지 카드'] },
+      du:{ id:'du', name:'대운 10년 세운표', coin:COST.du, art:'book', keep:'저장한 모든 사람의 세운표를 결제일부터 1년 동안 볼 수 있어요', items:['지금 대운 10년 해마다 적극·다지기·대비','해마다 꼭 챙길 것 하나와 합·충·형·조후','다음 대운 10년 미리 보기'] },
+      ez:{ id:'ez', name:'사주 이야기책 2~7장', coin:COST.ez, art:'book', keep:'구입한 뒤 결제일부터 1년 동안 계정에서 다시 읽을 수 있어요', items:['2장 기둥마다 들여다보기 · 월주·일주·시주','3장 내 안의 다섯 가지 힘(십성)','4장 나를 돕는 귀인과 특별한 별','5~6장 10년 계절(대운)과 올해·이번 달','7장 다섯 고전의 도사가 보낸 편지 카드'] }
     })[id];
   }
   function refreshOrders(){ if (!srvUser()) return; api('/api/me').then(function(r){ if (r && r.user){ SRV.orders = r.user.orders || SRV.orders; SRV.couponOk = !!r.user.couponOk; } }).catch(function(){}); }
