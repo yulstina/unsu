@@ -30,13 +30,37 @@ module.exports = async (req, res) => {
   try {
     if (a === 'order') return await order(req, res);
     if (a === 'confirm') return await confirm(req, res);
+    if (a === 'webhook') return await webhook(req, res);
     return S.send(res, 404, { ok: false });
   } catch (e) {
     console.error('pay', a, e.message);
     if (a === 'confirm') return S.redirect(res, '/?pay=fail&code=SERVER');
+    if (a === 'webhook') return S.send(res, 200, { ok: false });   /* 토스는 200 이 아니면 재전송한다. 처리 실패는 로그로 남기고 다음 이벤트·수동 확인으로 */
     return S.send(res, 500, { ok: false, err: 'server' });
   }
 };
+
+/* 토스 웹훅(PAYMENT_STATUS_CHANGED 등): 본문은 믿지 않고 paymentKey 로 토스에서 결제를 다시 조회해,
+   상점관리자·카드사에서 취소된 건만 주문을 refunded 로 맞춘다. 지급 취소(엽전 회수)는 하지 않고 기록만 한다. */
+async function webhook(req, res){
+  if (req.method !== 'POST' || !process.env.TOSS_SECRET_KEY) return S.send(res, 200, { ok: true });
+  const b = await S.body(req);
+  const d = (b && b.data) || {};
+  const paymentKey = String(d.paymentKey || '');
+  if (!paymentKey || !/^[A-Za-z0-9_\-]{10,200}$/.test(paymentKey)) return S.send(res, 200, { ok: true });
+  const r = await fetch('https://api.tosspayments.com/v1/payments/' + encodeURIComponent(paymentKey), { headers: { Authorization: 'Basic ' + Buffer.from(process.env.TOSS_SECRET_KEY + ':').toString('base64') } });
+  const p = await r.json().catch(() => ({}));
+  if (!r.ok || !/^wj[a-z0-9]+$/.test(String(p.orderId || ''))) return S.send(res, 200, { ok: true });
+  if (p.status === 'CANCELED' || p.status === 'PARTIAL_CANCELED'){
+    const full = p.status === 'CANCELED';
+    const left = Number(p.balanceAmount);
+    const refunded = Number(p.totalAmount) - (isFinite(left) ? left : 0);
+    const last = (p.cancels && p.cancels.length && p.cancels[p.cancels.length - 1]) || {};
+    await S.db('orders?order_id=eq.' + p.orderId + '&payment_key=eq.' + encodeURIComponent(paymentKey) + '&status=eq.paid', { method: 'PATCH', prefer: 'return=minimal',
+      body: { status: full ? 'refunded' : 'paid', refunded_at: last.canceledAt || new Date().toISOString(), refund_amount: refunded } });
+  }
+  return S.send(res, 200, { ok: true });
+}
 
 async function order(req, res){
   if (req.method !== 'POST' || !S.sameOrigin(req)) return S.send(res, 405, { ok: false });
