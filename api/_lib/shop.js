@@ -19,16 +19,17 @@ const EARN = {
   invite:  { n: 20,  max: 5 }    /* 초대 수락 선물 */
 };
 /* 엽전으로 여는 상품 가격 — src/app.js 의 COST 와 같아야 한다. 서버는 브라우저가 보낸 금액 대신 이 값으로 차감한다 */
-const PRICES = { cat: 100, dream: 200, gh: 100, ez: 100, tk: 500, tj: 100, cal: 100, lv: 200, chat: 100, wl: 100, sal: 100, gw: 100 };
+const PRICES = { cat: 100, dream: 200, gh: 100, ez: 100, tk: 500, tj: 100, cal: 100, lv: 200, chat: 100, wl: 100, sal: 100, gw: 100, fl: 200, du: 100 };
 /* 광고 보상 엽전: 실제 보상형 광고(Google Ad Manager)가 연결되고 서버 확인이 붙기 전까지 꺼 둔다 → Vercel 환경변수 AD_COIN_ON=1 로 켠다 */
 const AD_COIN_ON = process.env.AD_COIN_ON === '1';
 /* 우니 패스: 원화 바로 결제하는 기간권. 기간 동안 엽전 콘텐츠를 엽전 없이 열고 광고를 숨긴다(자동 결제 아님).
    AI 를 쓰는 꿈 풀이 리포트만 하루 PASS_DREAM_MAX 번까지. 가격은 src/app.js PASS 와 같이 바꾼다 */
 /* 원화 단건 결제 가격(원). 결제 즉시 그 콘텐츠 하나가 열린다. src/app.js 의 WON 과 같이 바꾼다.
    */
-const WON = { cat: 990, dream: 1900, gh: 990, ez: 990, tk: 4900, tj: 990, cal: 990, lv: 1900, chat: 990, wl: 990, sal: 990, gw: 990 };
+/* 2026-11-27 fl 다섯 렌즈 풀이 1,900 · du 대운 10년 세운표 990 (Claude 제안값, 소율 확정 전) */
+const WON = { cat: 990, dream: 1900, gh: 990, ez: 990, tk: 4900, tj: 990, cal: 990, lv: 1900, chat: 990, wl: 990, sal: 990, gw: 990, fl: 1900, du: 990 };
 /* 결제창·구매 내역에 나오는 상품명 — '로또·당첨·번호 추천' 같은 말은 쓰지 않는다(PG 심사) */
-const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: '궁합 상세 리포트', ez: '쉬운 사주 풀이', tk: '중요한 날 잡기', tj: '2027 토정비결', cal: '월별 운세 달력', lv: '연애·결혼 시기', chat: '우니에게 묻기 하루 무제한 대화권', wl: '내 재물 그릇 리포트', sal: '나에게 든 살 풀이', gw: '나를 돕는 귀인 풀이' };
+const WON_NAMES = { cat: '분야별 운세', dream: '꿈 풀이 리포트', gh: '궁합 상세 리포트', ez: '쉬운 사주 풀이', tk: '중요한 날 잡기', tj: '2027 토정비결', cal: '월별 운세 달력', lv: '연애·결혼 시기', chat: '우니에게 묻기 하루 무제한 대화권', wl: '내 재물 그릇 리포트', sal: '나에게 든 살 풀이', gw: '나를 돕는 귀인 풀이', fl: '다섯 렌즈 사주 풀이', du: '대운 10년 세운표' };
 const COIN_SALE = process.env.COIN_SALE === '1';
 /* 묶음 패키지(2026-11-24 소율 검토): 여러 풀이를 한 번에 원화 결제 → 결제 즉시 전부 열린다(충전·기간권 아님).
    items 는 WON 키. 결제가 끝나면 원장에 'spend:<item>' 구매 기록을 하나씩 남긴다. src/app.js PKG 와 같이 바꾼다.
