@@ -32,7 +32,7 @@ const OG = SITE + '/og.jpg?v=' + ver(fs.readFileSync(path.join(__dirname, '..', 
   fs.writeFileSync(path.join(OUT, 'js/lunar.js'), '/*! korean-lunar-calendar v0.4.0 | MIT License | (c) 2022 Jinil Lee */\n' + lunar + '\n');
   const figures = (await minify(r('figures.js') + '\n' + r('render.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/figures.js'), figures);
-  const core = (await minify(r('engine.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('content.js') + '\n' + r('content_legacy.js') + '\n' + r('daily.js') + '\n' + r('taekil.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('dream.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('share.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('legal.js').replace(/if \(typeof module[^\n]*\n?/, ''), jsOpts)).code;
+  const core = (await minify(r('engine.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('content.js') + '\n' + r('content_legacy.js') + '\n' + r('daily.js') + '\n' + r('taekil.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('lens.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('dream.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('share.js').replace(/if \(typeof module[^\n]*\n?/, '') + '\n' + r('legal.js').replace(/if \(typeof module[^\n]*\n?/, ''), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/core.js'), core);
   const app = (await minify(r('app.js'), jsOpts)).code;
   fs.writeFileSync(path.join(OUT, 'js/app.js'), app);
