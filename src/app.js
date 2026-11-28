@@ -1073,7 +1073,7 @@
   function showNums(){ return !(SRV.cfg && SRV.cfg.nums === false); }
   function todayLuck(entry, r){
     var f = DAILY.today(entry, r, nowD());
-    var nums = drawYongNumbers(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|luck', f.luckyEl, 4);
+    var nums = drawYongNumbers(entryISO(entry, r) + '|' + entryTKey(r) + '|' + todayStr() + '|luck', f.luckyEl, 3);   /* 2026-11-28 소율: 부적 행운 숫자 3개 */
     var acts = SMALL_ACT[f.luckyEl], act = acts[seedHash(entryISO(entry, r) + '|' + todayStr() + '|act') % acts.length];
     return { f:f, el:f.luckyEl, nums:nums, act:act };
   }
@@ -2245,6 +2245,7 @@
   function dreamNums(d){
     var base = String(d.id || d.at || ''), syms = (d.symbols || []).slice(0, 3), out = [], used = {};
     if (!syms.length) syms = [{ word:d.catName || '꿈' }];
+    if (syms.length < 2) syms.push({ word:syms[0].word === (d.catName || '꿈') ? '오늘의 기운' : (d.catName || '꿈') });   /* 2026-11-28 소율: 꿈 숫자 최소 2개, 최대 3개 */
     syms.forEach(function(sy){
       var n = 1 + Math.floor(mulberry32(seedHash(base + '|dn|' + sy.word))() * 50), g = 0;
       while (used[n] && g++ < 60) n = n % 50 + 1;
